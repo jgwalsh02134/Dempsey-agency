@@ -9,8 +9,7 @@ Fastify + Prisma backend for the Dempsey Agency B2B advertising platform.
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/dempsey` |
 | `PORT` | Server port (Railway sets this automatically) | `3001` |
 | `CORS_ORIGIN` | Allowed origin for CORS | `https://dempsey.agency` |
-
-Copy the example file to get started:
+| `NODE_ENV` | Environment mode | `development` / `production` |
 
 ```sh
 cp .env.example .env
@@ -22,26 +21,59 @@ cp .env.example .env
 # from the repo root
 npm install
 
-# generate the Prisma client
+# generate Prisma client
 npm run prisma:generate -w apps/api
 
-# run the first migration (requires a running PostgreSQL)
+# run the first migration (requires running PostgreSQL)
 npm run prisma:migrate -w apps/api
 
-# start the dev server with hot-reload
+# start dev server with hot-reload
 npm run dev -w apps/api
 ```
 
-The server starts at `http://localhost:3001` (or whatever `PORT` you set).
+## Routes
 
-## Production build
+### Public
 
-```sh
-npm run build -w apps/api
-npm run start -w apps/api
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/healthz` | Health check — returns `{ "status": "ok" }` |
+| `GET` | `/api/v1` | API version info |
+
+### Authenticated (require `x-user-id` + `x-user-email` headers)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/me` | Current user with memberships |
+| `GET` | `/api/v1/users` | List all users |
+| `GET` | `/api/v1/users/:id` | Get user by ID |
+| `POST` | `/api/v1/users` | Create a user |
+| `GET` | `/api/v1/organizations` | List all organizations |
+| `GET` | `/api/v1/organizations/:id` | Get organization by ID |
+| `POST` | `/api/v1/organizations` | Create an organization |
+| `GET` | `/api/v1/memberships` | List all memberships |
+| `POST` | `/api/v1/memberships` | Create a membership |
+| `GET` | `/api/v1/agency-clients` | List agency-client relationships |
+| `POST` | `/api/v1/agency-clients` | Create agency-client relationship |
+
+### Dev auth headers
+
+Until a real auth provider (Clerk) is added, pass these headers:
+
+```
+x-user-id: <user cuid>
+x-user-email: <user email>
 ```
 
-## Prisma commands
+Example:
+
+```sh
+curl http://localhost:3001/api/v1/me \
+  -H "x-user-id: abc123" \
+  -H "x-user-email: dev@dempsey.agency"
+```
+
+## Prisma
 
 ```sh
 # generate client after schema changes
@@ -54,18 +86,17 @@ npm run prisma:migrate -w apps/api
 npm run prisma:migrate:deploy -w apps/api
 ```
 
-## Health check
+## Production build
 
+```sh
+npm run build -w apps/api
+npm run start -w apps/api
 ```
-GET /healthz  →  { "status": "ok" }
-```
-
-Unauthenticated, returns HTTP 200. Use this as the Railway health-check path.
 
 ## Railway deployment
 
 1. Set **Root Directory** to `apps/api` in the Railway service settings.
-2. Add a PostgreSQL plugin and Railway will inject `DATABASE_URL` automatically.
+2. Add a PostgreSQL plugin — Railway injects `DATABASE_URL` automatically.
 3. Set `CORS_ORIGIN` to your frontend domain.
 4. Railway detects Node.js, runs `npm install` → `npm run build` → `npm run start`.
 5. Set the health-check path to `/healthz`.
