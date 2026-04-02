@@ -1,0 +1,7 @@
+{
+  "name": "dempsey-agency",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}

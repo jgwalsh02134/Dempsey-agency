@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  AGENCY_OWNER
+  AGENCY_ADMIN
+  STAFF
+  CLIENT_ADMIN
+  CLIENT_USER
+}
+
+enum OrganizationType {
+  AGENCY
+  CLIENT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships OrganizationMembership[]
+}
+
+model Organization {
+  id        String           @id @default(cuid())
+  name      String
+  type      OrganizationType
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  memberships         OrganizationMembership[]
+  agencyRelationships AgencyClientRelationship[] @relation("AgencyOrg")
+  clientRelationships AgencyClientRelationship[] @relation("ClientOrg")
+}
+
+model OrganizationMembership {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId])
+}
+
+model AgencyClientRelationship {
+  id        String   @id @default(cuid())
+  agencyId  String
+  clientId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agency Organization @relation("AgencyOrg", fields: [agencyId], references: [id])
+  client Organization @relation("ClientOrg", fields: [clientId], references: [id])
+
+  @@unique([agencyId, clientId])
+}
