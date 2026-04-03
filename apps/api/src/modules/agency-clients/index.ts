@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../plugins/auth.js";
-import { membershipHasOrgAdminRole, requireRole } from "../../lib/rbac.js";
+import { requireRole, userIsAgencyOrganizationAdmin } from "../../lib/rbac.js";
 import { resolveAgencyOrgIdsForUser } from "../../lib/org-scope.js";
 import { createAgencyClientSchema } from "./schemas.js";
 
@@ -30,19 +30,26 @@ export async function agencyClientRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const data = createAgencyClientSchema.parse(request.body);
+      const agencyId = data.agencyId.trim();
 
-      if (!membershipHasOrgAdminRole(request.currentUser!, data.agencyId)) {
+      const canAdminAgency = await userIsAgencyOrganizationAdmin(
+        app.prisma,
+        request.currentUser!.id,
+        agencyId,
+      );
+      if (!canAdminAgency) {
         return reply.code(403).send({
-          error:
-            "Forbidden: must be agency owner or admin on the agency organization",
+          error: "Forbidden",
+          message:
+            "You are not an admin of the parent agency organization",
         });
       }
 
       const agency = await app.prisma.organization.findUnique({
-        where: { id: data.agencyId },
+        where: { id: agencyId },
       });
       const client = await app.prisma.organization.findUnique({
-        where: { id: data.clientId },
+        where: { id: data.clientId.trim() },
       });
 
       if (!agency || agency.type !== "AGENCY") {
@@ -53,7 +60,7 @@ export async function agencyClientRoutes(app: FastifyInstance) {
       }
 
       const relationship = await app.prisma.agencyClientRelationship.create({
-        data,
+        data: { agencyId, clientId: data.clientId.trim() },
         include: { agency: true, client: true },
       });
       return reply.code(201).send(relationship);

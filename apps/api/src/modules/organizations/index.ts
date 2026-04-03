@@ -1,9 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../plugins/auth.js";
-import {
-  membershipHasOrgAdminRole,
-  requireRole,
-} from "../../lib/rbac.js";
+import { requireRole, userIsAgencyOrganizationAdmin } from "../../lib/rbac.js";
 import {
   resolveVisibleOrganizationIds,
 } from "../../lib/org-scope.js";
@@ -82,12 +79,18 @@ export async function organizationRoutes(app: FastifyInstance) {
         return reply.code(201).send(org);
       }
 
-      const agencyId = agencyOrganizationId!;
+      const agencyId = agencyOrganizationId!.trim();
 
-      if (!membershipHasOrgAdminRole(request.currentUser!, agencyId)) {
+      const canAdminParent = await userIsAgencyOrganizationAdmin(
+        app.prisma,
+        request.currentUser!.id,
+        agencyId,
+      );
+      if (!canAdminParent) {
         return reply.code(403).send({
-          error:
-            "Forbidden: must be agency owner or admin of the parent agency organization",
+          error: "Forbidden",
+          message:
+            "You are not an admin of the parent agency organization",
         });
       }
 

@@ -5,7 +5,7 @@ export const createOrganizationSchema = z
     name: z.string().min(1).max(255),
     type: z.enum(["AGENCY", "CLIENT"]),
     /** Required when type is CLIENT — the agency org creating this client org. */
-    agencyOrganizationId: z.string().min(1).optional(),
+    agencyOrganizationId: z.string().trim().min(1).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "CLIENT" && !data.agencyOrganizationId) {

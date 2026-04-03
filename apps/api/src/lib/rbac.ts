@@ -83,8 +83,36 @@ export function membershipHasOrgAdminRole(
   user: AuthUser,
   organizationId: string,
 ): boolean {
-  const m = user.memberships.find((x) => x.organizationId === organizationId);
+  const target = organizationId.trim();
+  const m = user.memberships.find(
+    (x) => x.organizationId.trim() === target || x.organization.id.trim() === target,
+  );
   return m != null && ADMIN_ROLES.includes(m.role);
+}
+
+/**
+ * Authoritative check for “may act as agency admin on this org” using the database.
+ * Ensures the org exists, is type AGENCY, and the user is AGENCY_OWNER or AGENCY_ADMIN there.
+ * Prefer this for writes (e.g. creating client orgs) so permissions match live data, not only the JWT session snapshot.
+ */
+export async function userIsAgencyOrganizationAdmin(
+  prisma: PrismaClient,
+  userId: string,
+  agencyOrganizationId: string,
+): Promise<boolean> {
+  const id = agencyOrganizationId.trim();
+  if (!id) return false;
+
+  const membership = await prisma.organizationMembership.findFirst({
+    where: {
+      userId,
+      organizationId: id,
+      role: { in: ADMIN_ROLES },
+      organization: { type: "AGENCY" },
+    },
+  });
+
+  return membership != null;
 }
 
 export async function resolveCanManageOrganization(
