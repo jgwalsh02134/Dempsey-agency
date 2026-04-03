@@ -3,7 +3,6 @@ import type {
   LoginResponse,
   Organization,
   OrgUsersResponse,
-  PatchUserRoleResponse,
   SessionUser,
 } from "../types";
 
@@ -54,11 +53,12 @@ export async function createClientOrganization(body: {
   });
 }
 
+/** PATCH role — success is HTTP 2xx only; UI applies role from request args (body may be empty behind some proxies). */
 export async function patchUserRole(
   userId: string,
   body: { organizationId: string; role: string },
-): Promise<PatchUserRoleResponse> {
-  return apiFetch<PatchUserRoleResponse>(
+): Promise<void> {
+  await apiFetch<unknown>(
     `/api/v1/users/${encodeURIComponent(userId)}/role`,
     {
       method: "PATCH",

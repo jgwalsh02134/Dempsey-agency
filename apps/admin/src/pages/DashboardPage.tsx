@@ -7,11 +7,7 @@ import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import { CreateUserForm } from "../components/CreateUserForm";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import { SessionPanel } from "../components/SessionPanel";
-import type {
-  Organization,
-  OrgUsersResponse,
-  PatchUserRoleResponse,
-} from "../types";
+import type { Organization, OrgUsersResponse, Role } from "../types";
 
 export function DashboardPage() {
   const { session, logout, loading: authLoading, token } = useAuth();
@@ -72,30 +68,28 @@ export function DashboardPage() {
     [],
   );
 
-  const applyPatchedMemberRole = useCallback((patch: PatchUserRoleResponse) => {
-    setMembers((prev) => {
-      if (!prev || prev.organizationId !== patch.organizationId) {
-        return prev;
-      }
-      return {
-        ...prev,
-        users: prev.users.map((row) =>
-          row.user.id === patch.userId
-            ? {
-                ...row,
-                membershipId: patch.id,
-                role: patch.role,
-                user: {
-                  id: patch.user.id,
-                  email: patch.user.email,
-                  name: patch.user.name,
-                  active: patch.user.active,
-                },
-              }
-            : row,
-        ),
-      };
-    });
+  /** Update role from client-known row ids after a successful PATCH (does not depend on response JSON). */
+  const applyLocalMemberRole = useCallback(
+    (args: { membershipId: string; userId: string; role: Role }) => {
+      setMembers((prev) => {
+        if (!prev || prev.organizationId !== selectedOrgId) {
+          return prev;
+        }
+        return {
+          ...prev,
+          users: prev.users.map((row) =>
+            row.membershipId === args.membershipId && row.user.id === args.userId
+              ? { ...row, role: args.role }
+              : row,
+          ),
+        };
+      });
+      setMembersError(null);
+    },
+    [selectedOrgId],
+  );
+
+  const clearMembersListError = useCallback(() => {
     setMembersError(null);
   }, []);
 
@@ -181,7 +175,8 @@ export function DashboardPage() {
             data={members}
             loading={membersLoading}
             error={membersError}
-            onRolePatched={applyPatchedMemberRole}
+            onClearListError={clearMembersListError}
+            onLocalRoleUpdated={applyLocalMemberRole}
             onRefresh={() => loadMembers(selectedOrgId, { background: true })}
           />
         )}

@@ -1,12 +1,7 @@
 import { useCallback, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import type {
-  OrganizationType,
-  OrgUsersResponse,
-  PatchUserRoleResponse,
-  Role,
-} from "../types";
+import type { OrganizationType, OrgMemberRow, OrgUsersResponse, Role } from "../types";
 
 type ActionFeedback =
   | { type: "success"; message: string }
@@ -20,13 +15,26 @@ function rolesForOrgType(t: OrganizationType): Role[] {
   return t === "AGENCY" ? AGENCY_ROLES : CLIENT_ROLES;
 }
 
+function patchRoleErrorMessage(e: unknown): string {
+  if (e instanceof ApiError) return e.message;
+  if (e instanceof Error && e.message) return e.message;
+  return "Could not update role.";
+}
+
+function refetchWarningMessage(prefix: string, e: unknown): string {
+  if (e instanceof ApiError) return `${prefix} (${e.message})`;
+  if (e instanceof Error && e.message) return `${prefix} (${e.message})`;
+  return prefix;
+}
+
 export function OrgMembersTable({
   orgId,
   orgType,
   data,
   loading,
   error,
-  onRolePatched,
+  onClearListError,
+  onLocalRoleUpdated,
   onRefresh,
 }: {
   orgId: string;
@@ -34,48 +42,62 @@ export function OrgMembersTable({
   data: OrgUsersResponse | null;
   loading: boolean;
   error: string | null;
-  onRolePatched: (patch: PatchUserRoleResponse) => void;
+  onClearListError: () => void;
+  onLocalRoleUpdated: (args: {
+    membershipId: string;
+    userId: string;
+    role: Role;
+  }) => void;
   onRefresh: () => Promise<void>;
 }) {
   const [busyUser, setBusyUser] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
 
   const changeRole = useCallback(
-    async (userId: string, newRole: Role) => {
+    async (row: OrgMemberRow, newRole: Role) => {
+      onClearListError();
       setFeedback(null);
-      setBusyUser(userId);
+      setBusyUser(row.user.id);
+
       try {
-        const updated = await api.patchUserRole(userId, {
-          organizationId: orgId,
+        try {
+          await api.patchUserRole(row.user.id, {
+            organizationId: orgId,
+            role: newRole,
+          });
+        } catch (e) {
+          setFeedback({ type: "error", message: patchRoleErrorMessage(e) });
+          return;
+        }
+
+        onLocalRoleUpdated({
+          membershipId: row.membershipId,
+          userId: row.user.id,
           role: newRole,
         });
-        onRolePatched(updated);
+
         setFeedback({ type: "success", message: "Role updated." });
         const t = window.setTimeout(() => {
           setFeedback((f) => (f?.type === "success" ? null : f));
         }, 4000);
+
         try {
           await onRefresh();
         } catch (refetchErr) {
           window.clearTimeout(t);
           setFeedback({
             type: "warning",
-            message:
-              refetchErr instanceof ApiError
-                ? `Role saved, but reloading the list failed (${refetchErr.message}).`
-                : "Role saved, but reloading the list failed.",
+            message: refetchWarningMessage(
+              "Role saved, but reloading the member list failed.",
+              refetchErr,
+            ),
           });
         }
-      } catch (e) {
-        setFeedback({
-          type: "error",
-          message: e instanceof ApiError ? e.message : "Update failed",
-        });
       } finally {
         setBusyUser(null);
       }
     },
-    [orgId, onRefresh, onRolePatched],
+    [orgId, onClearListError, onLocalRoleUpdated, onRefresh],
   );
 
   const deactivate = useCallback(
@@ -83,32 +105,43 @@ export function OrgMembersTable({
       if (!window.confirm("Deactivate this user? They will not be able to sign in.")) {
         return;
       }
+      onClearListError();
       setFeedback(null);
       setBusyUser(userId);
+
       try {
-        await api.deactivateUser(userId);
+        try {
+          await api.deactivateUser(userId);
+        } catch (e) {
+          setFeedback({
+            type: "error",
+            message:
+              e instanceof ApiError
+                ? e.message
+                : e instanceof Error && e.message
+                  ? e.message
+                  : "Deactivate failed.",
+          });
+          return;
+        }
+
         setFeedback({ type: "success", message: "User deactivated." });
         try {
           await onRefresh();
         } catch (refetchErr) {
           setFeedback({
             type: "warning",
-            message:
-              refetchErr instanceof ApiError
-                ? `User deactivated, but reloading the list failed (${refetchErr.message}).`
-                : "User deactivated, but reloading the list failed.",
+            message: refetchWarningMessage(
+              "User deactivated, but reloading the member list failed.",
+              refetchErr,
+            ),
           });
         }
-      } catch (e) {
-        setFeedback({
-          type: "error",
-          message: e instanceof ApiError ? e.message : "Deactivate failed",
-        });
       } finally {
         setBusyUser(null);
       }
     },
-    [onRefresh],
+    [onClearListError, onRefresh],
   );
 
   if (!orgId) {
@@ -179,7 +212,7 @@ export function OrgMembersTable({
                         disabled={busyUser === row.user.id}
                         onChange={(e) => {
                           const v = e.target.value as Role;
-                          if (v !== row.role) void changeRole(row.user.id, v);
+                          if (v !== row.role) void changeRole(row, v);
                         }}
                       >
                         {rolesForOrgType(orgType).map((r) => (

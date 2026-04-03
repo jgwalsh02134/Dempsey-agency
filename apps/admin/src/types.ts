@@ -48,21 +48,8 @@ export interface OrgUsersResponse {
   }[];
 }
 
-/** Response body from PATCH /api/v1/users/:id/role (membership + user). */
-export interface PatchUserRoleResponse {
-  id: string;
-  userId: string;
-  organizationId: string;
-  role: Role;
-  createdAt: string;
-  updatedAt: string;
-  user: {
-    id: string;
-    email: string;
-    name: string | null;
-    active: boolean;
-  };
-}
+/** One row in GET /organizations/:id/users → users[]. */
+export type OrgMemberRow = OrgUsersResponse["users"][number];
 
 export interface LoginResponse {
   token: string;
