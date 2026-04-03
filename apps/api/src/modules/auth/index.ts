@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../plugins/auth.js";
-import { verifyPassword } from "../../lib/password.js";
-import { loginSchema } from "./schemas.js";
+import { hashPassword, verifyPassword } from "../../lib/password.js";
+import { changePasswordSchema, loginSchema } from "./schemas.js";
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/login", async (request, reply) => {
@@ -40,6 +40,46 @@ export async function authRoutes(app: FastifyInstance) {
     { preHandler: [requireAuth] },
     async (request) => {
       return request.currentUser;
+    },
+  );
+
+  app.get(
+    "/session",
+    { preHandler: [requireAuth] },
+    async (request) => {
+      return request.currentUser;
+    },
+  );
+
+  app.post(
+    "/change-password",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { currentPassword, newPassword } = changePasswordSchema.parse(
+        request.body,
+      );
+
+      const user = await app.prisma.user.findUnique({
+        where: { id: request.currentUser!.id },
+      });
+      if (!user?.passwordHash) {
+        return reply
+          .code(400)
+          .send({ error: "Password change is not available for this account" });
+      }
+
+      const ok = await verifyPassword(currentPassword, user.passwordHash);
+      if (!ok) {
+        return reply.code(401).send({ error: "Current password is incorrect" });
+      }
+
+      const passwordHash = await hashPassword(newPassword);
+      await app.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      });
+
+      return { success: true };
     },
   );
 }

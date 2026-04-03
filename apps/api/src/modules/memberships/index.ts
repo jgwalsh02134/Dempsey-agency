@@ -1,11 +1,26 @@
 import type { FastifyInstance } from "fastify";
+import type { Role } from "@prisma/client";
 import { requireAuth } from "../../plugins/auth.js";
-import { requireRole } from "../../lib/rbac.js";
+import {
+  assertCanAssignMembershipRole,
+  assertCanManageOrganization,
+} from "../../lib/rbac.js";
+import { resolveVisibleOrganizationIds } from "../../lib/org-scope.js";
 import { createMembershipSchema } from "./schemas.js";
 
 export async function membershipRoutes(app: FastifyInstance) {
-  app.get("/memberships", { preHandler: [requireAuth] }, async () => {
+  app.get("/memberships", { preHandler: [requireAuth] }, async (request) => {
+    const visible = await resolveVisibleOrganizationIds(
+      app.prisma,
+      request.currentUser!,
+    );
+    const where =
+      visible === null
+        ? {}
+        : { organizationId: { in: visible.length ? visible : ["__none__"] } };
+
     return app.prisma.organizationMembership.findMany({
+      where,
       include: {
         user: { omit: { passwordHash: true } },
         organization: true,
@@ -16,16 +31,44 @@ export async function membershipRoutes(app: FastifyInstance) {
 
   app.post(
     "/memberships",
-    {
-      preHandler: [
-        requireAuth,
-        requireRole("AGENCY_OWNER", "AGENCY_ADMIN"),
-      ],
-    },
+    { preHandler: [requireAuth] },
     async (request, reply) => {
       const data = createMembershipSchema.parse(request.body);
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        data.organizationId,
+        reply,
+      );
+      if (!manage) return;
+
+      const org = await app.prisma.organization.findUnique({
+        where: { id: data.organizationId },
+      });
+      if (!org) {
+        return reply.code(404).send({ error: "Organization not found" });
+      }
+
+      if (
+        !assertCanAssignMembershipRole(
+          request.currentUser!,
+          data.organizationId,
+          org.type,
+          data.role as Role,
+          manage,
+          reply,
+        )
+      ) {
+        return;
+      }
+
       const membership = await app.prisma.organizationMembership.create({
-        data,
+        data: {
+          userId: data.userId,
+          organizationId: data.organizationId,
+          role: data.role as Role,
+        },
         include: {
           user: { omit: { passwordHash: true } },
           organization: true,
