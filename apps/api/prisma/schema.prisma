@@ -20,6 +20,13 @@ enum OrganizationType {
   CLIENT
 }
 
+enum AuditAction {
+  USER_CREATED
+  ROLE_CHANGED
+  USER_DEACTIVATED
+  MEMBERSHIP_REMOVED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -29,7 +36,9 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships OrganizationMembership[]
+  memberships          OrganizationMembership[]
+  auditLogsAsActor     AuditLog[]             @relation("AuditActor")
+  auditLogsAsTarget    AuditLog[]             @relation("AuditTarget")
 }
 
 model Organization {
@@ -69,4 +78,22 @@ model AgencyClientRelationship {
   client Organization @relation("ClientOrg", fields: [clientId], references: [id])
 
   @@unique([agencyId, clientId])
+}
+
+/// Append-only security audit trail (admin / membership actions).
+model AuditLog {
+  id             String      @id @default(cuid())
+  action         AuditAction
+  actorUserId    String?
+  targetUserId   String?
+  organizationId String?
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+
+  actorUser  User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetUser User? @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([organizationId])
+  @@index([actorUserId])
 }

@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { ZodError } from "zod";
-import { env } from "./env.js";
+import { corsConfig } from "./env.js";
 import { healthRoutes } from "./routes/health.js";
 import jwtPlugin from "./plugins/jwt.js";
 import prismaPlugin from "./plugins/prisma.js";
@@ -34,7 +34,20 @@ export async function buildApp() {
     reply.code(500).send({ error: "Internal Server Error" });
   });
 
-  await app.register(cors, { origin: env.CORS_ORIGIN });
+  await app.register(cors, {
+    origin: (origin, cb) => {
+      if (corsConfig.mode === "wildcard") {
+        return cb(null, true);
+      }
+      if (!origin) {
+        return cb(null, true);
+      }
+      if (corsConfig.origins.includes(origin)) {
+        return cb(null, true);
+      }
+      return cb(null, false);
+    },
+  });
   await app.register(jwtPlugin);
   await app.register(prismaPlugin);
   await app.register(authPlugin);

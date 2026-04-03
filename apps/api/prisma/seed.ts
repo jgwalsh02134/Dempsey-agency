@@ -1,3 +1,8 @@
+/**
+ * Bootstrap-only: reads SEED_* from the environment when this script runs.
+ * The API server never reads SEED_* — normal deploys must not depend on them.
+ * After first login, change the password via the API and avoid keeping default secrets in .env.
+ */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -42,6 +47,9 @@ async function seed() {
 
   console.log(`Seeded: ${email} as AGENCY_OWNER of "${orgName}"`);
   console.log(`Password: ${password}`);
+  console.log(
+    "Tip: change-password via API, then remove SEED_PASSWORD from your environment.",
+  );
 }
 
 seed()

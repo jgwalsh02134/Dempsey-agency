@@ -39,7 +39,7 @@ Deploy as a **static site** (no server-side code).
 
 (Optional: set the same for **Preview** if previews should hit the real API.)
 
-Ensure API **`CORS_ORIGIN`** includes your Pages URL (e.g. `https://admin.dempsey.agency` or `https://<project>.pages.dev`).
+Ensure the API allowlist includes your admin origin: set **`CORS_ORIGINS`** (or **`CORS_ORIGIN`**) on the API to include `https://admin.dempsey.agency` (and `https://dempsey.agency` if the marketing site calls the API), plus any `*.pages.dev` preview hosts you use.
 
 `public/_redirects` provides SPA fallback so React Router paths load `index.html`.
 

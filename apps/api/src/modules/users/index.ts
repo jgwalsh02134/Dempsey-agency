@@ -21,6 +21,7 @@ import {
   patchUserRoleBodySchema,
   userParamsSchema,
 } from "./schemas.js";
+import { writeAuditLog } from "../../lib/audit-log.js";
 
 async function resolveVisibleUserIds(
   app: FastifyInstance,
@@ -95,13 +96,27 @@ export async function userRoutes(app: FastifyInstance) {
         return;
       }
 
-      const updated = await app.prisma.organizationMembership.update({
-        where: { id: membership.id },
-        data: { role: body.role as Role },
-        include: {
-          user: { omit: { passwordHash: true } },
-          organization: true,
-        },
+      const updated = await app.prisma.$transaction(async (tx) => {
+        const row = await tx.organizationMembership.update({
+          where: { id: membership.id },
+          data: { role: body.role as Role },
+          include: {
+            user: { omit: { passwordHash: true } },
+            organization: true,
+          },
+        });
+        await writeAuditLog(tx, {
+          action: "ROLE_CHANGED",
+          actorUserId: request.currentUser!.id,
+          targetUserId: targetUserId,
+          organizationId: body.organizationId,
+          metadata: {
+            membershipId: membership.id,
+            fromRole: membership.role,
+            toRole: body.role,
+          },
+        });
+        return row;
       });
       return updated;
     },
@@ -130,9 +145,17 @@ export async function userRoutes(app: FastifyInstance) {
         return { success: true, alreadyInactive: true };
       }
 
-      await app.prisma.user.update({
-        where: { id: targetUserId },
-        data: { active: false },
+      await app.prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: targetUserId },
+          data: { active: false },
+        });
+        await writeAuditLog(tx, {
+          action: "USER_DEACTIVATED",
+          actorUserId: request.currentUser!.id,
+          targetUserId,
+          metadata: {},
+        });
       });
       return { success: true };
     },
@@ -227,6 +250,13 @@ export async function userRoutes(app: FastifyInstance) {
             organizationId,
             role: role as Role,
           },
+        });
+        await writeAuditLog(tx, {
+          action: "USER_CREATED",
+          actorUserId: request.currentUser!.id,
+          targetUserId: created.id,
+          organizationId,
+          metadata: { email: data.email, role },
         });
         return created;
       });

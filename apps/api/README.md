@@ -4,21 +4,43 @@ Fastify + Prisma backend for the Dempsey Agency B2B advertising platform.
 
 ## Required environment variables
 
-| Variable | Description | Default | Example |
+### Runtime (API process — set on Railway and local `.env`)
+
+| Variable | Description | Default / notes | Example |
 |---|---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string | — | `postgresql://user:pass@localhost:5432/dempsey` |
+| `DATABASE_URL` | PostgreSQL connection string | required | `postgresql://user:pass@localhost:5432/dempsey` |
 | `PORT` | Server port (Railway sets automatically) | `3000` | `3001` |
-| `CORS_ORIGIN` | Allowed origin for CORS | `*` | `https://dempsey.agency` |
+| `CORS_ORIGINS` | Preferred: comma-separated **browser** origins allowed to call the API | In dev, defaults to `*` if unset | `https://dempsey.agency,https://admin.dempsey.agency` |
+| `CORS_ORIGIN` | Legacy: one origin, or a comma-separated list (same parsing as `CORS_ORIGINS`) | Used if `CORS_ORIGINS` is empty | `http://localhost:5173` |
 | `NODE_ENV` | Environment mode | `development` | `production` |
-| `JWT_SECRET` | Secret for signing JWT tokens | `unsafe-dev-secret` | `openssl rand -base64 48` |
+| `JWT_SECRET` | Secret for signing JWT tokens | `unsafe-dev-secret` (rejected when `NODE_ENV=production`) | `openssl rand -base64 48` |
 | `JWT_EXPIRES_IN` | Token lifetime | `7d` | `24h` |
+
+**Production CORS**
+
+- `NODE_ENV=production` requires an explicit allowlist: set `CORS_ORIGINS` (or `CORS_ORIGIN`) to every frontend origin that uses the API (e.g. marketing and admin).
+- Wildcard `*` is **not** allowed in production.
+- Non-browser clients (curl, health checks) send no `Origin` header and are still accepted.
+
+**Production JWT**
+
+- If `JWT_SECRET` is still the default `unsafe-dev-secret` while `NODE_ENV=production`, the process exits at startup.
 
 ```sh
 cp .env.example .env
 ```
 
-> **Important**: set a real `JWT_SECRET` before deploying to production.
-> Generate one with: `openssl rand -base64 48`
+### Bootstrap only (seed script — do **not** set on production deploys)
+
+These are read **only** when you run `npm run seed -w apps/api` (or `prisma db seed`). The running API never uses them; Railway and other hosts do not need them after initial database setup.
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `SEED_EMAIL` | `prisma/seed.ts` | First admin email (default `admin@dempsey.agency`) |
+| `SEED_PASSWORD` | `prisma/seed.ts` | Initial password (default `changeme123`) |
+| `SEED_ORG_NAME` | `prisma/seed.ts` | Agency organization name |
+
+**After setup:** log in, call `POST /api/v1/auth/change-password`, then remove `SEED_PASSWORD` (and any other seed overrides) from your local `.env` and from team secrets. Do not store long-lived bootstrap passwords in deployment environments.
 
 ## Local development
 
@@ -38,6 +60,10 @@ npm run seed -w apps/api
 # start dev server with hot-reload
 npm run dev -w apps/api
 ```
+
+## Audit log (database)
+
+Security-relevant actions are appended to the `AuditLog` table (PostgreSQL via Prisma): **user created**, **role changed**, **user deactivated**, **membership removed**. Each row stores `actorUserId`, optional `targetUserId` / `organizationId`, and JSON `metadata` (e.g. previous and new roles). There is no read API yet — inspect with Prisma Studio, SQL, or your own reporting.
 
 ## Seeded admin workflow
 
@@ -185,7 +211,7 @@ curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/deactivate"
 1. **Login**: `POST /api/v1/auth/login` → JWT (inactive accounts are rejected).
 2. **Requests**: `Authorization: Bearer <token>`.
 3. **Session**: `GET /api/v1/auth/me` or `GET /api/v1/auth/session` (same data).
-4. **Change password**: `POST /api/v1/auth/change-password` with current + new password.
+4. **Change password**: `POST /api/v1/auth/change-password` with current + new password (returns **403** if the account is deactivated).
 5. **Logout**: `POST /api/v1/auth/logout` (stateless JWT — discard token on the client).
 
 ## Routes
@@ -270,6 +296,7 @@ npm run start -w apps/api
 
 1. Set **Root Directory** to `apps/api`.
 2. Add PostgreSQL — `DATABASE_URL` is injected.
-3. Set `CORS_ORIGIN` and a strong `JWT_SECRET`.
-4. Build: `npm run build`; start: `npm run start`.
-5. Health check path: `/healthz`.
+3. Set **`CORS_ORIGINS`** to every production frontend origin (comma-separated), e.g. `https://dempsey.agency,https://admin.dempsey.agency`, and a strong **`JWT_SECRET`**. Do **not** set `SEED_*` on the service — seeds are one-off via CLI or a release task if you choose.
+4. Run migrations on deploy: `npm run prisma:migrate:deploy` (or equivalent Railway step) **before** or as part of startup so `AuditLog` exists.
+5. Build: `npm run build`; start: `npm run start`.
+6. Health check path: `/healthz`.

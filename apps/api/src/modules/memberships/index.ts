@@ -10,6 +10,7 @@ import {
   assertNotRemovingLastAgencyOwner,
 } from "../../lib/org-user-admin.js";
 import { createMembershipSchema, membershipParamsSchema } from "./schemas.js";
+import { writeAuditLog } from "../../lib/audit-log.js";
 
 export async function membershipRoutes(app: FastifyInstance) {
   app.get("/memberships", { preHandler: [requireAuth] }, async (request) => {
@@ -114,8 +115,20 @@ export async function membershipRoutes(app: FastifyInstance) {
         return;
       }
 
-      await app.prisma.organizationMembership.delete({
-        where: { id: membershipId },
+      await app.prisma.$transaction(async (tx) => {
+        await tx.organizationMembership.delete({
+          where: { id: membershipId },
+        });
+        await writeAuditLog(tx, {
+          action: "MEMBERSHIP_REMOVED",
+          actorUserId: request.currentUser!.id,
+          targetUserId: membership.userId,
+          organizationId: membership.organizationId,
+          metadata: {
+            membershipId,
+            role: membership.role,
+          },
+        });
       });
       return reply.code(204).send();
     },

@@ -68,6 +68,10 @@ export async function authRoutes(app: FastifyInstance) {
           .send({ error: "Password change is not available for this account" });
       }
 
+      if (!user.active) {
+        return reply.code(403).send({ error: "Account is disabled" });
+      }
+
       const ok = await verifyPassword(currentPassword, user.passwordHash);
       if (!ok) {
         return reply.code(401).send({ error: "Current password is incorrect" });
