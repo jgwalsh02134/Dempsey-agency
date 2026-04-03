@@ -1,13 +1,27 @@
 /**
  * API origin for fetch().
- * - If VITE_API_BASE_URL is set, use it (browser calls API directly; CORS must allow this origin).
- * - In dev with no env, use same-origin `/api` so Vite proxies to the real API (avoids CORS locally).
+ *
+ * Development:
+ * - If VITE_API_BASE_URL is set → use it (direct API calls).
+ * - Otherwise → "" (same-origin `/api/...` via Vite proxy).
+ *
+ * Production (static build, e.g. Cloudflare Pages):
+ * - Uses VITE_API_BASE_URL from the build environment (set in Cloudflare).
+ * - Falls back to https://api.dempsey.agency only if unset (e.g. local vite build).
  */
 export function getApiBase(): string {
   const raw = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (raw) return raw.replace(/\/$/, "");
-  if (import.meta.env.DEV) return "";
-  return "https://api.dempsey.agency";
+
+  if (import.meta.env.DEV) {
+    if (raw) return raw.replace(/\/$/, "");
+    return "";
+  }
+
+  const productionBase = (raw || "https://api.dempsey.agency").replace(
+    /\/$/,
+    "",
+  );
+  return productionBase;
 }
 
 export function apiUrl(path: string): string {
