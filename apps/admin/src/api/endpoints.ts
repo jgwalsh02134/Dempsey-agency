@@ -3,6 +3,7 @@ import type {
   LoginResponse,
   Organization,
   OrgUsersResponse,
+  PatchUserRoleResponse,
   SessionUser,
 } from "../types";
 
@@ -56,11 +57,14 @@ export async function createClientOrganization(body: {
 export async function patchUserRole(
   userId: string,
   body: { organizationId: string; role: string },
-): Promise<unknown> {
-  return apiFetch(`/api/v1/users/${encodeURIComponent(userId)}/role`, {
-    method: "PATCH",
-    body: JSON.stringify(body),
-  });
+): Promise<PatchUserRoleResponse> {
+  return apiFetch<PatchUserRoleResponse>(
+    `/api/v1/users/${encodeURIComponent(userId)}/role`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 export async function deactivateUser(userId: string): Promise<unknown> {

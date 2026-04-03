@@ -11,6 +11,7 @@
   --danger: #ef4444;
   --danger-muted: #f87171;
   --success: #34d399;
+  --warning: #fbbf24;
   --radius: 10px;
   font-family:
     "Inter",
@@ -158,6 +159,12 @@ select:focus {
 
 .success {
   color: var(--success);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.warning {
+  color: var(--warning);
   margin: 0;
   font-size: 0.9rem;
 }

@@ -7,7 +7,11 @@ import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import { CreateUserForm } from "../components/CreateUserForm";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import { SessionPanel } from "../components/SessionPanel";
-import type { Organization, OrgUsersResponse } from "../types";
+import type {
+  Organization,
+  OrgUsersResponse,
+  PatchUserRoleResponse,
+} from "../types";
 
 export function DashboardPage() {
   const { session, logout, loading: authLoading, token } = useAuth();
@@ -36,24 +40,63 @@ export function DashboardPage() {
     }
   }, []);
 
-  const loadMembers = useCallback(async (orgId: string) => {
-    if (!orgId) {
-      setMembers(null);
-      return;
-    }
-    setMembersLoading(true);
+  const loadMembers = useCallback(
+    async (orgId: string, opts?: { background?: boolean }) => {
+      if (!orgId) {
+        setMembers(null);
+        return;
+      }
+      const background = opts?.background === true;
+      if (!background) {
+        setMembersLoading(true);
+        setMembersError(null);
+      }
+      try {
+        const data = await api.fetchOrgUsers(orgId);
+        setMembers(data);
+        setMembersError(null);
+      } catch (e) {
+        if (!background) {
+          setMembers(null);
+          setMembersError(
+            e instanceof ApiError ? e.message : "Failed to load members",
+          );
+        }
+        throw e;
+      } finally {
+        if (!background) {
+          setMembersLoading(false);
+        }
+      }
+    },
+    [],
+  );
+
+  const applyPatchedMemberRole = useCallback((patch: PatchUserRoleResponse) => {
+    setMembers((prev) => {
+      if (!prev || prev.organizationId !== patch.organizationId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        users: prev.users.map((row) =>
+          row.user.id === patch.userId
+            ? {
+                ...row,
+                membershipId: patch.id,
+                role: patch.role,
+                user: {
+                  id: patch.user.id,
+                  email: patch.user.email,
+                  name: patch.user.name,
+                  active: patch.user.active,
+                },
+              }
+            : row,
+        ),
+      };
+    });
     setMembersError(null);
-    try {
-      const data = await api.fetchOrgUsers(orgId);
-      setMembers(data);
-    } catch (e) {
-      setMembers(null);
-      setMembersError(
-        e instanceof ApiError ? e.message : "Failed to load members",
-      );
-    } finally {
-      setMembersLoading(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -138,7 +181,8 @@ export function DashboardPage() {
             data={members}
             loading={membersLoading}
             error={membersError}
-            onRefresh={() => loadMembers(selectedOrgId)}
+            onRolePatched={applyPatchedMemberRole}
+            onRefresh={() => loadMembers(selectedOrgId, { background: true })}
           />
         )}
 

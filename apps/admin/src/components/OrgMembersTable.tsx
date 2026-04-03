@@ -1,7 +1,17 @@
 import { useCallback, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import type { OrganizationType, OrgUsersResponse, Role } from "../types";
+import type {
+  OrganizationType,
+  OrgUsersResponse,
+  PatchUserRoleResponse,
+  Role,
+} from "../types";
+
+type ActionFeedback =
+  | { type: "success"; message: string }
+  | { type: "error"; message: string }
+  | { type: "warning"; message: string };
 
 const AGENCY_ROLES: Role[] = ["AGENCY_OWNER", "AGENCY_ADMIN", "STAFF"];
 const CLIENT_ROLES: Role[] = ["CLIENT_ADMIN", "CLIENT_USER"];
@@ -16,6 +26,7 @@ export function OrgMembersTable({
   data,
   loading,
   error,
+  onRolePatched,
   onRefresh,
 }: {
   orgId: string;
@@ -23,28 +34,48 @@ export function OrgMembersTable({
   data: OrgUsersResponse | null;
   loading: boolean;
   error: string | null;
-  onRefresh: () => void;
+  onRolePatched: (patch: PatchUserRoleResponse) => void;
+  onRefresh: () => Promise<void>;
 }) {
   const [busyUser, setBusyUser] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
 
   const changeRole = useCallback(
     async (userId: string, newRole: Role) => {
-      setActionError(null);
+      setFeedback(null);
       setBusyUser(userId);
       try {
-        await api.patchUserRole(userId, {
+        const updated = await api.patchUserRole(userId, {
           organizationId: orgId,
           role: newRole,
         });
-        await onRefresh();
+        onRolePatched(updated);
+        setFeedback({ type: "success", message: "Role updated." });
+        const t = window.setTimeout(() => {
+          setFeedback((f) => (f?.type === "success" ? null : f));
+        }, 4000);
+        try {
+          await onRefresh();
+        } catch (refetchErr) {
+          window.clearTimeout(t);
+          setFeedback({
+            type: "warning",
+            message:
+              refetchErr instanceof ApiError
+                ? `Role saved, but reloading the list failed (${refetchErr.message}).`
+                : "Role saved, but reloading the list failed.",
+          });
+        }
       } catch (e) {
-        setActionError(e instanceof ApiError ? e.message : "Update failed");
+        setFeedback({
+          type: "error",
+          message: e instanceof ApiError ? e.message : "Update failed",
+        });
       } finally {
         setBusyUser(null);
       }
     },
-    [orgId, onRefresh],
+    [orgId, onRefresh, onRolePatched],
   );
 
   const deactivate = useCallback(
@@ -52,13 +83,27 @@ export function OrgMembersTable({
       if (!window.confirm("Deactivate this user? They will not be able to sign in.")) {
         return;
       }
-      setActionError(null);
+      setFeedback(null);
       setBusyUser(userId);
       try {
         await api.deactivateUser(userId);
-        await onRefresh();
+        setFeedback({ type: "success", message: "User deactivated." });
+        try {
+          await onRefresh();
+        } catch (refetchErr) {
+          setFeedback({
+            type: "warning",
+            message:
+              refetchErr instanceof ApiError
+                ? `User deactivated, but reloading the list failed (${refetchErr.message}).`
+                : "User deactivated, but reloading the list failed.",
+          });
+        }
       } catch (e) {
-        setActionError(e instanceof ApiError ? e.message : "Deactivate failed");
+        setFeedback({
+          type: "error",
+          message: e instanceof ApiError ? e.message : "Deactivate failed",
+        });
       } finally {
         setBusyUser(null);
       }
@@ -87,9 +132,18 @@ export function OrgMembersTable({
           {error}
         </p>
       )}
-      {actionError && (
-        <p className="error" role="alert">
-          {actionError}
+      {feedback && (
+        <p
+          className={
+            feedback.type === "error"
+              ? "error"
+              : feedback.type === "success"
+                ? "success"
+                : "warning"
+          }
+          role={feedback.type === "error" ? "alert" : "status"}
+        >
+          {feedback.message}
         </p>
       )}
       {data && !loading && (
