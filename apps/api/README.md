@@ -4,16 +4,21 @@ Fastify + Prisma backend for the Dempsey Agency B2B advertising platform.
 
 ## Required environment variables
 
-| Variable | Description | Example |
-|---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/dempsey` |
-| `PORT` | Server port (Railway sets this automatically) | `3001` |
-| `CORS_ORIGIN` | Allowed origin for CORS | `https://dempsey.agency` |
-| `NODE_ENV` | Environment mode | `development` / `production` |
+| Variable | Description | Default | Example |
+|---|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string | — | `postgresql://user:pass@localhost:5432/dempsey` |
+| `PORT` | Server port (Railway sets automatically) | `3000` | `3001` |
+| `CORS_ORIGIN` | Allowed origin for CORS | `*` | `https://dempsey.agency` |
+| `NODE_ENV` | Environment mode | `development` | `production` |
+| `JWT_SECRET` | Secret for signing JWT tokens | `unsafe-dev-secret` | `openssl rand -base64 48` |
+| `JWT_EXPIRES_IN` | Token lifetime | `7d` | `24h` |
 
 ```sh
 cp .env.example .env
 ```
+
+> **Important**: set a real `JWT_SECRET` before deploying to production.
+> Generate one with: `openssl rand -base64 48`
 
 ## Local development
 
@@ -24,11 +29,40 @@ npm install
 # generate Prisma client
 npm run prisma:generate -w apps/api
 
-# run the first migration (requires running PostgreSQL)
+# run migrations (requires running PostgreSQL)
 npm run prisma:migrate -w apps/api
+
+# seed the first agency owner account
+npm run seed -w apps/api
 
 # start dev server with hot-reload
 npm run dev -w apps/api
+```
+
+## Auth flow
+
+1. **Seed** the first agency owner (or create one via the database).
+2. **Login**: `POST /api/v1/auth/login` with `{ email, password }` → returns a JWT token.
+3. **Use the token**: pass `Authorization: Bearer <token>` on subsequent requests.
+4. **Check identity**: `GET /api/v1/auth/me` returns the current user + org memberships.
+5. **Logout**: `POST /api/v1/auth/logout` (client-side: discard the token).
+
+### Testing auth locally
+
+```sh
+# seed the default admin account
+npm run seed -w apps/api
+
+# login
+curl -s -X POST http://localhost:3001/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@dempsey.agency","password":"changeme123"}' \
+  | jq .
+
+# use the returned token
+TOKEN="<paste token here>"
+curl -s http://localhost:3001/api/v1/auth/me \
+  -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
 ## Routes
@@ -37,53 +71,64 @@ npm run dev -w apps/api
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/healthz` | Health check — returns `{ "status": "ok" }` |
+| `GET` | `/healthz` | Health check — `{ "status": "ok" }` |
 | `GET` | `/api/v1` | API version info |
 
-### Authenticated (require `x-user-id` + `x-user-email` headers)
+### Auth (no token required for login)
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/v1/me` | Current user with memberships |
-| `GET` | `/api/v1/users` | List all users |
-| `GET` | `/api/v1/users/:id` | Get user by ID |
-| `POST` | `/api/v1/users` | Create a user |
-| `GET` | `/api/v1/organizations` | List all organizations |
-| `GET` | `/api/v1/organizations/:id` | Get organization by ID |
-| `POST` | `/api/v1/organizations` | Create an organization |
-| `GET` | `/api/v1/memberships` | List all memberships |
-| `POST` | `/api/v1/memberships` | Create a membership |
-| `GET` | `/api/v1/agency-clients` | List agency-client relationships |
-| `POST` | `/api/v1/agency-clients` | Create agency-client relationship |
+| `POST` | `/api/v1/auth/login` | Login with `{ email, password }` → JWT |
+| `POST` | `/api/v1/auth/logout` | Logout (requires token) |
+| `GET` | `/api/v1/auth/me` | Current user + memberships (requires token) |
 
-### Dev auth headers
+### Users (authenticated)
 
-Until a real auth provider (Clerk) is added, pass these headers:
+| Method | Path | RBAC |
+|---|---|---|
+| `GET` | `/api/v1/users` | any authenticated user |
+| `GET` | `/api/v1/users/:id` | any authenticated user |
+| `POST` | `/api/v1/users` | `AGENCY_OWNER` or `AGENCY_ADMIN` |
 
-```
-x-user-id: <user cuid>
-x-user-email: <user email>
-```
+### Organizations (authenticated)
 
-Example:
+| Method | Path | RBAC |
+|---|---|---|
+| `GET` | `/api/v1/organizations` | any authenticated user |
+| `GET` | `/api/v1/organizations/:id` | any authenticated user |
+| `POST` | `/api/v1/organizations` | `AGENCY_OWNER` or `AGENCY_ADMIN` |
 
-```sh
-curl http://localhost:3001/api/v1/me \
-  -H "x-user-id: abc123" \
-  -H "x-user-email: dev@dempsey.agency"
-```
+### Memberships (authenticated)
+
+| Method | Path | RBAC |
+|---|---|---|
+| `GET` | `/api/v1/memberships` | any authenticated user |
+| `POST` | `/api/v1/memberships` | `AGENCY_OWNER` or `AGENCY_ADMIN` |
+
+### Agency-Client Relationships (authenticated)
+
+| Method | Path | RBAC |
+|---|---|---|
+| `GET` | `/api/v1/agency-clients` | any authenticated user |
+| `POST` | `/api/v1/agency-clients` | `AGENCY_OWNER` or `AGENCY_ADMIN` |
+
+## RBAC roles
+
+| Role | Scope | Can create resources |
+|---|---|---|
+| `AGENCY_OWNER` | Full platform access | Yes |
+| `AGENCY_ADMIN` | Agency management | Yes |
+| `STAFF` | Agency read access | No (read-only for now) |
+| `CLIENT_ADMIN` | Client org management | No |
+| `CLIENT_USER` | Client read access | No |
 
 ## Prisma
 
 ```sh
-# generate client after schema changes
-npm run prisma:generate -w apps/api
-
-# create a new dev migration
-npm run prisma:migrate -w apps/api
-
-# apply pending migrations in production
-npm run prisma:migrate:deploy -w apps/api
+npm run prisma:generate -w apps/api     # generate client
+npm run prisma:migrate -w apps/api      # new dev migration
+npm run prisma:migrate:deploy -w apps/api  # apply in production
+npm run seed -w apps/api                # seed first agency owner
 ```
 
 ## Production build
@@ -95,8 +140,9 @@ npm run start -w apps/api
 
 ## Railway deployment
 
-1. Set **Root Directory** to `apps/api` in the Railway service settings.
+1. Set **Root Directory** to `apps/api` in Railway service settings.
 2. Add a PostgreSQL plugin — Railway injects `DATABASE_URL` automatically.
 3. Set `CORS_ORIGIN` to your frontend domain.
-4. Railway detects Node.js, runs `npm install` → `npm run build` → `npm run start`.
-5. Set the health-check path to `/healthz`.
+4. Set `JWT_SECRET` to a strong random value (`openssl rand -base64 48`).
+5. Railway detects Node.js, runs `npm install` → `npm run build` → `npm run start`.
+6. Set the health-check path to `/healthz`.

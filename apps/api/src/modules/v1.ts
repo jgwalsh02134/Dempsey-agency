@@ -8,7 +8,7 @@ import { agencyClientRoutes } from "./agency-clients/index.js";
 export async function v1Routes(app: FastifyInstance) {
   app.get("/", async () => ({ version: "v1", status: "ok" }));
 
-  await app.register(authRoutes);
+  await app.register(authRoutes, { prefix: "/auth" });
   await app.register(userRoutes);
   await app.register(organizationRoutes);
   await app.register(membershipRoutes);

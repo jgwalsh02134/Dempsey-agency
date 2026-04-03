@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import { ZodError } from "zod";
 import { env } from "./env.js";
 import { healthRoutes } from "./routes/health.js";
+import jwtPlugin from "./plugins/jwt.js";
 import prismaPlugin from "./plugins/prisma.js";
 import authPlugin from "./plugins/auth.js";
 import { v1Routes } from "./modules/v1.js";
@@ -34,6 +35,7 @@ export async function buildApp() {
   });
 
   await app.register(cors, { origin: env.CORS_ORIGIN });
+  await app.register(jwtPlugin);
   await app.register(prismaPlugin);
   await app.register(authPlugin);
 

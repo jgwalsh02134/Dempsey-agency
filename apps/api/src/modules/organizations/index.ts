@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../plugins/auth.js";
+import { requireRole } from "../../lib/rbac.js";
 import { createOrganizationSchema, orgParamsSchema } from "./schemas.js";
 
 export async function organizationRoutes(app: FastifyInstance) {
@@ -17,7 +18,9 @@ export async function organizationRoutes(app: FastifyInstance) {
       const org = await app.prisma.organization.findUnique({
         where: { id },
         include: {
-          memberships: { include: { user: true } },
+          memberships: {
+            include: { user: { omit: { passwordHash: true } } },
+          },
           agencyRelationships: { include: { client: true } },
           clientRelationships: { include: { agency: true } },
         },
@@ -32,7 +35,12 @@ export async function organizationRoutes(app: FastifyInstance) {
 
   app.post(
     "/organizations",
-    { preHandler: [requireAuth] },
+    {
+      preHandler: [
+        requireAuth,
+        requireRole("AGENCY_OWNER", "AGENCY_ADMIN"),
+      ],
+    },
     async (request, reply) => {
       const data = createOrganizationSchema.parse(request.body);
       const org = await app.prisma.organization.create({ data });

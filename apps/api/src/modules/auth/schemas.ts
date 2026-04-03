@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-export const authUserResponse = z.object({
-  id: z.string(),
+export const loginSchema = z.object({
   email: z.string().email(),
-  name: z.string().nullable(),
+  password: z.string().min(1),
 });
