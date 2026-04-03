@@ -52,7 +52,7 @@ export default fp(async (app) => {
         },
       });
 
-      if (user) {
+      if (user?.active) {
         request.currentUser = {
           id: user.id,
           email: user.email,

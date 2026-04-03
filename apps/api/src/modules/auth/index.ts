@@ -8,7 +8,7 @@ export async function authRoutes(app: FastifyInstance) {
     const { email, password } = loginSchema.parse(request.body);
 
     const user = await app.prisma.user.findUnique({ where: { email } });
-    if (!user?.passwordHash) {
+    if (!user?.passwordHash || !user.active) {
       return reply.code(401).send({ error: "Invalid email or password" });
     }
 

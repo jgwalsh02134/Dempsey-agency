@@ -123,9 +123,66 @@ curl -s -X POST http://localhost:3001/api/v1/users \
 
 Agency admins acting over the agency–client link may assign `CLIENT_ADMIN` or `CLIENT_USER`. A **client admin** in the client org may only assign `CLIENT_USER` (e.g. via `POST /api/v1/users` or `POST /api/v1/memberships` for an existing user).
 
+### 7. Admin management (members, roles, deactivation)
+
+**Who can list org members**
+
+- Any user with **AGENCY_OWNER** anywhere can list members of **any** organization (platform-wide owner).
+- **AGENCY_OWNER** / **AGENCY_ADMIN** on an **agency** can list that agency and **linked client** orgs (via agency–client relationship).
+- **CLIENT_ADMIN** can list **only** their **client** organization.
+
+**Deactivated users**
+
+- `User.active` defaults to `true`. **`PATCH /api/v1/users/:id/deactivate`** sets `active` to `false`.
+- **Login** is rejected for inactive users (same generic error as wrong password).
+- **Existing JWTs** stop working for API calls: the auth hook does not attach `currentUser` for inactive users, so protected routes return **401**.
+
+#### List users in one organization
+
+```sh
+ORG_ID="<organization id>"
+curl -s "http://localhost:3001/api/v1/organizations/$ORG_ID/users" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Response shape: `{ "organizationId", "users": [ { "membershipId", "role", "joinedAt", "user": { "id", "email", "name", "active" } } ] }`.
+
+#### Change a user’s role in an organization
+
+Body: `{ "organizationId", "role" }`. Same RBAC rules as creating a membership (agency owner/admin vs client admin vs agency–client link). Cannot demote the **last** `AGENCY_OWNER` of an **agency** org.
+
+```sh
+TARGET_USER_ID="<user cuid>"
+curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/role" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"organizationId\":\"$AGENCY_ID\",\"role\":\"STAFF\"}"
+```
+
+#### Remove a membership
+
+```sh
+MEMBERSHIP_ID="<organizationMembership id from list or /memberships>"
+curl -s -w "\nHTTP %{http_code}" -X DELETE "http://localhost:3001/api/v1/memberships/$MEMBERSHIP_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+You cannot delete the **last** `AGENCY_OWNER` membership of an **agency** organization (`400` with a clear error).
+
+#### Deactivate a user
+
+Empty JSON body `{}`. You must be allowed to **manage** at least one organization the target user belongs to. Cannot deactivate yourself.
+
+```sh
+curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/deactivate" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
 ## Auth flow (summary)
 
-1. **Login**: `POST /api/v1/auth/login` → JWT.
+1. **Login**: `POST /api/v1/auth/login` → JWT (inactive accounts are rejected).
 2. **Requests**: `Authorization: Bearer <token>`.
 3. **Session**: `GET /api/v1/auth/me` or `GET /api/v1/auth/session` (same data).
 4. **Change password**: `POST /api/v1/auth/change-password` with current + new password.
@@ -154,15 +211,18 @@ Agency admins acting over the agency–client link may assign `CLIENT_ADMIN` or 
 
 | Method | Path | Notes |
 |---|---|---|
-| `GET` | `/api/v1/users` | Scoped to orgs you can see |
+| `GET` | `/api/v1/users` | Scoped to orgs you can see; includes `active` |
 | `GET` | `/api/v1/users/:id` | Self or users visible in your org scope |
 | `POST` | `/api/v1/users` | Create user + membership; body includes `organizationId`, `role`, `password` |
+| `PATCH` | `/api/v1/users/:id/role` | Body `{ organizationId, role }`; org-scoped RBAC; blocks last agency owner demotion |
+| `PATCH` | `/api/v1/users/:id/deactivate` | Body `{}` only; soft-deactivate; blocks login + API session |
 
 ### Organizations
 
 | Method | Path | Notes |
 |---|---|---|
 | `GET` | `/api/v1/organizations` | Scoped (platform agency owners see all) |
+| `GET` | `/api/v1/organizations/:id/users` | Members of org with roles; org-scoped list access |
 | `GET` | `/api/v1/organizations/:id` | Same visibility rules |
 | `POST` | `/api/v1/organizations` | `AGENCY`: agency owner only. `CLIENT`: requires `agencyOrganizationId` and agency admin/owner on that agency |
 
@@ -172,6 +232,7 @@ Agency admins acting over the agency–client link may assign `CLIENT_ADMIN` or 
 |---|---|---|
 | `GET` | `/api/v1/memberships` | Scoped to visible orgs |
 | `POST` | `/api/v1/memberships` | Link existing user to org; org-aware + role rules |
+| `DELETE` | `/api/v1/memberships/:id` | Remove membership; org-scoped; blocks removing last agency owner |
 
 ### Agency–client relationships
 

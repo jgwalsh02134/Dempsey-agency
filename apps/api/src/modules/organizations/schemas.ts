@@ -26,5 +26,5 @@ export const createOrganizationSchema = z
   });
 
 export const orgParamsSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().trim().min(1),
 });

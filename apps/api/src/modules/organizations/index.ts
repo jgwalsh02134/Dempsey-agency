@@ -4,6 +4,7 @@ import { requireRole, userIsAgencyOrganizationAdmin } from "../../lib/rbac.js";
 import {
   resolveVisibleOrganizationIds,
 } from "../../lib/org-scope.js";
+import { assertCanListOrganizationUsers } from "../../lib/org-user-admin.js";
 import { createOrganizationSchema, orgParamsSchema } from "./schemas.js";
 
 export async function organizationRoutes(app: FastifyInstance) {
@@ -22,6 +23,45 @@ export async function organizationRoutes(app: FastifyInstance) {
       orderBy: { createdAt: "desc" },
     });
   });
+
+  app.get(
+    "/organizations/:id/users",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id: orgId } = orgParamsSchema.parse(request.params);
+      const allowed = await assertCanListOrganizationUsers(
+        app.prisma,
+        request.currentUser!,
+        orgId,
+        reply,
+      );
+      if (!allowed) return;
+
+      const oid = orgId.trim();
+      const rows = await app.prisma.organizationMembership.findMany({
+        where: { organizationId: oid },
+        include: {
+          user: { omit: { passwordHash: true } },
+        },
+        orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+      });
+
+      return {
+        organizationId: oid,
+        users: rows.map((m) => ({
+          membershipId: m.id,
+          role: m.role,
+          joinedAt: m.createdAt,
+          user: {
+            id: m.user.id,
+            email: m.user.email,
+            name: m.user.name,
+            active: m.user.active,
+          },
+        })),
+      };
+    },
+  );
 
   app.get(
     "/organizations/:id",

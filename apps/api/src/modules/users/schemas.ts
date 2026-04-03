@@ -17,5 +17,13 @@ export const createUserSchema = z.object({
 });
 
 export const userParamsSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().trim().min(1),
 });
+
+export const patchUserRoleBodySchema = z.object({
+  organizationId: z.string().trim().min(1),
+  role: roleEnum,
+});
+
+/** Optional body; extra keys rejected for clarity. */
+export const deactivateUserBodySchema = z.object({}).strict();

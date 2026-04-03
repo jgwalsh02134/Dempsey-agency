@@ -12,8 +12,8 @@ async function seed() {
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: { passwordHash },
-    create: { email, name: "Agency Owner", passwordHash },
+    update: { passwordHash, active: true },
+    create: { email, name: "Agency Owner", passwordHash, active: true },
   });
 
   let org = await prisma.organization.findFirst({

@@ -6,7 +6,10 @@ import {
   assertCanManageOrganization,
 } from "../../lib/rbac.js";
 import { resolveVisibleOrganizationIds } from "../../lib/org-scope.js";
-import { createMembershipSchema } from "./schemas.js";
+import {
+  assertNotRemovingLastAgencyOwner,
+} from "../../lib/org-user-admin.js";
+import { createMembershipSchema, membershipParamsSchema } from "./schemas.js";
 
 export async function membershipRoutes(app: FastifyInstance) {
   app.get("/memberships", { preHandler: [requireAuth] }, async (request) => {
@@ -75,6 +78,46 @@ export async function membershipRoutes(app: FastifyInstance) {
         },
       });
       return reply.code(201).send(membership);
+    },
+  );
+
+  app.delete(
+    "/memberships/:id",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id: membershipId } = membershipParamsSchema.parse(request.params);
+
+      const membership = await app.prisma.organizationMembership.findUnique({
+        where: { id: membershipId },
+        include: { organization: true },
+      });
+      if (!membership) {
+        return reply.code(404).send({ error: "Membership not found" });
+      }
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        membership.organizationId,
+        reply,
+      );
+      if (!manage) return;
+
+      if (
+        !(await assertNotRemovingLastAgencyOwner(
+          app.prisma,
+          membership,
+          membership.organization.type,
+          reply,
+        ))
+      ) {
+        return;
+      }
+
+      await app.prisma.organizationMembership.delete({
+        where: { id: membershipId },
+      });
+      return reply.code(204).send();
     },
   );
 }
