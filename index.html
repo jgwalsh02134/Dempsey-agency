@@ -5,9 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dempsey Agency</title>
     <link rel="icon" href="assets/favicons/D_FAV_2.svg" type="image/svg+xml" sizes="any" />
+    <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
     <style>
       :root {
         color-scheme: light;
+        --bg: #f7f8fa;
+        --text: #10233f;
+        --text-muted: #3d4f6b;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
       }
       body {
         margin: 0;
@@ -15,65 +24,52 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #f4f6fb;
-        color: #111827;
+        background: var(--bg);
+        color: var(--text);
       }
-      .page {
+      .hero {
         width: 100%;
-        max-width: 100%;
-        padding: 1rem;
+        max-width: 36rem;
+        padding: clamp(2rem, 8vw, 4rem) clamp(1.5rem, 6vw, 2.5rem);
         text-align: center;
       }
-      .hero-headline {
-        margin: 0 0 1rem;
-        font-size: clamp(1.5rem, 4vw, 2.5rem);
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
-      .hero-image {
-        width: 100%;
-        max-height: calc(100vh - 10rem);
-        height: auto;
-        object-fit: contain;
+      .logo {
         display: block;
-        border-radius: 0;
-        box-shadow: none;
-        margin: 0 auto;
+        width: clamp(7.5rem, 22vw, 11rem);
+        height: auto;
+        margin: 0 auto clamp(2rem, 6vw, 3rem);
       }
-      .links {
-        margin-top: 1.25rem;
-        display: inline-flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        justify-content: center;
+      .title {
+        margin: 0;
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-weight: 700;
+        font-size: clamp(1.75rem, 5.5vw, 2.75rem);
+        letter-spacing: 0.02em;
+        line-height: 1.15;
       }
-      .links a {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.9rem 1.4rem;
-        border-radius: 999px;
-        background: #1d4ed8;
-        color: white;
-        text-decoration: none;
-        font-weight: 600;
-        transition: transform 0.2s ease, background 0.2s ease;
-      }
-      .links a:hover {
-        background: #1e40af;
-        transform: translateY(-1px);
+      .tagline {
+        margin: clamp(1rem, 3vw, 1.5rem) 0 0;
+        font-family: "skolar-latin", serif;
+        font-weight: 300;
+        font-size: clamp(1rem, 2.8vw, 1.25rem);
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-muted);
       }
     </style>
   </head>
   <body>
-    <main class="page">
-      <h1 class="hero-headline">Website Coming Soon</h1>
-      <img class="hero-image" src="assets/images/beC6a.png" alt="Website coming soon" />
-      <div class="links">
-        <a href="https://vdata.com" target="_blank" rel="noopener noreferrer">vdata.com</a>
-        <a href="https://adsell.ai" target="_blank" rel="noopener noreferrer">adsell.ai</a>
-      </div>
+    <main class="hero">
+      <img
+        class="logo"
+        src="assets/favicons/D_FAV_2.svg"
+        alt=""
+        width="176"
+        height="176"
+        decoding="async"
+      />
+      <h1 class="title">Dempsey Agency</h1>
+      <p class="tagline">Coming Soon</p>
     </main>
   </body>
 </html>
