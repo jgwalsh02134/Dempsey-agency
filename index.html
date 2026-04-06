@@ -21,16 +21,26 @@
       body {
         margin: 0;
         min-height: 100vh;
+        min-height: 100dvh;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .page {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .hero-wrap {
+        flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--bg);
-        color: var(--text);
+        padding: clamp(2rem, 8vw, 4rem) clamp(1.5rem, 6vw, 2.5rem);
       }
       .hero {
         width: 100%;
         max-width: 36rem;
-        padding: clamp(2rem, 8vw, 4rem) clamp(1.5rem, 6vw, 2.5rem);
         text-align: center;
       }
       .logo {
@@ -56,20 +66,93 @@
         text-transform: uppercase;
         color: var(--text-muted);
       }
+      .partners {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: clamp(0.75rem, 3vw, 1.5rem);
+        padding: clamp(1rem, 3vw, 1.5rem) 1rem
+          calc(1.25rem + env(safe-area-inset-bottom, 0px));
+      }
+      .partner {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid rgba(16, 35, 63, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .partner:hover {
+        opacity: 0.88;
+        transform: translateY(-2px);
+        border-color: rgba(16, 35, 63, 0.18);
+      }
+      .partner:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 3px;
+      }
+      .partner img {
+        display: block;
+        height: clamp(0.9rem, 2.8vw, 1.2rem);
+        width: auto;
+        max-width: min(9.5rem, 42vw);
+        object-fit: contain;
+      }
     </style>
   </head>
   <body>
-    <main class="hero">
-      <img
-        class="logo"
-        src="assets/favicons/D_FAV_2.svg"
-        alt=""
-        width="176"
-        height="176"
-        decoding="async"
-      />
-      <h1 class="title">Dempsey Agency</h1>
-      <p class="tagline">Coming Soon</p>
-    </main>
+    <div class="page">
+      <main class="hero-wrap">
+        <div class="hero">
+          <img
+            class="logo"
+            src="assets/favicons/D_FAV_2.svg"
+            alt=""
+            width="176"
+            height="176"
+            decoding="async"
+          />
+          <h1 class="title">Dempsey Agency</h1>
+          <p class="tagline">Coming Soon</p>
+        </div>
+      </main>
+      <nav class="partners" aria-label="Partner companies">
+        <a
+          class="partner"
+          href="https://www.vdata.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="assets/branding/V-Data-wordimage.svg"
+            alt="Vision Data"
+            width="120"
+            height="24"
+            decoding="async"
+          />
+        </a>
+        <a
+          class="partner"
+          href="https://adsell.ai/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="assets/branding/as-full-wordmark.svg"
+            alt="AdSell"
+            width="120"
+            height="24"
+            decoding="async"
+          />
+        </a>
+      </nav>
+    </div>
   </body>
 </html>
