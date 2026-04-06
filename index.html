@@ -66,44 +66,87 @@
         text-transform: uppercase;
         color: #7a8aa0;
       }
-      .partners {
+      .site-footer {
+        border-top: 1px solid rgba(16, 35, 63, 0.1);
+        padding: clamp(1.75rem, 5vw, 2.5rem) clamp(1.25rem, 5vw, 2rem)
+          calc(2.5rem + env(safe-area-inset-bottom, 0px));
+        margin-top: 0;
+      }
+      .footer-inner {
+        max-width: 36rem;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .footer-legal {
+        margin: 0;
+        font-family: "skolar-latin", serif;
+        font-size: 0.6875rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #5c6b7f;
+        letter-spacing: 0.02em;
+      }
+      .footer-nav {
+        margin: 0.85rem 0 0;
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         align-items: center;
-        gap: clamp(0.5rem, 2.5vw, 1.1rem);
-        padding: clamp(1rem, 3vw, 1.5rem) 1rem
-          calc(40px + env(safe-area-inset-bottom, 0px));
+        gap: 0.35rem 0.5rem;
+        font-family: "skolar-latin", serif;
+        font-size: 0.6875rem;
       }
-      .partner {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.35rem 0.65rem;
-        border-radius: 10px;
-        background: #e4e7ec;
-        border: 1px solid rgba(16, 35, 63, 0.06);
+      .footer-nav a {
+        color: #4a5d73;
         text-decoration: none;
-        transition:
-          opacity 0.2s ease,
-          transform 0.2s ease,
-          border-color 0.2s ease;
+        letter-spacing: 0.04em;
+        transition: color 0.2s ease, opacity 0.2s ease;
       }
-      .partner:hover {
-        opacity: 0.82;
-        transform: translateY(-3px);
-        border-color: rgba(16, 35, 63, 0.12);
+      .footer-nav a:hover {
+        color: var(--text);
       }
-      .partner:focus-visible {
-        outline: 2px solid var(--text);
-        outline-offset: 3px;
+      .footer-nav-sep {
+        color: rgba(16, 35, 63, 0.25);
+        user-select: none;
       }
-      .partner img {
+      .footer-note {
+        margin: 1rem 0 0;
+        font-family: "skolar-latin", serif;
+        font-size: 0.625rem;
+        font-weight: 300;
+        line-height: 1.55;
+        color: #7a8799;
+        letter-spacing: 0.03em;
+      }
+      .footer-affil-label {
+        margin: 1.75rem 0 0;
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: 0.5625rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #8b97a8;
+      }
+      .affiliate-marks {
+        margin: 0.85rem 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: clamp(1.25rem, 4vw, 2rem);
+      }
+      .affiliate-marks img {
         display: block;
-        height: clamp(0.9rem, 2.8vw, 1.2rem);
+        height: clamp(1.1rem, 3.2vw, 1.35rem);
         width: auto;
-        max-width: min(9.5rem, 42vw);
+        max-width: min(5.5rem, 26vw);
         object-fit: contain;
+        opacity: 0.52;
+        filter: grayscale(1);
+        transition: opacity 0.2s ease;
+      }
+      .affiliate-marks img:hover {
+        opacity: 0.72;
       }
     </style>
   </head>
@@ -123,36 +166,47 @@
           <p class="tagline">Coming Soon</p>
         </div>
       </main>
-      <nav class="partners" aria-label="Partner companies">
-        <a
-          class="partner"
-          href="https://www.vdata.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            src="assets/branding/V-Data-wordimage.svg"
-            alt="Vision Data"
-            width="120"
-            height="24"
-            decoding="async"
-          />
-        </a>
-        <a
-          class="partner"
-          href="https://adsell.ai/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            src="assets/branding/as-full-wordmark.svg"
-            alt="AdSell"
-            width="120"
-            height="24"
-            decoding="async"
-          />
-        </a>
-      </nav>
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <p class="footer-legal">
+            © 2026 Dempsey Agency, LLC. All rights reserved.
+          </p>
+          <nav class="footer-nav" aria-label="Legal and contact">
+            <a href="/privacy">Privacy Policy</a>
+            <span class="footer-nav-sep" aria-hidden="true">·</span>
+            <a href="/terms">Terms of Use</a>
+            <span class="footer-nav-sep" aria-hidden="true">·</span>
+            <a href="/contact">Contact</a>
+          </nav>
+          <p class="footer-note">
+            Dempsey Agency, LLC is an independent business entity.
+          </p>
+          <p class="footer-affil-label">Affiliated companies</p>
+          <div class="affiliate-marks">
+            <img
+              src="assets/branding/D-FAV.svg"
+              alt="Dempsey Agency"
+              width="48"
+              height="48"
+              decoding="async"
+            />
+            <img
+              src="assets/branding/as-short-wordmark.svg"
+              alt="AdSell"
+              width="80"
+              height="24"
+              decoding="async"
+            />
+            <img
+              src="assets/branding/vdata-logo-v.svg"
+              alt="Vision Data"
+              width="32"
+              height="32"
+              decoding="async"
+            />
+          </div>
+        </div>
+      </footer>
     </div>
   </body>
 </html>
