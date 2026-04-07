@@ -73,39 +73,42 @@
         color: var(--color-ocean);
       }
       .site-footer {
+        --footer-rhythm: clamp(0.7rem, 1.6vw, 0.95rem);
+        --footer-zone-gap: clamp(1rem, 2.2vw, 1.35rem);
         width: 100%;
         box-sizing: border-box;
         border-top: 1px solid var(--color-ledger);
         background: var(--color-canvas);
-        padding: clamp(1.5rem, 3.2vw, 1.9rem)
-          clamp(1.25rem, 4vw, 2.5rem)
-          calc(1.6rem + env(safe-area-inset-bottom, 0px));
+        padding: clamp(1.35rem, 2.8vw, 1.65rem)
+          clamp(1.15rem, 4vw, 2rem)
+          calc(1.45rem + env(safe-area-inset-bottom, 0px));
         margin-top: auto;
       }
       .footer-inner {
         box-sizing: border-box;
         width: 100%;
-        max-width: 72rem;
+        max-width: min(52rem, 100%);
         margin-inline: auto;
         display: flex;
         flex-direction: column;
-        align-items: stretch;
-        gap: clamp(1.15rem, 2.5vw, 1.65rem);
+        align-items: center;
+        gap: var(--footer-zone-gap);
       }
       .footer-zone {
         width: 100%;
+        max-width: 36rem;
+        margin-inline: auto;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
+        align-items: center;
+        text-align: center;
       }
       .footer-zone--brand {
-        padding-bottom: 0;
+        margin-bottom: 0;
       }
       .footer-brand-mark {
         display: inline-flex;
         line-height: 0;
-        max-width: 100%;
         border-radius: 4px;
         transition: opacity 0.2s ease;
       }
@@ -113,52 +116,54 @@
         opacity: 0.88;
       }
       .footer-brand-mark:focus-visible {
-        outline: 1px solid var(--color-gold);
-        outline-offset: 3px;
+        outline: 2px solid var(--color-gold);
+        outline-offset: 4px;
       }
       .footer-brand-mark img {
         display: block;
-        width: min(16.5rem, 100%);
-        height: auto;
+        height: clamp(3.5rem, 9vw, 4.15rem);
+        width: auto;
+        max-width: min(6.75rem, 38vw);
         object-fit: contain;
+        object-position: center top;
       }
       .footer-zone--affiliates {
-        gap: 0.5rem;
-        border-top: 1px solid rgba(75, 107, 138, 0.12);
-        padding-top: clamp(0.85rem, 2vw, 1.1rem);
+        gap: var(--footer-rhythm);
+        padding-top: 2px;
       }
       .footer-affil-label {
         margin: 0;
+        width: 100%;
         font-family: "neue-haas-grotesk-display", sans-serif;
-        font-size: clamp(0.5625rem, 1.2vw, 0.625rem);
+        font-size: clamp(0.5625rem, 1.15vw, 0.625rem);
         font-weight: 700;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.22em;
         text-transform: uppercase;
         color: var(--color-ocean);
-        opacity: 0.72;
-        text-align: left;
+        opacity: 0.68;
+        text-align: center;
       }
       .affiliate-marks {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        align-items: flex-end;
-        gap: clamp(1.75rem, 5vw, 3.5rem);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        justify-content: center;
+        align-items: end;
         width: 100%;
-        margin: 0;
+        max-width: 19.5rem;
+        margin: 0 auto;
         padding: 0;
+        gap: clamp(1.25rem, 4vw, 2rem);
+        column-gap: clamp(1.5rem, 5vw, 2.75rem);
       }
       .affiliate-item {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         justify-content: flex-end;
-        gap: 0.45rem;
-        flex: 0 0 auto;
-        min-height: 3.1rem;
-        padding: 0.25rem 0;
-        padding-inline-end: 0.5rem;
+        gap: 0.4rem;
+        min-height: 2.85rem;
+        min-width: 0;
+        padding: 0.2rem 0.35rem;
         text-decoration: none;
         color: inherit;
         border-radius: 6px;
@@ -168,66 +173,53 @@
         opacity: 0.9;
       }
       .affiliate-item:focus-visible {
-        outline: 1px solid var(--color-gold);
-        outline-offset: 2px;
+        outline: 2px solid var(--color-gold);
+        outline-offset: 3px;
       }
       .affiliate-item img {
         display: block;
-        height: clamp(1.35rem, 3.2vw, 1.85rem);
+        height: clamp(1.2rem, 2.8vw, 1.55rem);
         width: auto;
-        max-width: min(10rem, 46vw);
+        max-width: 100%;
         object-fit: contain;
-        object-position: left bottom;
-        opacity: 0.58;
+        object-position: center bottom;
+        opacity: 0.55;
         transition: opacity 0.2s ease;
       }
       .affiliate-item:hover img {
-        opacity: 0.75;
+        opacity: 0.72;
       }
       .affiliate-name {
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.65625rem, 1.4vw, 0.71875rem);
+        font-size: clamp(0.625rem, 1.35vw, 0.6875rem);
         font-weight: 400;
-        line-height: 1.35;
-        letter-spacing: 0.03em;
-        color: var(--color-ocean);
-        opacity: 0.88;
-        text-align: left;
-      }
-      .footer-zone--legal {
-        gap: 0.45rem;
-        padding-top: clamp(0.75rem, 1.8vw, 1rem);
-        border-top: 1px solid rgba(75, 107, 138, 0.12);
-      }
-      .footer-legal {
-        margin: 0;
-        font-family: "skolar-latin", serif;
-        font-size: clamp(0.6875rem, 1.35vw, 0.75rem);
-        font-weight: 400;
-        line-height: 1.55;
+        line-height: 1.3;
+        letter-spacing: 0.035em;
         color: var(--color-ocean);
         opacity: 0.82;
-        letter-spacing: 0.015em;
-        text-align: left;
-        max-width: 42rem;
+        text-align: center;
+      }
+      .footer-zone--meta {
+        gap: var(--footer-rhythm);
+        max-width: 38rem;
       }
       .footer-nav {
         margin: 0;
         display: flex;
         flex-wrap: wrap;
-        justify-content: flex-start;
+        justify-content: center;
         align-items: center;
-        row-gap: 0.35rem;
-        column-gap: 0.2rem;
+        row-gap: 0.5rem;
+        column-gap: 0;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.65625rem, 1.25vw, 0.71875rem);
+        font-size: clamp(0.71875rem, 1.45vw, 0.8125rem);
+        font-weight: 400;
       }
       .footer-nav a {
-        color: var(--color-ocean);
+        color: var(--color-midnight);
         text-decoration: none;
         letter-spacing: 0.02em;
-        padding: 0.3rem 0.5rem 0.3rem 0;
-        margin-right: 0.15rem;
+        padding: 0.4rem 0.65rem;
         border-radius: 4px;
         transition: color 0.2s ease;
       }
@@ -235,75 +227,84 @@
         color: var(--color-fir);
       }
       .footer-nav a:focus-visible {
-        outline: 1px solid var(--color-gold);
+        outline: 2px solid var(--color-gold);
         outline-offset: 2px;
       }
       .footer-nav-sep {
-        color: var(--color-ledger);
+        color: var(--color-ocean);
+        opacity: 0.35;
         user-select: none;
-        padding: 0 0.2rem 0 0;
-        align-self: center;
+        padding: 0 0.15rem;
+        font-weight: 300;
+      }
+      .footer-legal-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        margin-top: 0.15rem;
+      }
+      .footer-legal {
+        margin: 0;
+        font-family: "skolar-latin", serif;
+        font-size: clamp(0.65625rem, 1.25vw, 0.71875rem);
+        font-weight: 400;
+        line-height: 1.5;
+        color: var(--color-ocean);
+        opacity: 0.72;
+        letter-spacing: 0.012em;
+        text-align: center;
+        text-wrap: balance;
+        max-width: 34rem;
       }
       .footer-note {
-        margin: 0.15rem 0 0;
+        margin: 0;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.59375rem, 1.15vw, 0.65625rem);
+        font-size: clamp(0.59375rem, 1.1vw, 0.65625rem);
         font-weight: 300;
-        line-height: 1.55;
+        line-height: 1.5;
         color: var(--color-ocean);
-        opacity: 0.76;
-        letter-spacing: 0.02em;
-        text-align: left;
-        max-width: 42rem;
+        opacity: 0.58;
+        letter-spacing: 0.018em;
+        text-align: center;
+        text-wrap: balance;
+        max-width: 32rem;
+      }
+      @media (max-width: 22rem) {
+        .affiliate-marks {
+          grid-template-columns: 1fr;
+          max-width: 12rem;
+          row-gap: 1.1rem;
+        }
       }
       @media (min-width: 640px) {
         .site-footer {
-          padding-top: clamp(1.6rem, 2.2vw, 1.95rem);
-          padding-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+          padding-top: clamp(1.45rem, 2vw, 1.7rem);
+          padding-bottom: calc(1.55rem + env(safe-area-inset-bottom, 0px));
         }
         .footer-inner {
-          gap: clamp(1.2rem, 2.2vw, 1.55rem);
+          --footer-zone-gap: clamp(1.05rem, 1.9vw, 1.25rem);
         }
         .footer-brand-mark img {
-          width: min(17.5rem, 100%);
+          height: clamp(3.65rem, 6.5vw, 4.35rem);
+          max-width: min(7rem, 32vw);
         }
         .affiliate-marks {
-          gap: clamp(2.25rem, 6vw, 4.25rem);
-        }
-        .affiliate-item img {
-          max-width: 11rem;
-        }
-        .footer-nav a {
-          padding: 0.35rem 0.65rem 0.35rem 0;
+          max-width: 21rem;
         }
       }
       @media (min-width: 900px) {
         .site-footer {
-          padding-inline: clamp(2rem, 5vw, 3rem);
+          padding-inline: clamp(1.75rem, 4vw, 2.75rem);
         }
-        .footer-brand-mark img {
-          width: min(18.5rem, 100%);
-        }
-        .affiliate-marks {
-          gap: 3rem;
-        }
-        .affiliate-item {
-          min-height: 3.35rem;
-        }
-        .affiliate-item img {
-          height: clamp(1.5rem, 2.2vw, 1.95rem);
-          max-width: 12rem;
-        }
-        .footer-zone--legal {
-          gap: 0.5rem;
-        }
-        .footer-nav {
-          column-gap: 0.35rem;
-        }
-      }
-      @media (min-width: 1200px) {
         .footer-inner {
-          max-width: 75rem;
+          max-width: min(56rem, 100%);
+        }
+        .footer-zone {
+          max-width: 40rem;
+        }
+        .footer-nav a {
+          padding: 0.42rem 0.75rem;
         }
       }
     </style>
@@ -327,16 +328,12 @@
       <footer class="site-footer">
         <div class="footer-inner">
           <div class="footer-zone footer-zone--brand">
-            <a
-              class="footer-brand-mark"
-              href="https://dempsey.agency/"
-              aria-label="Dempsey Agency"
-            >
+            <a class="footer-brand-mark" href="https://dempsey.agency">
               <img
-                src="assets/branding/word_letter_mark.svg"
-                alt=""
-                width="240"
-                height="71"
+                src="assets/branding/D-Vertical.svg"
+                alt="Dempsey Agency"
+                width="148"
+                height="181"
                 decoding="async"
               />
             </a>
@@ -353,12 +350,12 @@
               >
                 <img
                   src="assets/branding/vdata-logo-v.svg"
-                  alt=""
+                  alt="Vision Data"
                   width="40"
                   height="40"
                   decoding="async"
                 />
-                <span class="affiliate-name">Vision Data</span>
+                <span class="affiliate-name" aria-hidden="true">Vision Data</span>
               </a>
               <a
                 class="affiliate-item"
@@ -368,20 +365,17 @@
               >
                 <img
                   src="assets/branding/as-short-wordmark.svg"
-                  alt=""
+                  alt="AdSell.ai"
                   width="96"
                   height="28"
                   decoding="async"
                 />
-                <span class="affiliate-name">AdSell.ai</span>
+                <span class="affiliate-name" aria-hidden="true">AdSell.ai</span>
               </a>
             </div>
           </div>
 
-          <div class="footer-zone footer-zone--legal">
-            <p class="footer-legal">
-              © 2026 Dempsey Agency, LLC. All rights reserved.
-            </p>
+          <div class="footer-zone footer-zone--meta">
             <nav class="footer-nav" aria-label="Legal and contact">
               <a href="/privacy">Privacy Policy</a>
               <span class="footer-nav-sep" aria-hidden="true">·</span>
@@ -389,9 +383,14 @@
               <span class="footer-nav-sep" aria-hidden="true">·</span>
               <a href="/contact">Contact</a>
             </nav>
-            <p class="footer-note">
-              Dempsey Agency, LLC is an independent business entity.
-            </p>
+            <div class="footer-legal-stack">
+              <p class="footer-legal">
+                © 2026 Dempsey Agency, LLC. All rights reserved.
+              </p>
+              <p class="footer-note">
+                Dempsey Agency, LLC is an independent business entity.
+              </p>
+            </div>
           </div>
         </div>
       </footer>
