@@ -74,28 +74,33 @@
       }
       .site-footer {
         border-top: 1px solid var(--color-ledger);
-        padding: clamp(1.35rem, 3.5vw, 1.75rem)
-          clamp(1.25rem, 5vw, 3rem)
-          calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        padding: clamp(1.4rem, 3.5vw, 1.85rem)
+          clamp(1.25rem, 5vw, 3.25rem)
+          calc(1.55rem + env(safe-area-inset-bottom, 0px));
         margin-top: 0;
       }
       .footer-inner {
         width: 100%;
-        max-width: min(40rem, 100%);
+        max-width: min(42rem, 100%);
         margin: 0 auto;
-        text-align: center;
-      }
-      .footer-brand {
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 0.85rem;
+        gap: clamp(1.05rem, 2.8vw, 1.45rem);
+      }
+      .footer-zone {
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .footer-zone--brand {
+        padding-bottom: 0.05rem;
       }
       .footer-brand-mark {
         display: inline-flex;
         line-height: 0;
-        max-width: 100%;
+        max-width: min(22rem, 92vw);
         border-radius: 4px;
         transition: opacity 0.2s ease;
       }
@@ -108,30 +113,95 @@
       }
       .footer-brand-mark img {
         display: block;
-        width: clamp(11.5rem, 72vw, 17.5rem);
-        max-width: 100%;
+        width: clamp(11.75rem, 52vw, 18rem);
         height: auto;
         object-fit: contain;
       }
-      .footer-legal-block {
+      .footer-zone--affiliates {
+        gap: 0.45rem;
+      }
+      .footer-affil-label {
+        margin: 0;
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: clamp(0.5625rem, 1.35vw, 0.625rem);
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--color-ocean);
+        opacity: 0.72;
+        text-align: center;
+      }
+      .affiliate-marks {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-end;
+        gap: clamp(2.25rem, 12vw, 5rem);
+        width: 100%;
+        max-width: 36rem;
+        margin: 0 auto;
+        padding: 0 0.25rem;
+      }
+      .affiliate-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.45rem;
-        width: 100%;
-        margin-top: 0.9rem;
+        justify-content: flex-end;
+        gap: 0.4rem;
+        flex: 0 1 auto;
+        min-height: 3.25rem;
+        padding: 0.35rem 0.75rem;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 6px;
+        transition: opacity 0.2s ease;
+      }
+      .affiliate-item:hover {
+        opacity: 0.9;
+      }
+      .affiliate-item:focus-visible {
+        outline: 1px solid var(--color-gold);
+        outline-offset: 2px;
+      }
+      .affiliate-item img {
+        display: block;
+        height: clamp(1.35rem, 4.5vw, 1.85rem);
+        width: auto;
+        max-width: min(9.5rem, 42vw);
+        object-fit: contain;
+        object-position: center bottom;
+        opacity: 0.58;
+        transition: opacity 0.2s ease;
+      }
+      .affiliate-item:hover img {
+        opacity: 0.75;
+      }
+      .affiliate-name {
+        font-family: "skolar-latin", serif;
+        font-size: clamp(0.65625rem, 1.55vw, 0.71875rem);
+        font-weight: 400;
+        line-height: 1.3;
+        letter-spacing: 0.04em;
+        color: var(--color-ocean);
+        opacity: 0.88;
+        text-align: center;
+      }
+      .footer-zone--legal {
+        gap: 0.5rem;
+        padding-top: 0.15rem;
+        max-width: 40rem;
+        margin: 0 auto;
       }
       .footer-legal {
         margin: 0;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.75rem, 1.65vw, 0.8125rem);
+        font-size: clamp(0.6875rem, 1.4vw, 0.75rem);
         font-weight: 400;
         line-height: 1.5;
         color: var(--color-ocean);
-        opacity: 0.88;
+        opacity: 0.82;
         letter-spacing: 0.015em;
-        max-width: 48rem;
-        width: 100%;
+        text-align: center;
       }
       .footer-nav {
         margin: 0;
@@ -139,16 +209,16 @@
         flex-wrap: wrap;
         justify-content: center;
         align-items: center;
-        row-gap: 0.45rem;
-        column-gap: 0.35rem;
+        row-gap: 0.4rem;
+        column-gap: 0.25rem;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.71875rem, 1.55vw, 0.78125rem);
+        font-size: clamp(0.65625rem, 1.3vw, 0.71875rem);
       }
       .footer-nav a {
         color: var(--color-ocean);
         text-decoration: none;
         letter-spacing: 0.02em;
-        padding: 0.35rem 0.5rem;
+        padding: 0.35rem 0.55rem;
         border-radius: 4px;
         transition: color 0.2s ease;
       }
@@ -162,150 +232,87 @@
       .footer-nav-sep {
         color: var(--color-ledger);
         user-select: none;
-        padding: 0 0.15rem;
+        padding: 0 0.12rem;
       }
       .footer-note {
-        margin: 0;
+        margin: 0.1rem 0 0;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.625rem, 1.4vw, 0.6875rem);
+        font-size: clamp(0.59375rem, 1.2vw, 0.65625rem);
         font-weight: 300;
         line-height: 1.55;
         color: var(--color-ocean);
-        opacity: 0.82;
+        opacity: 0.76;
         letter-spacing: 0.02em;
-        max-width: 48rem;
-        width: 100%;
-      }
-      .footer-affil-block {
-        margin: 0;
-        width: 100%;
-      }
-      .footer-affil-label {
-        margin: 0;
-        font-family: "neue-haas-grotesk-display", sans-serif;
-        font-size: clamp(0.5625rem, 1.3vw, 0.59375rem);
-        font-weight: 700;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: var(--color-ocean);
-        opacity: 0.7;
-      }
-      .affiliate-marks {
-        margin: 0.5rem 0 0;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: flex-end;
-        gap: clamp(1.75rem, 10vw, 3.25rem);
-        width: 100%;
-      }
-      .affiliate-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.35rem;
-        min-width: min(7.5rem, 40vw);
-        max-width: 12rem;
-        flex: 0 1 auto;
-        padding: 0.3rem 0.5rem;
-        text-decoration: none;
-        color: inherit;
-        border-radius: 4px;
-        transition: opacity 0.2s ease;
-      }
-      .affiliate-item:hover {
-        opacity: 0.9;
-      }
-      .affiliate-item:focus-visible {
-        outline: 1px solid var(--color-gold);
-        outline-offset: 2px;
-      }
-      .affiliate-item img {
-        display: block;
-        height: clamp(1.25rem, 4vw, 1.6rem);
-        width: auto;
-        max-width: min(8.75rem, 40vw);
-        object-fit: contain;
-        opacity: 0.56;
-        transition: opacity 0.2s ease;
-      }
-      .affiliate-item:hover img {
-        opacity: 0.72;
-      }
-      .affiliate-name {
-        font-family: "skolar-latin", serif;
-        font-size: clamp(0.625rem, 1.5vw, 0.65625rem);
-        font-weight: 400;
-        line-height: 1.3;
-        letter-spacing: 0.04em;
-        color: var(--color-ocean);
-        opacity: 0.86;
         text-align: center;
       }
       @media (min-width: 640px) {
         .footer-inner {
-          max-width: min(52rem, 100%);
+          max-width: min(56rem, 100%);
+          gap: clamp(1.15rem, 2.4vw, 1.5rem);
         }
         .site-footer {
-          padding-top: clamp(1.5rem, 2.5vw, 1.85rem);
-          padding-bottom: calc(1.65rem + env(safe-area-inset-bottom, 0px));
-        }
-        .footer-nav {
-          column-gap: 0.5rem;
-        }
-        .footer-nav a {
-          padding: 0.4rem 0.65rem;
+          padding-top: clamp(1.55rem, 2.5vw, 1.9rem);
+          padding-bottom: calc(1.7rem + env(safe-area-inset-bottom, 0px));
         }
         .footer-brand-mark img {
-          width: clamp(12.5rem, 58vw, 18.5rem);
+          width: clamp(13rem, 38vw, 19rem);
+        }
+        .affiliate-marks {
+          max-width: 44rem;
+          gap: clamp(2.75rem, 11vw, 6rem);
+        }
+        .footer-nav {
+          column-gap: 0.45rem;
+        }
+        .footer-nav a {
+          padding: 0.4rem 0.7rem;
         }
       }
       @media (min-width: 900px) {
         .footer-inner {
-          max-width: min(68rem, 100%);
+          max-width: min(72rem, 100%);
+          gap: clamp(1.2rem, 2.2vw, 1.55rem);
         }
         .site-footer {
-          padding-top: 1.55rem;
-          padding-bottom: calc(1.65rem + env(safe-area-inset-bottom, 0px));
+          padding-top: 1.6rem;
+          padding-bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
         }
-        .footer-brand {
-          margin-bottom: 0.95rem;
+        .footer-brand-mark {
+          max-width: min(24rem, 88vw);
         }
         .footer-brand-mark img {
-          width: clamp(15.5rem, 32vw, 21.5rem);
-        }
-        .footer-affil-block {
-          margin-bottom: 0.15rem;
+          width: clamp(15rem, 28vw, 20.5rem);
         }
         .affiliate-marks {
-          margin-top: 0.55rem;
-          gap: clamp(4rem, 15vw, 9rem);
-        }
-        .footer-legal-block {
-          gap: 0.5rem;
-          margin-top: 1rem;
-        }
-        .footer-nav {
-          column-gap: 0.65rem;
-        }
-        .footer-nav a {
-          padding: 0.4rem 0.85rem;
+          max-width: 52rem;
+          gap: clamp(4.5rem, 14vw, 10rem);
+          padding: 0 1rem;
         }
         .affiliate-item {
-          max-width: 15rem;
-          min-width: 9.5rem;
+          min-height: 3.5rem;
+          padding: 0.4rem 1.25rem;
         }
         .affiliate-item img {
-          height: clamp(1.45rem, 2.5vw, 1.9rem);
-          max-width: min(11rem, 24vw);
+          height: clamp(1.5rem, 2.6vw, 2rem);
+          max-width: min(11.5rem, 26vw);
+        }
+        .footer-zone--legal {
+          gap: 0.55rem;
+          max-width: 44rem;
+        }
+        .footer-nav {
+          column-gap: 0.55rem;
+        }
+        .footer-nav a {
+          padding: 0.42rem 0.95rem;
         }
       }
       @media (min-width: 1200px) {
         .footer-inner {
-          max-width: min(76rem, 100%);
+          max-width: min(80rem, 100%);
         }
         .affiliate-marks {
-          gap: clamp(5rem, 18vw, 10.5rem);
+          gap: clamp(5.5rem, 16vw, 11rem);
         }
       }
     </style>
@@ -328,7 +335,7 @@
       </main>
       <footer class="site-footer">
         <div class="footer-inner">
-          <div class="footer-brand">
+          <div class="footer-zone footer-zone--brand">
             <a
               class="footer-brand-mark"
               href="https://dempsey.agency/"
@@ -344,7 +351,7 @@
             </a>
           </div>
 
-          <div class="footer-affil-block">
+          <div class="footer-zone footer-zone--affiliates">
             <p class="footer-affil-label">Affiliated companies</p>
             <div class="affiliate-marks">
               <a
@@ -356,8 +363,8 @@
                 <img
                   src="assets/branding/vdata-logo-v.svg"
                   alt=""
-                  width="36"
-                  height="36"
+                  width="40"
+                  height="40"
                   decoding="async"
                 />
                 <span class="affiliate-name">Vision Data</span>
@@ -371,8 +378,8 @@
                 <img
                   src="assets/branding/as-short-wordmark.svg"
                   alt=""
-                  width="88"
-                  height="26"
+                  width="96"
+                  height="28"
                   decoding="async"
                 />
                 <span class="affiliate-name">AdSell.ai</span>
@@ -380,7 +387,7 @@
             </div>
           </div>
 
-          <div class="footer-legal-block">
+          <div class="footer-zone footer-zone--legal">
             <p class="footer-legal">
               © 2026 Dempsey Agency, LLC. All rights reserved.
             </p>
