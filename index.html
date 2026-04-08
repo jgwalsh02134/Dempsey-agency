@@ -164,8 +164,8 @@
         justify-content: flex-start;
         box-sizing: border-box;
         width: 100%;
-        max-width: 12rem;
-        height: 2.55rem;
+        max-width: min(100%, 14rem);
+        min-height: 2.35rem;
       }
       .affiliate-logo-img {
         display: block;
@@ -174,22 +174,26 @@
         max-width: 100%;
         object-fit: contain;
         object-position: left center;
-        opacity: 0.62;
+        opacity: 0.72;
         transition: opacity 0.2s ease;
       }
       .affiliate-item--vdata .affiliate-logo-img {
-        max-height: 1.78rem;
-        width: auto;
-        transform: scale(0.97);
-        transform-origin: left center;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        max-height: 2.35rem;
+        min-width: 7rem;
+        object-fit: contain;
+        object-position: left center;
       }
       .affiliate-item--adsell .affiliate-logo-img {
-        max-height: 1.42rem;
+        max-height: 1.48rem;
         width: auto;
+        max-width: 100%;
         transform: translateY(0.05rem);
       }
       .affiliate-item:hover .affiliate-logo-img {
-        opacity: 0.78;
+        opacity: 0.85;
       }
       .footer-contact {
         margin: 0;
@@ -303,14 +307,14 @@
           max-width: min(100%, 23rem);
         }
         .affiliate-logo-box {
-          max-width: 12.5rem;
-          height: 2.7rem;
+          max-width: min(100%, 14.5rem);
+          min-height: 2.45rem;
         }
         .affiliate-item--vdata .affiliate-logo-img {
-          max-height: 1.85rem;
+          max-height: 2.45rem;
         }
         .affiliate-item--adsell .affiliate-logo-img {
-          max-height: 1.5rem;
+          max-height: 1.55rem;
         }
       }
       @media (min-width: 900px) {
@@ -333,14 +337,14 @@
           max-width: min(100%, 24rem);
         }
         .affiliate-logo-box {
-          max-width: 12.75rem;
-          height: 2.78rem;
+          max-width: min(100%, 15rem);
+          min-height: 2.5rem;
         }
         .affiliate-item--vdata .affiliate-logo-img {
-          max-height: 1.9rem;
+          max-height: 2.5rem;
         }
         .affiliate-item--adsell .affiliate-logo-img {
-          max-height: 1.54rem;
+          max-height: 1.58rem;
         }
       }
     </style>
@@ -389,8 +393,8 @@
                       class="affiliate-logo-img"
                       src="assets/branding/V-Data-wordimage.svg"
                       alt="Vision Data"
-                      width="2675"
-                      height="454"
+                      width="800"
+                      height="136"
                       decoding="async"
                     />
                   </span>
