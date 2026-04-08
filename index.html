@@ -71,291 +71,237 @@
         text-transform: uppercase;
         color: var(--color-ocean);
       }
+      /* ── Footer ── */
       .site-footer {
         width: 100%;
-        box-sizing: border-box;
         border-top: 1px solid var(--color-ledger);
         background: var(--color-canvas);
-        padding: clamp(1.45rem, 3vw, 1.95rem)
-          clamp(1.15rem, 3.5vw, 2rem)
-          calc(1.55rem + env(safe-area-inset-bottom, 0px));
+        padding: clamp(2rem, 4.5vw, 2.75rem) clamp(1.25rem, 4vw, 2.25rem)
+          calc(1.5rem + env(safe-area-inset-bottom, 0px));
         margin-top: auto;
       }
       .footer-shell {
-        box-sizing: border-box;
         width: 100%;
-        max-width: min(56rem, 100%);
+        max-width: 54rem;
         margin-inline: auto;
       }
-      .footer-main {
-        display: grid;
-        grid-template-columns: 1fr;
-        align-items: start;
-        gap: clamp(1.1rem, 2.2vw, 1.5rem);
-        padding-bottom: clamp(1.05rem, 2vw, 1.35rem);
-        border-bottom: 1px solid var(--color-ledger);
-      }
-      .footer-col {
+
+      /* ── Upper: brand + contact | affiliates ── */
+      .footer-upper {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
-        min-width: 0;
+        gap: clamp(1.75rem, 3.2vw, 2.25rem);
+        padding-bottom: clamp(1.35rem, 2.6vw, 1.75rem);
+        border-bottom: 1px solid var(--color-ledger);
       }
-      .footer-col-heading {
-        margin: 0 0 clamp(0.4rem, 1vw, 0.58rem);
-        font-family: "neue-haas-grotesk-display", sans-serif;
-        font-size: clamp(0.65625rem, 1.2vw, 0.71875rem);
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--color-ocean);
-        opacity: 0.84;
+      .footer-brand-col {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.85rem, 1.6vw, 1.1rem);
       }
-      .footer-col--affiliates {
-        align-items: center;
-        text-align: center;
-      }
-      .footer-col--affiliates .footer-col-heading {
-        width: 100%;
-        text-align: center;
-        margin-bottom: clamp(0.32rem, 0.7vw, 0.44rem);
-      }
-      .footer-brand-mark {
+      .footer-logo {
         display: inline-flex;
         line-height: 0;
         border-radius: 4px;
         transition: opacity 0.2s ease;
-        max-width: 100%;
+        align-self: flex-start;
       }
-      .footer-brand-mark:hover {
-        opacity: 0.88;
+      .footer-logo:hover {
+        opacity: 0.82;
       }
-      .footer-brand-mark:focus-visible {
+      .footer-logo:focus-visible {
         outline: 2px solid var(--color-gold);
         outline-offset: 4px;
       }
-      .footer-brand-mark img {
+      .footer-logo img {
         display: block;
+        height: clamp(1.5rem, 3.4vw, 1.85rem);
         width: auto;
-        height: clamp(1.65rem, 3.6vw, 1.95rem);
-        max-width: min(11.5rem, 72vw);
+        max-width: min(12rem, 72vw);
         object-fit: contain;
-        object-position: left center;
       }
-      .affiliate-stack {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: clamp(0.4rem, 0.8vw, 0.5rem);
-        width: 100%;
-        min-width: 0;
-      }
-      .affiliate-slot {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        width: 11rem;
-        max-width: 100%;
-        height: 2.15rem;
-        padding: 0 0.75rem;
-        text-decoration: none;
-        color: inherit;
-        background: #fafbfc;
-        border: 1px solid var(--color-ledger);
-        border-radius: 5px;
-        transition: border-color 0.2s ease, background-color 0.2s ease;
-      }
-      .affiliate-slot:hover {
-        border-color: #cbd5e1;
-        background: #f5f7fa;
-      }
-      .affiliate-slot:focus-visible {
-        outline: 2px solid var(--color-gold);
-        outline-offset: 2px;
-      }
-      .affiliate-slot img {
-        display: block;
-        width: auto;
-        height: auto;
-        min-width: 0;
-        object-fit: contain;
-        object-position: center center;
-        opacity: 0.72;
-        transition: opacity 0.2s ease;
-      }
-      .affiliate-slot:hover img {
-        opacity: 0.84;
-      }
-      .affiliate-slot--vision img {
-        max-width: 6.25rem;
-        max-height: 0.7rem;
-      }
-      .affiliate-slot--adsell img {
-        max-width: 5.5rem;
-        max-height: 0.82rem;
-      }
-      .footer-contact {
+      .footer-address {
         margin: 0;
         padding: 0;
         font-style: normal;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.1rem;
+        gap: 0.05rem;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.8125rem, 1.35vw, 0.875rem);
+        font-size: clamp(0.8125rem, 1.3vw, 0.875rem);
         font-weight: 400;
-        line-height: 1.4;
-        letter-spacing: 0.012em;
+        line-height: 1.55;
+        letter-spacing: 0.01em;
         color: var(--color-ocean);
-        opacity: 0.9;
       }
-      .footer-contact a {
-        color: inherit;
-        text-decoration: none;
-        border-radius: 3px;
-        padding: 0.1rem 0.15rem;
-        margin: -0.1rem -0.15rem;
-        transition: color 0.2s ease;
-      }
-      .footer-contact a:hover {
-        color: var(--color-fir);
-      }
-      .footer-contact a:focus-visible {
-        outline: 2px solid var(--color-gold);
-        outline-offset: 2px;
-      }
-      .footer-contact-line {
+      .footer-address p {
         margin: 0;
       }
-      .footer-sub {
-        padding-top: clamp(0.75rem, 1.65vw, 1rem);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: clamp(0.42rem, 1.1vw, 0.58rem);
-      }
-      .footer-sub-nav {
-        margin: 0;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        row-gap: 0.3rem;
-        column-gap: clamp(0.55rem, 1.75vw, 0.95rem);
-        font-family: "skolar-latin", serif;
-        font-size: clamp(0.8125rem, 1.32vw, 0.875rem);
-        font-weight: 400;
-      }
-      .footer-sub-nav a {
+      .footer-address a {
         color: var(--color-midnight);
         text-decoration: none;
-        letter-spacing: 0.015em;
-        padding: 0.4rem 0.55rem;
-        border-radius: 4px;
+        font-weight: 500;
+        border-radius: 3px;
         transition: color 0.2s ease;
       }
-      .footer-sub-nav a:hover {
+      .footer-address a:hover {
         color: var(--color-fir);
       }
-      .footer-sub-nav a:focus-visible {
+      .footer-address a:focus-visible {
         outline: 2px solid var(--color-gold);
         outline-offset: 2px;
       }
-      .footer-sub-meta {
+
+      /* ── Affiliates ── */
+      .footer-affiliates-col {
         display: flex;
         flex-direction: column;
+        gap: clamp(0.5rem, 1vw, 0.65rem);
+      }
+      .footer-label {
+        margin: 0;
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: clamp(0.625rem, 1.1vw, 0.6875rem);
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--color-ocean);
+        opacity: 0.7;
+      }
+      .footer-affiliates {
+        display: flex;
         align-items: center;
-        gap: 0.22rem;
-        max-width: 40rem;
+        gap: clamp(1.25rem, 2.8vw, 1.75rem);
       }
-      .footer-legal {
-        margin: 0;
-        font-family: "skolar-latin", serif;
-        font-size: clamp(0.65625rem, 1.08vw, 0.71875rem);
-        font-weight: 400;
-        line-height: 1.45;
-        color: var(--color-ocean);
-        opacity: 0.66;
-        letter-spacing: 0.01em;
-        text-wrap: balance;
+      .footer-affiliate {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: opacity 0.2s ease;
+        opacity: 0.62;
       }
-      .footer-note {
-        margin: 0;
+      .footer-affiliate:hover {
+        opacity: 0.88;
+      }
+      .footer-affiliate:focus-visible {
+        outline: 2px solid var(--color-gold);
+        outline-offset: 4px;
+        opacity: 0.88;
+      }
+      .footer-affiliate img {
+        display: block;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+      }
+      .footer-affiliate--vision img {
+        height: clamp(0.5rem, 1.1vw, 0.625rem);
+      }
+      .footer-affiliate--adsell img {
+        height: clamp(0.875rem, 1.6vw, 1.0625rem);
+      }
+
+      /* ── Lower: nav + legal ── */
+      .footer-lower {
+        padding-top: clamp(1rem, 2vw, 1.35rem);
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.55rem, 1.2vw, 0.75rem);
+      }
+      .footer-nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0;
         font-family: "skolar-latin", serif;
-        font-size: clamp(0.59375rem, 0.98vw, 0.65625rem);
-        font-weight: 300;
-        line-height: 1.45;
+        font-size: clamp(0.78125rem, 1.2vw, 0.84375rem);
+      }
+      .footer-nav a {
         color: var(--color-ocean);
-        opacity: 0.54;
+        text-decoration: none;
         letter-spacing: 0.012em;
-        text-wrap: balance;
+        padding: 0.25rem 0;
+        border-radius: 3px;
+        transition: color 0.2s ease;
       }
+      .footer-nav a:hover {
+        color: var(--color-midnight);
+      }
+      .footer-nav a:focus-visible {
+        outline: 2px solid var(--color-gold);
+        outline-offset: 2px;
+      }
+      .footer-nav-sep {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--color-ocean);
+        opacity: 0.35;
+        margin: 0 clamp(0.5rem, 1.1vw, 0.75rem);
+        flex-shrink: 0;
+      }
+      .footer-legal-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+      .footer-copyright {
+        margin: 0;
+        font-family: "skolar-latin", serif;
+        font-size: clamp(0.6875rem, 1.05vw, 0.75rem);
+        line-height: 1.4;
+        color: var(--color-ocean);
+        opacity: 0.58;
+        letter-spacing: 0.008em;
+      }
+      .footer-disclaimer {
+        margin: 0;
+        font-family: "skolar-latin", serif;
+        font-size: clamp(0.625rem, 0.95vw, 0.6875rem);
+        font-weight: 300;
+        line-height: 1.4;
+        color: var(--color-ocean);
+        opacity: 0.44;
+      }
+
+      /* ── Tablet ── */
       @media (min-width: 640px) {
-        .footer-main {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          column-gap: clamp(1.2rem, 2.4vw, 1.85rem);
-          row-gap: clamp(1.1rem, 2.1vw, 1.45rem);
+        .footer-upper {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: flex-start;
         }
-        .footer-col--contact {
-          grid-column: 1 / -1;
-        }
-        .footer-brand-mark img {
-          height: clamp(1.7rem, 3.2vw, 2rem);
-          max-width: min(12rem, 70vw);
-        }
-        .affiliate-slot {
-          width: 11.5rem;
-          height: 2.25rem;
-        }
-        .affiliate-slot--vision img {
-          max-width: 6.5rem;
-          max-height: 0.72rem;
-        }
-        .affiliate-slot--adsell img {
-          max-width: 5.75rem;
-          max-height: 0.85rem;
-        }
-      }
-      @media (min-width: 900px) {
-        .site-footer {
-          padding-inline: clamp(1.75rem, 4vw, 2.75rem);
-        }
-        .footer-shell {
-          max-width: min(56.25rem, 100%);
-        }
-        .footer-main {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          column-gap: clamp(1.35rem, 2.5vw, 2rem);
-          row-gap: 0;
-          align-items: start;
-        }
-        .footer-col--contact {
-          grid-column: auto;
+        .footer-affiliates-col {
           align-items: flex-end;
           text-align: right;
         }
-        .footer-col--contact .footer-contact {
+        .footer-affiliates {
+          gap: clamp(1.5rem, 3vw, 2rem);
+        }
+        .footer-lower {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: baseline;
+        }
+        .footer-legal-block {
           align-items: flex-end;
+          text-align: right;
         }
-        .footer-brand-mark img {
-          height: clamp(1.75rem, 2.2vw, 2.05rem);
-          max-width: min(12.25rem, 36vw);
+      }
+      /* ── Desktop ── */
+      @media (min-width: 900px) {
+        .site-footer {
+          padding-inline: clamp(2rem, 5vw, 3rem);
         }
-        .affiliate-slot {
-          width: 11.75rem;
-          height: 2.3rem;
+        .footer-logo img {
+          height: clamp(1.65rem, 2vw, 1.9rem);
         }
-        .affiliate-slot--vision img {
-          max-width: 6.75rem;
-          max-height: 0.74rem;
+        .footer-affiliate--vision img {
+          height: clamp(0.5625rem, 0.78vw, 0.6875rem);
         }
-        .affiliate-slot--adsell img {
-          max-width: 6rem;
-          max-height: 0.88rem;
+        .footer-affiliate--adsell img {
+          height: clamp(0.9375rem, 1.3vw, 1.125rem);
         }
       }
     </style>
@@ -377,24 +323,26 @@
       </main>
       <footer class="site-footer">
         <div class="footer-shell">
-          <div class="footer-main">
-            <div class="footer-col footer-col--brand">
-              <a class="footer-brand-mark" href="https://dempsey.agency">
+          <div class="footer-upper">
+            <div class="footer-brand-col">
+              <a class="footer-logo" href="https://dempsey.agency">
                 <img
                   src="assets/branding/hor-lockup.svg"
                   alt="Dempsey Agency"
-                  width="244"
-                  height="67"
                   decoding="async"
                 />
               </a>
+              <address class="footer-address">
+                <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
+                <p>1377 Third Street</p>
+                <p>Rensselaer, NY 12144</p>
+              </address>
             </div>
-
-            <div class="footer-col footer-col--affiliates">
-              <h2 class="footer-col-heading">Affiliated companies</h2>
-              <div class="affiliate-stack">
+            <div class="footer-affiliates-col">
+              <p class="footer-label">Affiliated companies</p>
+              <div class="footer-affiliates">
                 <a
-                  class="affiliate-slot affiliate-slot--vision"
+                  class="footer-affiliate footer-affiliate--vision"
                   href="https://www.vdata.com/"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -406,7 +354,7 @@
                   />
                 </a>
                 <a
-                  class="affiliate-slot affiliate-slot--adsell"
+                  class="footer-affiliate footer-affiliate--adsell"
                   href="https://adsell.ai/"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -419,30 +367,20 @@
                 </a>
               </div>
             </div>
-
-            <div class="footer-col footer-col--contact">
-              <h2 class="footer-col-heading">Contact</h2>
-              <address class="footer-contact">
-                <a class="footer-contact-line" href="mailto:info@dempsey.agency"
-                  >info@dempsey.agency</a
-                >
-                <p class="footer-contact-line">1377 Third Street</p>
-                <p class="footer-contact-line">Rensselaer, NY 12144</p>
-              </address>
-            </div>
           </div>
-
-          <div class="footer-sub">
-            <nav class="footer-sub-nav" aria-label="Legal and contact">
+          <div class="footer-lower">
+            <nav class="footer-nav" aria-label="Footer navigation">
               <a href="/privacy">Privacy Policy</a>
+              <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="/terms">Terms of Use</a>
+              <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="/contact">Contact</a>
             </nav>
-            <div class="footer-sub-meta">
-              <p class="footer-legal">
-                © 2026 Dempsey Agency, LLC. All rights reserved.
+            <div class="footer-legal-block">
+              <p class="footer-copyright">
+                &copy; 2026 Dempsey Agency, LLC. All rights reserved.
               </p>
-              <p class="footer-note">
+              <p class="footer-disclaimer">
                 Dempsey Agency, LLC is an independent business entity.
               </p>
             </div>
