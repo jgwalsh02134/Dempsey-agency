@@ -55,9 +55,13 @@
       }
       .logo {
         display: block;
-        width: clamp(7.5rem, 22vw, 11rem);
+        width: auto;
+        max-width: clamp(10rem, 30vw, 12.75rem);
+        max-height: clamp(11.5rem, 34vw, 14.5rem);
         height: auto;
-        margin: 0 auto clamp(2rem, 6vw, 3rem);
+        margin: 0 auto clamp(1.85rem, 5.5vw, 2.85rem);
+        object-fit: contain;
+        object-position: center top;
       }
       .title {
         margin: 0;
@@ -355,10 +359,10 @@
         <div class="hero">
           <img
             class="logo"
-            src="assets/favicons/D_FAV_2.svg"
-            alt=""
-            width="176"
-            height="176"
+            src="assets/branding/DA_STACK_3.svg"
+            alt="Dempsey Agency logo"
+            width="900"
+            height="1203"
             decoding="async"
           />
           <h1 class="title">Dempsey Agency</h1>
