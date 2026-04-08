@@ -116,6 +116,11 @@
         align-items: center;
         text-align: center;
       }
+      .footer-col--affiliates .footer-col-heading {
+        width: 100%;
+        text-align: center;
+        margin-bottom: clamp(0.28rem, 0.72vw, 0.4rem);
+      }
       .footer-brand-mark {
         display: inline-flex;
         line-height: 0;
@@ -138,61 +143,57 @@
         object-fit: contain;
         object-position: left center;
       }
-      .affiliate-stack {
+      .affiliate-rail {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: clamp(0.35rem, 0.95vw, 0.48rem);
+        align-items: stretch;
+        gap: clamp(0.38rem, 0.9vw, 0.5rem);
         width: 100%;
-      }
-      .affiliate-item {
-        display: block;
+        max-width: min(12.25rem, 100%);
+        margin-inline: auto;
         min-width: 0;
-        max-width: 100%;
-        padding: 0.08rem 0;
+      }
+      .affiliate-slot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 100%;
+        height: 1.12rem;
+        min-width: 0;
+        padding: 0;
         text-decoration: none;
         color: inherit;
         border-radius: 6px;
         transition: opacity 0.2s ease;
       }
-      .affiliate-item:hover {
-        opacity: 0.9;
+      .affiliate-slot:hover {
+        opacity: 0.92;
       }
-      .affiliate-item:focus-visible {
+      .affiliate-slot:focus-visible {
         outline: 2px solid var(--color-gold);
         outline-offset: 3px;
       }
-      .affiliate-logo-box {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        width: min(100%, 8.75rem);
-        height: 1.42rem;
-        flex-shrink: 0;
-        min-width: 0;
-      }
-      .affiliate-logo-img {
+      .affiliate-slot-img {
         display: block;
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
         min-width: 0;
+        width: auto;
+        height: auto;
         object-fit: contain;
         object-position: center center;
-        opacity: 0.76;
+        opacity: 0.74;
         transition: opacity 0.2s ease;
       }
-      .affiliate-item--vdata .affiliate-logo-img {
-        object-fit: contain;
-        object-position: center center;
+      .affiliate-slot--vdata .affiliate-slot-img {
+        max-width: min(100%, 10.5rem);
+        max-height: 0.62rem;
       }
-      .affiliate-item--adsell .affiliate-logo-img {
-        object-fit: contain;
-        padding-inline: 0.12rem;
+      .affiliate-slot--adsell .affiliate-slot-img {
+        max-width: min(72%, 7.5rem);
+        max-height: 0.56rem;
       }
-      .affiliate-item:hover .affiliate-logo-img {
-        opacity: 0.86;
+      .affiliate-slot:hover .affiliate-slot-img {
+        opacity: 0.84;
       }
       .footer-contact {
         margin: 0;
@@ -305,9 +306,17 @@
           height: clamp(1.7rem, 3.2vw, 2rem);
           max-width: min(12rem, 70vw);
         }
-        .affiliate-logo-box {
-          width: min(100%, 9rem);
-          height: 1.48rem;
+        .affiliate-rail {
+          max-width: min(12.75rem, 100%);
+        }
+        .affiliate-slot {
+          height: 1.16rem;
+        }
+        .affiliate-slot--vdata .affiliate-slot-img {
+          max-height: 0.64rem;
+        }
+        .affiliate-slot--adsell .affiliate-slot-img {
+          max-height: 0.58rem;
         }
       }
       @media (min-width: 900px) {
@@ -318,7 +327,10 @@
           max-width: min(56.25rem, 100%);
         }
         .footer-main {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: minmax(0, 1fr) minmax(11.5rem, 1.22fr) minmax(
+              0,
+              1fr
+            );
           column-gap: clamp(1.35rem, 2.5vw, 2rem);
           row-gap: 0;
           align-items: start;
@@ -335,9 +347,19 @@
           height: clamp(1.75rem, 2.2vw, 2.05rem);
           max-width: min(12.25rem, 36vw);
         }
-        .affiliate-logo-box {
-          width: min(100%, 9.125rem);
-          height: 1.5rem;
+        .affiliate-rail {
+          max-width: min(13.25rem, 100%);
+        }
+        .affiliate-slot {
+          height: 1.18rem;
+        }
+        .affiliate-slot--vdata .affiliate-slot-img {
+          max-height: 0.66rem;
+          max-width: min(100%, 11rem);
+        }
+        .affiliate-slot--adsell .affiliate-slot-img {
+          max-height: 0.6rem;
+          max-width: min(70%, 7.75rem);
         }
       }
     </style>
@@ -374,40 +396,36 @@
 
             <div class="footer-col footer-col--affiliates">
               <h2 class="footer-col-heading">Affiliated companies</h2>
-              <div class="affiliate-stack">
+              <div class="affiliate-rail">
                 <a
-                  class="affiliate-item affiliate-item--vdata"
+                  class="affiliate-slot affiliate-slot--vdata"
                   href="https://www.vdata.com/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span class="affiliate-logo-box">
-                    <img
-                      class="affiliate-logo-img"
-                      src="assets/branding/V-Data-wordimage.svg"
-                      alt="Vision Data"
-                      width="2675"
-                      height="454"
-                      decoding="async"
-                    />
-                  </span>
+                  <img
+                    class="affiliate-slot-img"
+                    src="assets/branding/V-Data-wordimage.svg"
+                    alt="Vision Data"
+                    width="2675"
+                    height="454"
+                    decoding="async"
+                  />
                 </a>
                 <a
-                  class="affiliate-item affiliate-item--adsell"
+                  class="affiliate-slot affiliate-slot--adsell"
                   href="https://adsell.ai/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span class="affiliate-logo-box">
-                    <img
-                      class="affiliate-logo-img"
-                      src="assets/branding/blue-as-full-wordmark%20copy.svg"
-                      alt="AdSell.ai"
-                      width="200"
-                      height="42"
-                      decoding="async"
-                    />
-                  </span>
+                  <img
+                    class="affiliate-slot-img"
+                    src="assets/branding/blue-as-full-wordmark%20copy.svg"
+                    alt="AdSell.ai"
+                    width="200"
+                    height="42"
+                    decoding="async"
+                  />
                 </a>
               </div>
             </div>
