@@ -76,8 +76,6 @@
         width: 100%;
         border-top: 1px solid var(--color-ledger);
         background: var(--color-canvas);
-        padding: clamp(2rem, 4.5vw, 2.75rem) clamp(1.25rem, 4vw, 2.25rem)
-          calc(1.5rem + env(safe-area-inset-bottom, 0px));
         margin-top: auto;
       }
       .footer-shell {
@@ -88,11 +86,13 @@
 
       /* ── Upper: brand + contact | affiliates ── */
       .footer-upper {
+        padding: clamp(2rem, 4.5vw, 2.75rem) clamp(1.25rem, 4vw, 2.25rem)
+          clamp(1.75rem, 3.5vw, 2.25rem);
+      }
+      .footer-upper > .footer-shell {
         display: flex;
         flex-direction: column;
-        gap: clamp(1.75rem, 3.2vw, 2.25rem);
-        padding-bottom: clamp(1.35rem, 2.6vw, 1.75rem);
-        border-bottom: 1px solid var(--color-ledger);
+        gap: clamp(1.75rem, 3.5vw, 2.25rem);
       }
       .footer-brand-col {
         display: flex;
@@ -156,7 +156,8 @@
       .footer-affiliates-col {
         display: flex;
         flex-direction: column;
-        gap: clamp(0.5rem, 1vw, 0.65rem);
+        align-items: flex-end;
+        gap: clamp(0.75rem, 1.4vw, 1rem);
       }
       .footer-label {
         margin: 0;
@@ -170,8 +171,9 @@
       }
       .footer-affiliates {
         display: flex;
-        align-items: center;
-        gap: clamp(1.25rem, 2.8vw, 1.75rem);
+        flex-direction: column;
+        align-items: flex-end;
+        gap: clamp(0.75rem, 1.4vw, 1rem);
       }
       .footer-affiliate {
         display: inline-flex;
@@ -179,35 +181,39 @@
         text-decoration: none;
         border-radius: 4px;
         transition: opacity 0.2s ease;
-        opacity: 0.62;
+        opacity: 0.78;
       }
       .footer-affiliate:hover {
-        opacity: 0.88;
+        opacity: 0.95;
       }
       .footer-affiliate:focus-visible {
         outline: 2px solid var(--color-gold);
         outline-offset: 4px;
-        opacity: 0.88;
+        opacity: 0.95;
       }
       .footer-affiliate img {
         display: block;
-        width: auto;
         height: auto;
         object-fit: contain;
       }
       .footer-affiliate--vision img {
-        height: clamp(0.5rem, 1.1vw, 0.625rem);
+        width: clamp(9.5rem, 19vw, 11rem);
       }
       .footer-affiliate--adsell img {
-        height: clamp(0.875rem, 1.6vw, 1.0625rem);
+        width: clamp(6rem, 12vw, 7rem);
       }
 
-      /* ── Lower: nav + legal ── */
+      /* ── Lower bar ── */
       .footer-lower {
-        padding-top: clamp(1rem, 2vw, 1.35rem);
+        border-top: 1px solid var(--color-ledger);
+        background: #f1f5f9;
+        padding: clamp(0.85rem, 1.8vw, 1.1rem) clamp(1.25rem, 4vw, 2.25rem)
+          calc(clamp(0.85rem, 1.8vw, 1.1rem) + env(safe-area-inset-bottom, 0px));
+      }
+      .footer-lower > .footer-shell {
         display: flex;
         flex-direction: column;
-        gap: clamp(0.55rem, 1.2vw, 0.75rem);
+        gap: clamp(0.5rem, 1vw, 0.65rem);
       }
       .footer-nav {
         display: flex;
@@ -267,19 +273,15 @@
 
       /* ── Tablet ── */
       @media (min-width: 640px) {
-        .footer-upper {
+        .footer-upper > .footer-shell {
           flex-direction: row;
           justify-content: space-between;
           align-items: flex-start;
         }
         .footer-affiliates-col {
           align-items: flex-end;
-          text-align: right;
         }
-        .footer-affiliates {
-          gap: clamp(1.5rem, 3vw, 2rem);
-        }
-        .footer-lower {
+        .footer-lower > .footer-shell {
           flex-direction: row;
           justify-content: space-between;
           align-items: baseline;
@@ -291,17 +293,20 @@
       }
       /* ── Desktop ── */
       @media (min-width: 900px) {
-        .site-footer {
+        .footer-upper {
+          padding-inline: clamp(2rem, 5vw, 3rem);
+        }
+        .footer-lower {
           padding-inline: clamp(2rem, 5vw, 3rem);
         }
         .footer-logo img {
           height: clamp(1.65rem, 2vw, 1.9rem);
         }
         .footer-affiliate--vision img {
-          height: clamp(0.5625rem, 0.78vw, 0.6875rem);
+          width: clamp(10.5rem, 13vw, 11.5rem);
         }
         .footer-affiliate--adsell img {
-          height: clamp(0.9375rem, 1.3vw, 1.125rem);
+          width: clamp(6.5rem, 8.5vw, 7.25rem);
         }
       }
     </style>
@@ -322,8 +327,8 @@
         </div>
       </main>
       <footer class="site-footer">
-        <div class="footer-shell">
-          <div class="footer-upper">
+        <div class="footer-upper">
+          <div class="footer-shell">
             <div class="footer-brand-col">
               <a class="footer-logo" href="https://dempsey.agency">
                 <img
@@ -368,7 +373,9 @@
               </div>
             </div>
           </div>
-          <div class="footer-lower">
+        </div>
+        <div class="footer-lower">
+          <div class="footer-shell">
             <nav class="footer-nav" aria-label="Footer navigation">
               <a href="/privacy">Privacy Policy</a>
               <span class="footer-nav-sep" aria-hidden="true"></span>
