@@ -55,25 +55,15 @@
       }
       .logo {
         display: block;
-        width: auto;
-        max-width: clamp(10rem, 30vw, 12.75rem);
-        max-height: clamp(11.5rem, 34vw, 14.5rem);
+        width: clamp(14.5rem, 48vw, 19.25rem);
+        max-width: min(92vw, 20rem);
         height: auto;
-        margin: 0 auto clamp(1.85rem, 5.5vw, 2.85rem);
+        margin: 0 auto clamp(2rem, 5.5vw, 2.75rem);
         object-fit: contain;
-        object-position: center top;
-      }
-      .title {
-        margin: 0;
-        font-family: "neue-haas-grotesk-display", sans-serif;
-        font-weight: 700;
-        font-size: clamp(1.75rem, 5.5vw, 2.75rem);
-        letter-spacing: 0.02em;
-        line-height: 1.15;
-        color: var(--color-midnight);
+        object-position: center center;
       }
       .tagline {
-        margin: clamp(1rem, 3vw, 1.5rem) 0 0;
+        margin: 0;
         font-family: "skolar-latin", serif;
         font-weight: 300;
         font-size: clamp(0.8125rem, 2.2vw, 1rem);
@@ -361,13 +351,12 @@
         <div class="hero">
           <img
             class="logo"
-            src="assets/branding/DA_STACK_3.svg"
+            src="assets/branding/hor-lockup.svg"
             alt="Dempsey Agency logo"
-            width="900"
-            height="1203"
+            width="244"
+            height="67"
             decoding="async"
           />
-          <h1 class="title">Dempsey Agency</h1>
           <p class="tagline">Coming Soon</p>
         </div>
       </main>
