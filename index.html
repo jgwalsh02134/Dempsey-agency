@@ -96,7 +96,8 @@
       .footer-main {
         display: grid;
         grid-template-columns: 1fr;
-        gap: clamp(1.85rem, 3.5vw, 2.5rem);
+        align-items: start;
+        gap: clamp(1.75rem, 3.2vw, 2.35rem);
         padding-bottom: clamp(1.65rem, 3vw, 2.1rem);
         border-bottom: 1px solid var(--color-ledger);
       }
@@ -108,7 +109,7 @@
         min-width: 0;
       }
       .footer-col-heading {
-        margin: 0 0 clamp(0.65rem, 1.5vw, 0.9rem);
+        margin: 0 0 clamp(0.7rem, 1.45vw, 0.95rem);
         font-family: "neue-haas-grotesk-display", sans-serif;
         font-size: clamp(0.6875rem, 1.25vw, 0.75rem);
         font-weight: 700;
@@ -143,16 +144,14 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: clamp(1rem, 2.2vw, 1.35rem);
+        gap: clamp(0.85rem, 1.9vw, 1.15rem);
         width: 100%;
       }
       .affiliate-item {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.65rem;
+        display: block;
         min-width: 0;
-        padding: 0.2rem 0;
+        max-width: 100%;
+        padding: 0.3rem 0;
         text-decoration: none;
         color: inherit;
         border-radius: 6px;
@@ -170,41 +169,31 @@
         align-items: center;
         justify-content: flex-start;
         box-sizing: border-box;
-        flex: 0 0 auto;
-        width: 7.25rem;
-        height: 2.75rem;
+        width: 100%;
+        max-width: 11.75rem;
+        height: 2.5rem;
       }
       .affiliate-logo-img {
         display: block;
         width: auto;
         height: auto;
+        max-width: 100%;
         object-fit: contain;
         object-position: left center;
-        opacity: 0.58;
+        opacity: 0.62;
         transition: opacity 0.2s ease;
       }
       .affiliate-item--vdata .affiliate-logo-img {
-        max-width: min(4.9rem, 100%);
-        max-height: 2.35rem;
-        transform: scale(0.92);
+        max-height: 1.68rem;
+        transform: scale(0.96);
         transform-origin: left center;
       }
       .affiliate-item--adsell .affiliate-logo-img {
-        max-width: 100%;
-        max-height: 1.68rem;
-        transform: translateY(0.05rem);
+        max-height: 1.38rem;
+        transform: translateY(0.06rem);
       }
       .affiliate-item:hover .affiliate-logo-img {
-        opacity: 0.74;
-      }
-      .affiliate-name {
-        font-family: "skolar-latin", serif;
-        font-size: clamp(0.75rem, 1.4vw, 0.8125rem);
-        font-weight: 400;
-        line-height: 1.25;
-        letter-spacing: 0.02em;
-        color: var(--color-ocean);
-        opacity: 0.88;
+        opacity: 0.78;
       }
       .footer-contact {
         margin: 0;
@@ -213,7 +202,7 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.18rem;
+        gap: 0.2rem;
         font-family: "skolar-latin", serif;
         font-size: clamp(0.84375rem, 1.45vw, 0.90625rem);
         font-weight: 400;
@@ -318,15 +307,14 @@
           max-width: min(100%, 23rem);
         }
         .affiliate-logo-box {
-          width: 7.5rem;
-          height: 2.85rem;
+          max-width: 12.25rem;
+          height: 2.65rem;
         }
         .affiliate-item--vdata .affiliate-logo-img {
-          max-height: 2.42rem;
-          max-width: min(5rem, 100%);
+          max-height: 1.78rem;
         }
         .affiliate-item--adsell .affiliate-logo-img {
-          max-height: 1.72rem;
+          max-height: 1.48rem;
         }
       }
       @media (min-width: 900px) {
@@ -347,6 +335,16 @@
         .footer-brand-mark img {
           height: clamp(2.1rem, 2.5vw, 2.45rem);
           max-width: min(100%, 24rem);
+        }
+        .affiliate-logo-box {
+          max-width: 12.5rem;
+          height: 2.72rem;
+        }
+        .affiliate-item--vdata .affiliate-logo-img {
+          max-height: 1.85rem;
+        }
+        .affiliate-item--adsell .affiliate-logo-img {
+          max-height: 1.52rem;
         }
       }
     </style>
@@ -394,14 +392,13 @@
                   <span class="affiliate-logo-box">
                     <img
                       class="affiliate-logo-img"
-                      src="assets/branding/vdata-logo-v.svg"
+                      src="assets/branding/V-Data-wordimage.svg"
                       alt="Vision Data"
-                      width="120"
-                      height="87"
+                      width="320"
+                      height="54"
                       decoding="async"
                     />
                   </span>
-                  <span class="affiliate-name" aria-hidden="true">Vision Data</span>
                 </a>
                 <a
                   class="affiliate-item affiliate-item--adsell"
@@ -412,14 +409,13 @@
                   <span class="affiliate-logo-box">
                     <img
                       class="affiliate-logo-img"
-                      src="assets/branding/new_as_wordmark.svg"
+                      src="assets/branding/blue-as-full-wordmark%20copy.svg"
                       alt="AdSell.ai"
-                      width="176"
-                      height="44"
+                      width="200"
+                      height="42"
                       decoding="async"
                     />
                   </span>
-                  <span class="affiliate-name" aria-hidden="true">AdSell.ai</span>
                 </a>
               </div>
             </div>
@@ -430,8 +426,12 @@
                 <a class="footer-contact-line" href="mailto:info@dempsey.agency"
                   >info@dempsey.agency</a
                 >
+                <p class="footer-contact-line">(518) xxx-xxxx</p>
                 <p class="footer-contact-line">1377 Third Street</p>
                 <p class="footer-contact-line">Rensselaer, NY 12144</p>
+                <a class="footer-contact-line" href="https://dempsey.agency"
+                  >dempsey.agency</a
+                >
               </address>
             </div>
           </div>
