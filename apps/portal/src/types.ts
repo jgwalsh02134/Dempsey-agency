@@ -29,3 +29,33 @@ export interface LoginResponse {
   token: string;
   user: { id: string; email: string; name: string | null };
 }
+
+export interface Document {
+  id: string;
+  organizationId: string;
+  title: string;
+  description: string | null;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  uploadedById: string;
+  createdAt: string;
+  updatedAt: string;
+  uploadedBy?: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+}
+
+export interface OrgDocumentsResponse {
+  organizationId: string;
+  documents: Document[];
+}
+
+export interface DocumentDownloadResponse {
+  url: string;
+  filename: string;
+  mimeType: string;
+}

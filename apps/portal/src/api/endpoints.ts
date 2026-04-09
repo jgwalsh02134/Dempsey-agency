@@ -1,5 +1,10 @@
 import { apiFetch } from "./client";
-import type { LoginResponse, SessionUser } from "../types";
+import type {
+  DocumentDownloadResponse,
+  LoginResponse,
+  OrgDocumentsResponse,
+  SessionUser,
+} from "../types";
 
 export async function login(
   email: string,
@@ -14,4 +19,20 @@ export async function login(
 
 export async function fetchSession(): Promise<SessionUser> {
   return apiFetch<SessionUser>("/api/v1/auth/me");
+}
+
+export async function fetchOrgDocuments(
+  orgId: string,
+): Promise<OrgDocumentsResponse> {
+  return apiFetch<OrgDocumentsResponse>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/documents`,
+  );
+}
+
+export async function fetchDocumentDownloadUrl(
+  id: string,
+): Promise<DocumentDownloadResponse> {
+  return apiFetch<DocumentDownloadResponse>(
+    `/api/v1/documents/${encodeURIComponent(id)}/download`,
+  );
 }
