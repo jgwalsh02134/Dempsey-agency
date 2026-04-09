@@ -1,6 +1,6 @@
 import { apiFetch } from "./client";
 import type {
-  AccountRequest,
+  AccountRequestWithInvite,
   AccountRequestStatus,
   AccountRequestsResponse,
   Campaign,
@@ -234,9 +234,13 @@ export async function fetchAccountRequests(): Promise<AccountRequestsResponse> {
 
 export async function patchAccountRequest(
   id: string,
-  body: { status: AccountRequestStatus },
-): Promise<AccountRequest> {
-  return apiFetch<AccountRequest>(
+  body: {
+    status: AccountRequestStatus;
+    organizationId?: string;
+    role?: string;
+  },
+): Promise<AccountRequestWithInvite> {
+  return apiFetch<AccountRequestWithInvite>(
     `/api/v1/account-requests/${encodeURIComponent(id)}`,
     { method: "PATCH", body: JSON.stringify(body) },
   );

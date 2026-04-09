@@ -145,7 +145,7 @@ export function DashboardPage() {
       <main className="dashboard-main">
         <SessionPanel session={session} />
 
-        <AccountRequestsSection />
+        <AccountRequestsSection organizations={orgs} />
 
         <section className="card">
           <h2>Organization</h2>

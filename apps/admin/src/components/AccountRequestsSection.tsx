@@ -2,7 +2,24 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
-import type { AccountRequest, AccountRequestStatus } from "../types";
+import type {
+  AccountRequest,
+  AccountRequestStatus,
+  Organization,
+  Role,
+} from "../types";
+
+const CLIENT_ROLES: { value: Role; label: string }[] = [
+  { value: "CLIENT_USER", label: "Client User" },
+  { value: "CLIENT_ADMIN", label: "Client Admin" },
+];
+const AGENCY_ROLES: { value: Role; label: string }[] = [
+  { value: "STAFF", label: "Staff" },
+  { value: "AGENCY_ADMIN", label: "Agency Admin" },
+  { value: "AGENCY_OWNER", label: "Agency Owner" },
+];
+
+const SITE_BASE = "https://dempsey.agency";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -26,7 +43,16 @@ function errorMessage(e: unknown): string {
   return "Something went wrong";
 }
 
-export function AccountRequestsSection() {
+function rolesForOrg(org: Organization | undefined) {
+  if (!org) return CLIENT_ROLES;
+  return org.type === "AGENCY" ? AGENCY_ROLES : CLIENT_ROLES;
+}
+
+export function AccountRequestsSection({
+  organizations,
+}: {
+  organizations: Organization[];
+}) {
   const { session } = useAuth();
   const [requests, setRequests] = useState<AccountRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +60,14 @@ export function AccountRequestsSection() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  /* Approval panel state — tracks which pending row has the panel open */
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [approveOrgId, setApproveOrgId] = useState("");
+  const [approveRole, setApproveRole] = useState<Role>("CLIENT_USER");
+
+  /* Invite link to display after successful approval */
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -52,23 +86,72 @@ export function AccountRequestsSection() {
     void loadRequests();
   }, [loadRequests]);
 
-  async function onDecision(
-    req: AccountRequest,
-    status: AccountRequestStatus,
-  ) {
-    const verb = status === "APPROVED" ? "approve" : "reject";
+  function openApprovePanel(req: AccountRequest) {
+    setApprovingId(req.id);
+    setApproveOrgId(organizations[0]?.id ?? "");
+    setApproveRole("CLIENT_USER");
+    setActionError(null);
+    setActionSuccess(null);
+    setInviteUrl(null);
+  }
+
+  function closeApprovePanel() {
+    setApprovingId(null);
+  }
+
+  async function onApprove(req: AccountRequest) {
+    if (!approveOrgId) return;
+    setActionError(null);
+    setActionSuccess(null);
+    setInviteUrl(null);
+    setBusyId(req.id);
+    try {
+      const result = await api.patchAccountRequest(req.id, {
+        status: "APPROVED",
+        organizationId: approveOrgId,
+        role: approveRole,
+      });
+      const reviewedBy = session
+        ? { id: session.id, email: session.email, name: session.name }
+        : null;
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === req.id ? { ...r, ...result, reviewedBy } : r,
+        ),
+      );
+      setApprovingId(null);
+      if (result.invite?.token) {
+        const link = `${SITE_BASE}/activate-account.html?token=${result.invite.token}`;
+        setInviteUrl(link);
+        setActionSuccess(
+          `${req.name}'s request approved. Invite link generated (expires ${formatDate(result.invite.expiresAt)}).`,
+        );
+      } else {
+        setActionSuccess(`${req.name}'s request has been approved.`);
+      }
+    } catch (e) {
+      setActionError(errorMessage(e));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function onReject(req: AccountRequest) {
     if (
       !window.confirm(
-        `${verb.charAt(0).toUpperCase() + verb.slice(1)} request from ${req.name} (${req.email})?`,
+        `Reject request from ${req.name} (${req.email})?`,
       )
     ) {
       return;
     }
     setActionError(null);
     setActionSuccess(null);
+    setInviteUrl(null);
     setBusyId(req.id);
     try {
-      const updated = await api.patchAccountRequest(req.id, { status });
+      const updated = await api.patchAccountRequest(req.id, {
+        status: "REJECTED",
+      });
       const reviewedBy = session
         ? { id: session.id, email: session.email, name: session.name }
         : null;
@@ -77,9 +160,7 @@ export function AccountRequestsSection() {
           r.id === req.id ? { ...r, ...updated, reviewedBy } : r,
         ),
       );
-      setActionSuccess(
-        `${req.name}'s request has been ${status.toLowerCase()}.`,
-      );
+      setActionSuccess(`${req.name}'s request has been rejected.`);
     } catch (e) {
       setActionError(errorMessage(e));
     } finally {
@@ -87,6 +168,14 @@ export function AccountRequestsSection() {
     }
   }
 
+  function onCopyInvite() {
+    if (!inviteUrl) return;
+    navigator.clipboard.writeText(inviteUrl).catch(() => {});
+  }
+
+  const selectedApproveOrg = organizations.find(
+    (o) => o.id === approveOrgId,
+  );
   const pending = requests.filter((r) => r.status === "PENDING");
   const resolved = requests.filter((r) => r.status !== "PENDING");
 
@@ -109,6 +198,30 @@ export function AccountRequestsSection() {
         <p className="success" role="status">
           {actionSuccess}
         </p>
+      )}
+      {inviteUrl && (
+        <div
+          style={{
+            marginTop: "0.5rem",
+            padding: "0.65rem 0.75rem",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "6px",
+            fontSize: "0.85rem",
+            wordBreak: "break-all",
+          }}
+        >
+          <strong>Invite link:</strong>{" "}
+          <code>{inviteUrl}</code>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={onCopyInvite}
+            style={{ marginLeft: "0.75rem", fontSize: "0.8rem" }}
+          >
+            Copy
+          </button>
+        </div>
       )}
 
       {!loading && requests.length === 0 && !listError && (
@@ -141,24 +254,91 @@ export function AccountRequestsSection() {
                     <td>{r.email}</td>
                     <td>{r.company}</td>
                     <td>{formatDate(r.createdAt)}</td>
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <button
-                        type="button"
-                        className="btn primary"
-                        disabled={busyId === r.id}
-                        onClick={() => onDecision(r, "APPROVED")}
-                        style={{ marginRight: "0.5rem" }}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        className="btn danger ghost"
-                        disabled={busyId === r.id}
-                        onClick={() => onDecision(r, "REJECTED")}
-                      >
-                        Reject
-                      </button>
+                    <td>
+                      {approvingId === r.id ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "14rem" }}>
+                          <label className="field">
+                            <span>Organization</span>
+                            <select
+                              value={approveOrgId}
+                              onChange={(e) => {
+                                setApproveOrgId(e.target.value);
+                                const org = organizations.find(
+                                  (o) => o.id === e.target.value,
+                                );
+                                const roles = rolesForOrg(org);
+                                setApproveRole(roles[0].value);
+                              }}
+                            >
+                              {organizations.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                  {o.name} ({o.type})
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="field">
+                            <span>Role</span>
+                            <select
+                              value={approveRole}
+                              onChange={(e) =>
+                                setApproveRole(e.target.value as Role)
+                              }
+                            >
+                              {rolesForOrg(selectedApproveOrg).map(
+                                (opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ),
+                              )}
+                            </select>
+                          </label>
+                          <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <button
+                              type="button"
+                              className="btn primary"
+                              disabled={busyId === r.id || !approveOrgId}
+                              onClick={() => onApprove(r)}
+                            >
+                              {busyId === r.id
+                                ? "Approving…"
+                                : "Approve & Invite"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn ghost"
+                              disabled={busyId === r.id}
+                              onClick={closeApprovePanel}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ whiteSpace: "nowrap" }}>
+                          <button
+                            type="button"
+                            className="btn primary"
+                            disabled={
+                              busyId === r.id ||
+                              organizations.length === 0
+                            }
+                            onClick={() => openApprovePanel(r)}
+                            style={{ marginRight: "0.5rem" }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="btn danger ghost"
+                            disabled={busyId === r.id}
+                            onClick={() => onReject(r)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -9,6 +9,7 @@ import { campaignRoutes } from "./campaigns/index.js";
 import { invoiceRoutes } from "./invoices/index.js";
 import { submissionRoutes } from "./submissions/index.js";
 import { accountRequestRoutes } from "./account-requests/index.js";
+import { inviteRoutes } from "./invites/index.js";
 
 export async function v1Routes(app: FastifyInstance) {
   app.get("/", async () => ({ version: "v1", status: "ok" }));
@@ -23,4 +24,5 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(invoiceRoutes);
   await app.register(submissionRoutes);
   await app.register(accountRequestRoutes);
+  await app.register(inviteRoutes);
 }

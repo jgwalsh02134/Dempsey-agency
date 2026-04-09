@@ -13,4 +13,14 @@ export const requestIdParamsSchema = z.object({
 
 export const updateAccountRequestSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"]),
+  organizationId: z.string().min(1).optional(),
+  role: z
+    .enum([
+      "AGENCY_OWNER",
+      "AGENCY_ADMIN",
+      "STAFF",
+      "CLIENT_ADMIN",
+      "CLIENT_USER",
+    ])
+    .optional(),
 });

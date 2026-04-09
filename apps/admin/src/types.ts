@@ -186,3 +186,12 @@ export interface AccountRequest {
 export interface AccountRequestsResponse {
   requests: AccountRequest[];
 }
+
+export interface InviteStub {
+  token: string;
+  expiresAt: string;
+}
+
+export interface AccountRequestWithInvite extends AccountRequest {
+  invite?: InviteStub;
+}

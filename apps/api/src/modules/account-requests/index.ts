@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../plugins/auth.js";
 import { requireRole } from "../../lib/rbac.js";
@@ -6,6 +7,8 @@ import {
   requestIdParamsSchema,
   updateAccountRequestSchema,
 } from "./schemas.js";
+
+const INVITE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 export async function accountRequestRoutes(app: FastifyInstance) {
   // ── Submit a request (public — no auth) ───────────────────────
@@ -71,7 +74,8 @@ export async function accountRequestRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = requestIdParamsSchema.parse(request.params);
-      const { status } = updateAccountRequestSchema.parse(request.body);
+      const { status, organizationId, role } =
+        updateAccountRequestSchema.parse(request.body);
 
       const existing = await app.prisma.accountRequest.findUnique({
         where: { id },
@@ -84,6 +88,54 @@ export async function accountRequestRoutes(app: FastifyInstance) {
         return reply.code(400).send({
           error: `Request has already been ${existing.status.toLowerCase()}`,
         });
+      }
+
+      if (status === "APPROVED" && organizationId) {
+        const org = await app.prisma.organization.findUnique({
+          where: { id: organizationId },
+        });
+        if (!org) {
+          return reply
+            .code(404)
+            .send({ error: "Organization not found" });
+        }
+
+        const token = randomBytes(32).toString("base64url");
+        const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
+
+        const [updated, invite] = await app.prisma.$transaction(
+          async (tx) => {
+            const ar = await tx.accountRequest.update({
+              where: { id },
+              data: {
+                status,
+                reviewedById: request.currentUser!.id,
+              },
+            });
+
+            const inv = await tx.invite.create({
+              data: {
+                email: existing.email,
+                token,
+                organizationId,
+                role: role ?? "CLIENT_USER",
+                accountRequestId: id,
+                expiresAt,
+                createdById: request.currentUser!.id,
+              },
+            });
+
+            return [ar, inv] as const;
+          },
+        );
+
+        return {
+          ...updated,
+          invite: {
+            token: invite.token,
+            expiresAt: invite.expiresAt.toISOString(),
+          },
+        };
       }
 
       const updated = await app.prisma.accountRequest.update({

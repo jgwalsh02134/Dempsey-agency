@@ -73,6 +73,7 @@ model User {
   createdInvoices      Invoice[]
   submissions              CreativeSubmission[]
   reviewedAccountRequests  AccountRequest[]
+  createdInvites           Invite[]           @relation("InviteCreator")
 }
 
 model Organization {
@@ -89,6 +90,7 @@ model Organization {
   campaigns           Campaign[]
   invoices            Invoice[]
   submissions         CreativeSubmission[]
+  invites             Invite[]
 }
 
 model OrganizationMembership {
@@ -213,10 +215,31 @@ model AccountRequest {
   updatedAt    DateTime             @updatedAt
 
   reviewedBy User? @relation(fields: [reviewedById], references: [id])
+  invites    Invite[]
 
   @@index([status])
   @@index([createdAt])
   @@index([email])
+}
+
+model Invite {
+  id               String    @id @default(cuid())
+  email            String
+  token            String    @unique
+  organizationId   String
+  role             Role      @default(CLIENT_USER)
+  accountRequestId String?
+  expiresAt        DateTime
+  usedAt           DateTime?
+  createdById      String
+  createdAt        DateTime  @default(now())
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  createdBy      User            @relation("InviteCreator", fields: [createdById], references: [id])
+  accountRequest AccountRequest? @relation(fields: [accountRequestId], references: [id])
+
+  @@index([email])
+  @@index([expiresAt])
 }
 
 /// Append-only security audit trail (admin / membership actions).
