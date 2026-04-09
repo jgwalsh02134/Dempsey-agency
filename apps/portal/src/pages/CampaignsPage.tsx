@@ -10,7 +10,7 @@ export function CampaignsPage() {
       </section>
 
       <section className="section-block">
-        <h2 className="section-heading">What you'll see here</h2>
+        <h2 className="section-heading">Campaign Overview</h2>
         <ul className="report-list">
           <li className="report-item">
             <div className="report-info">
