@@ -100,6 +100,17 @@ export async function accountRequestRoutes(app: FastifyInstance) {
             .send({ error: "Organization not found" });
         }
 
+        const effectiveRole = role ?? "CLIENT_USER";
+        const clientRoles = ["CLIENT_ADMIN", "CLIENT_USER"];
+        const agencyRoles = ["AGENCY_OWNER", "AGENCY_ADMIN", "STAFF"];
+        const validRoles =
+          org.type === "CLIENT" ? clientRoles : agencyRoles;
+        if (!validRoles.includes(effectiveRole)) {
+          return reply.code(400).send({
+            error: `Role ${effectiveRole} is not valid for a ${org.type.toLowerCase()} organization`,
+          });
+        }
+
         const token = randomBytes(32).toString("base64url");
         const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
 
@@ -118,7 +129,7 @@ export async function accountRequestRoutes(app: FastifyInstance) {
                 email: existing.email,
                 token,
                 organizationId,
-                role: role ?? "CLIENT_USER",
+                role: effectiveRole,
                 accountRequestId: id,
                 expiresAt,
                 createdById: request.currentUser!.id,
