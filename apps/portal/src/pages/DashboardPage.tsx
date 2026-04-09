@@ -79,6 +79,40 @@ export function DashboardPage() {
             </section>
           )}
         </div>
+
+        <section className="section-status">
+          <h2 className="section-heading">Portal Status</h2>
+          <ul className="status-list">
+            <li className="status-item">
+              <span className="status-indicator status-active" />
+              <div className="status-content">
+                <span className="status-label">Portal access is active</span>
+                <span className="status-detail">
+                  Your account is authenticated and connected.
+                </span>
+              </div>
+            </li>
+            <li className="status-item">
+              <span className="status-indicator status-pending" />
+              <div className="status-content">
+                <span className="status-label">Campaign reporting</span>
+                <span className="status-detail">
+                  Placement data and performance reports are being connected.
+                </span>
+              </div>
+            </li>
+            <li className="status-item">
+              <span className="status-indicator status-pending" />
+              <div className="status-content">
+                <span className="status-label">Client tools</span>
+                <span className="status-detail">
+                  Document sharing, invoicing, and media plan review are in
+                  development.
+                </span>
+              </div>
+            </li>
+          </ul>
+        </section>
       </main>
     </div>
   );
