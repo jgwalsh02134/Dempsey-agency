@@ -33,9 +33,9 @@ export function DashboardPage() {
           </div>
           <div className="portal-header-right">
             <nav className="portal-nav" aria-label="Portal navigation">
-              <span className="portal-nav-link active" aria-current="page">
+              <a href="#" className="portal-nav-link active" aria-current="page">
                 Dashboard
-              </span>
+              </a>
             </nav>
             <button type="button" className="btn-sign-out" onClick={logout}>
               Sign out
