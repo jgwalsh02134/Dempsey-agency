@@ -4,42 +4,43 @@ export function CampaignsPage() {
       <section className="section-welcome">
         <h1 className="welcome-heading">Campaigns</h1>
         <p className="welcome-body">
-          Track your active and completed campaigns. Placement details,
-          performance data, and campaign reports will be available here.
+          Active and completed campaigns managed by your Dempsey Agency team
+          will appear here with placement details and performance data.
         </p>
       </section>
 
       <section className="section-block">
-        <h2 className="section-heading">Your Campaigns</h2>
+        <h2 className="section-heading">What you'll see here</h2>
         <ul className="report-list">
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">Q2 2026 — National Print</span>
+              <span className="report-name">Active Campaigns</span>
               <span className="report-description">
-                Full-page placements across regional and national publications.
+                Current placements across print, digital, and newsletter
+                channels with status and delivery progress.
               </span>
             </div>
-            <span className="report-badge badge-active">Active</span>
+            <span className="report-badge">Coming soon</span>
           </li>
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">
-                Q2 2026 — Digital &amp; Newsletter
-              </span>
+              <span className="report-name">Campaign History</span>
               <span className="report-description">
-                Display and sponsored content across premium digital publishers.
+                Completed campaigns with final performance summaries and
+                placement records.
               </span>
             </div>
-            <span className="report-badge badge-active">Active</span>
+            <span className="report-badge">Coming soon</span>
           </li>
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">Q1 2026 — Launch Campaign</span>
+              <span className="report-name">Placement Details</span>
               <span className="report-description">
-                Introductory media push across print and digital channels.
+                Publisher-level breakdown of where your media ran, when it
+                ran, and how it performed.
               </span>
             </div>
-            <span className="report-badge badge-completed">Completed</span>
+            <span className="report-badge">Coming soon</span>
           </li>
         </ul>
       </section>

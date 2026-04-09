@@ -4,40 +4,32 @@ export function BillingPage() {
       <section className="section-welcome">
         <h1 className="welcome-heading">Billing</h1>
         <p className="welcome-body">
-          View invoices and payment history for your account. Detailed billing
-          records will be available here as invoicing is connected.
+          Invoices and payment history for your account will be accessible
+          here as billing is connected to the portal.
         </p>
       </section>
 
       <section className="section-block">
-        <h2 className="section-heading">Invoices</h2>
+        <h2 className="section-heading">What you'll see here</h2>
         <ul className="report-list">
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">June 2026 — Media Services</span>
+              <span className="report-name">Invoices</span>
               <span className="report-description">
-                Monthly placement and management fees.
+                Monthly billing summaries for media placement and management
+                services.
               </span>
             </div>
-            <span className="report-badge badge-pending">Pending</span>
+            <span className="report-badge">Coming soon</span>
           </li>
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">May 2026 — Media Services</span>
+              <span className="report-name">Payment History</span>
               <span className="report-description">
-                Monthly placement and management fees.
+                Record of completed payments and outstanding balances.
               </span>
             </div>
-            <span className="report-badge badge-paid">Paid</span>
-          </li>
-          <li className="report-item">
-            <div className="report-info">
-              <span className="report-name">April 2026 — Media Services</span>
-              <span className="report-description">
-                Monthly placement and management fees.
-              </span>
-            </div>
-            <span className="report-badge badge-paid">Paid</span>
+            <span className="report-badge">Coming soon</span>
           </li>
         </ul>
       </section>
