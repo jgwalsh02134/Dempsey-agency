@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#10233F" />
     <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
     <style>
       :root {
@@ -23,55 +23,247 @@
         --bg: var(--color-canvas);
         --text: var(--color-midnight);
       }
+
       *,
       *::before,
       *::after {
         box-sizing: border-box;
       }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
         min-height: 100dvh;
         background: var(--bg);
         color: var(--text);
+        font-family: "skolar-latin", serif;
       }
+
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      a {
+        color: inherit;
+      }
+
       .page {
         min-height: 100vh;
         min-height: 100dvh;
         display: flex;
         flex-direction: column;
       }
-      .hero-wrap {
-        flex: 1;
+
+      .shell {
+        width: 100%;
+        max-width: 64rem;
+        margin-inline: auto;
+        padding-inline: clamp(1.25rem, 4vw, 2.25rem);
+      }
+
+      /* ── Skip link ── */
+      .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -3rem;
+        z-index: 1000;
+        padding: 0.75rem 1rem;
+        background: var(--color-midnight);
+        color: var(--color-canvas);
+        text-decoration: none;
+        border-radius: 0.375rem;
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: 0.875rem;
+      }
+      .skip-link:focus {
+        top: 1rem;
+      }
+
+      /* ── Shared font-family ── */
+      .site-header,
+      .section-label,
+      .section-heading,
+      .header-nav,
+      .header-login,
+      .btn-primary,
+      .btn-secondary,
+      .service-card h3 {
+        font-family: "neue-haas-grotesk-display", sans-serif;
+      }
+
+      /* ── Header ── */
+      .site-header {
+        border-bottom: 1px solid var(--color-ledger);
+        background: rgba(248, 250, 252, 0.96);
+      }
+      .header-inner {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 4.75rem;
+      }
+      .header-logo {
+        display: inline-flex;
+        align-items: center;
+        line-height: 0;
+        flex-shrink: 0;
+      }
+      .header-logo img {
+        width: auto;
+        height: 2rem;
+        object-fit: contain;
+      }
+      .header-nav {
+        display: none;
+        align-items: center;
+        gap: 1.25rem;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+      .header-nav a {
+        text-decoration: none;
+        color: var(--color-ocean);
+      }
+      .header-nav a:hover,
+      .header-nav a:focus-visible {
+        color: var(--color-midnight);
+      }
+
+      /* ── Shared button / login ── */
+      .header-login,
+      .btn-primary,
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        padding: clamp(2rem, 8vw, 4rem) clamp(1.5rem, 6vw, 2.5rem);
+        min-height: 2.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        transition: background-color 0.2s ease, color 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .header-login,
+      .btn-secondary {
+        border: 1px solid var(--color-ledger);
+        color: var(--color-midnight);
+        background: transparent;
+      }
+      .header-login:hover,
+      .btn-secondary:hover,
+      .header-login:focus-visible,
+      .btn-secondary:focus-visible {
+        border-color: var(--color-ocean);
+        color: var(--color-midnight);
+      }
+      .btn-primary {
+        background: var(--color-midnight);
+        color: var(--color-canvas);
+        border: 1px solid var(--color-midnight);
+      }
+      .btn-primary:hover,
+      .btn-primary:focus-visible {
+        background: var(--color-fir);
+        border-color: var(--color-fir);
+      }
+
+      /* ── Sections shared ── */
+      .hero,
+      .services,
+      .cta {
+        padding-block: clamp(3rem, 8vw, 5.5rem);
       }
       .hero {
-        width: 100%;
-        max-width: 36rem;
-        text-align: center;
+        padding-top: clamp(4rem, 10vw, 7rem);
       }
-      .logo {
-        display: block;
-        width: clamp(14.5rem, 48vw, 19.25rem);
-        max-width: min(92vw, 20rem);
-        height: auto;
-        margin: 0 auto clamp(2rem, 5.5vw, 2.75rem);
-        object-fit: contain;
-        object-position: center center;
-      }
-      .tagline {
-        margin: 0;
-        font-family: "skolar-latin", serif;
-        font-weight: 300;
-        font-size: clamp(0.8125rem, 2.2vw, 1rem);
-        letter-spacing: 0.36em;
+      .section-label {
+        margin: 0 0 0.875rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--color-ocean);
       }
-      /* ── Footer ── */
+      .section-heading {
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 0.98;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--color-midnight);
+        max-width: 12ch;
+      }
+      .section-body {
+        margin: 1.25rem 0 0;
+        max-width: 42rem;
+        font-size: clamp(1rem, 2vw, 1.125rem);
+        line-height: 1.7;
+        color: var(--color-ocean);
+      }
+      .hero-actions,
+      .cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.875rem;
+        margin-top: 1.75rem;
+      }
+
+      /* ── Services ── */
+      .services {
+        border-top: 1px solid var(--color-ledger);
+      }
+      .services-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      .service-card {
+        padding: 1.5rem;
+        border: 1px solid var(--color-ledger);
+        border-radius: 1rem;
+        background: #ffffff;
+      }
+      .service-card h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.125rem;
+        line-height: 1.25;
+        color: var(--color-midnight);
+      }
+      .service-card p {
+        margin: 0;
+        color: var(--color-ocean);
+        line-height: 1.65;
+      }
+
+      /* ── CTA ── */
+      .cta {
+        border-top: 1px solid var(--color-ledger);
+      }
+
+      /* ── Page sections: tablet ── */
+      @media (min-width: 768px) {
+        .header-nav {
+          display: inline-flex;
+        }
+        .services-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      /* ══════════════════════════════════════════
+         Footer — preserved from existing file
+         ══════════════════════════════════════════ */
       .site-footer {
         width: 100%;
         border-top: 1px solid var(--color-ledger);
@@ -276,7 +468,7 @@
         opacity: 0.44;
       }
 
-      /* ── Tablet (640–1023px) ── */
+      /* ── Footer: tablet (640–1023px) ── */
       @media (min-width: 640px) {
         .footer-upper {
           padding: clamp(1.75rem, 3.5vw, 2.25rem) clamp(1.25rem, 3.5vw, 2rem);
@@ -314,7 +506,7 @@
           text-align: right;
         }
       }
-      /* ── Desktop (≥1024px) ── */
+      /* ── Footer: desktop (≥1024px) ── */
       @media (min-width: 1024px) {
         .footer-upper {
           padding: 2.5rem clamp(2rem, 5vw, 3rem) 2.25rem;
@@ -335,20 +527,113 @@
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
     <div class="page">
-      <main class="hero-wrap">
-        <div class="hero">
-          <img
-            class="logo"
-            src="assets/branding/hor-lockup.svg"
-            alt="Dempsey Agency logo"
-            width="244"
-            height="67"
-            decoding="async"
-          />
-          <p class="tagline">Coming Soon</p>
+      <header class="site-header">
+        <div class="shell header-inner">
+          <a class="header-logo" href="/">
+            <img
+              src="assets/branding/hor-lockup.svg"
+              alt="Dempsey Agency"
+              decoding="async"
+            />
+          </a>
+
+          <nav class="header-nav" aria-label="Primary navigation">
+            <a href="#services">Services</a>
+            <a href="/contact">Contact</a>
+          </nav>
+
+          <a class="header-login" href="/login">Client Portal</a>
         </div>
+      </header>
+
+      <main id="main-content">
+        <section class="hero" aria-labelledby="hero-heading">
+          <div class="shell">
+            <p class="section-label">Full-Service Media Agency</p>
+            <h1 class="section-heading" id="hero-heading">
+              National reach. Local precision.
+            </h1>
+            <p class="section-body">
+              Dempsey Agency delivers strategic planning, premium placements, and
+              accountable execution for brands seeking trusted media
+              environments.
+            </p>
+            <div class="hero-actions">
+              <a class="btn-primary" href="/contact">Get in Touch</a>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="services"
+          id="services"
+          aria-labelledby="services-heading"
+        >
+          <div class="shell">
+            <p class="section-label">What We Do</p>
+            <h2 class="section-heading" id="services-heading">
+              Core Services
+            </h2>
+
+            <div class="services-grid">
+              <div class="service-card">
+                <h3>Strategic Media Planning &amp; Buying</h3>
+                <p>
+                  Multi-platform strategies engineered for scale, efficiency, and
+                  clearer campaign direction.
+                </p>
+              </div>
+
+              <div class="service-card">
+                <h3>Premium Omnichannel Placements</h3>
+                <p>
+                  Access to trusted publisher environments across print, digital
+                  editions, websites, and newsletters.
+                </p>
+              </div>
+
+              <div class="service-card">
+                <h3>Creative Strategy</h3>
+                <p>
+                  Campaign direction and messaging tailored for credible,
+                  high-trust media environments.
+                </p>
+              </div>
+
+              <div class="service-card">
+                <h3>Performance Analytics &amp; Optimization</h3>
+                <p>
+                  Transparent reporting and ongoing optimization guided by
+                  campaign performance and publisher data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="cta" aria-labelledby="cta-heading">
+          <div class="shell">
+            <p class="section-label">Let's Work Together</p>
+            <h2 class="section-heading" id="cta-heading">
+              Ready to put a stronger media strategy in motion?
+            </h2>
+            <p class="section-body">
+              Connect with Dempsey Agency to discuss campaign planning, placement
+              strategy, and next steps.
+            </p>
+            <div class="cta-actions">
+              <a class="btn-primary" href="mailto:info@dempsey.agency"
+                >Contact Us</a
+              >
+              <a class="btn-secondary" href="/login">Client Portal</a>
+            </div>
+          </div>
+        </section>
       </main>
+
       <footer class="site-footer">
         <div class="footer-upper">
           <div class="footer-shell">
@@ -366,6 +651,7 @@
                 <p>Rensselaer, NY 12144</p>
               </address>
             </div>
+
             <div class="footer-affiliates-col">
               <p class="footer-label">Affiliated companies</p>
               <div class="footer-affiliates">
@@ -381,6 +667,7 @@
                     decoding="async"
                   />
                 </a>
+
                 <a
                   class="footer-affiliate footer-affiliate--adsell"
                   href="https://adsell.ai/"
@@ -397,6 +684,7 @@
             </div>
           </div>
         </div>
+
         <div class="footer-lower">
           <div class="footer-shell">
             <nav class="footer-nav" aria-label="Footer navigation">
@@ -406,6 +694,7 @@
               <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="/contact">Contact</a>
             </nav>
+
             <div class="footer-legal-block">
               <p class="footer-copyright">
                 &copy; 2026 Dempsey Agency, LLC. All rights reserved.
