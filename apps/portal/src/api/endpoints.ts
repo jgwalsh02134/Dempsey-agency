@@ -4,6 +4,7 @@ import type {
   LoginResponse,
   OrgCampaignsResponse,
   OrgDocumentsResponse,
+  OrgInvoicesResponse,
   SessionUser,
 } from "../types";
 
@@ -43,5 +44,13 @@ export async function fetchOrgCampaigns(
 ): Promise<OrgCampaignsResponse> {
   return apiFetch<OrgCampaignsResponse>(
     `/api/v1/organizations/${encodeURIComponent(orgId)}/campaigns`,
+  );
+}
+
+export async function fetchOrgInvoices(
+  orgId: string,
+): Promise<OrgInvoicesResponse> {
+  return apiFetch<OrgInvoicesResponse>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/invoices`,
   );
 }

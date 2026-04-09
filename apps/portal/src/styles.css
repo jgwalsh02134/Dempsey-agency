@@ -694,6 +694,30 @@ a.portal-nav-link:focus-visible {
   cursor: not-allowed;
 }
 
+.badge-overdue {
+  color: #991b1b;
+  border-color: #fecaca;
+  background: #fef2f2;
+  opacity: 1;
+}
+
+/* ── Invoice metadata row ── */
+.invoice-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.25rem;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.75rem;
+  color: var(--color-ocean);
+}
+
+.invoice-amount {
+  font-weight: 600;
+  color: var(--color-midnight);
+}
+
 /* ── Campaign metadata row ── */
 .campaign-meta {
   display: flex;

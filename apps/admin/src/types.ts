@@ -104,3 +104,30 @@ export interface OrgCampaignsResponse {
   organizationId: string;
   campaigns: Campaign[];
 }
+
+export type InvoiceStatus = "PENDING" | "PAID" | "OVERDUE";
+
+export interface Invoice {
+  id: string;
+  organizationId: string;
+  title: string;
+  description: string | null;
+  amountCents: number;
+  currency: string;
+  status: InvoiceStatus;
+  invoiceDate: string;
+  dueDate: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+}
+
+export interface OrgInvoicesResponse {
+  organizationId: string;
+  invoices: Invoice[];
+}

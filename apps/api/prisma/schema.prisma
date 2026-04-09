@@ -26,6 +26,12 @@ enum CampaignStatus {
   COMPLETED
 }
 
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
 enum AuditAction {
   USER_CREATED
   ROLE_CHANGED
@@ -47,6 +53,7 @@ model User {
   auditLogsAsTarget    AuditLog[]             @relation("AuditTarget")
   uploadedDocuments    Document[]
   createdCampaigns     Campaign[]
+  createdInvoices      Invoice[]
 }
 
 model Organization {
@@ -61,6 +68,7 @@ model Organization {
   clientRelationships AgencyClientRelationship[] @relation("ClientOrg")
   documents           Document[]
   campaigns           Campaign[]
+  invoices            Invoice[]
 }
 
 model OrganizationMembership {
@@ -120,6 +128,26 @@ model Campaign {
   createdById    String
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  @@index([organizationId, status])
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  title          String
+  description    String?
+  amountCents    Int
+  currency       String        @default("USD")
+  status         InvoiceStatus @default(PENDING)
+  invoiceDate    DateTime
+  dueDate        DateTime?
+  createdById    String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
   createdBy    User         @relation(fields: [createdById], references: [id])

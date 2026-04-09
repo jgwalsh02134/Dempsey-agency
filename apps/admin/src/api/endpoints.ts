@@ -3,10 +3,13 @@ import type {
   Campaign,
   CampaignStatus,
   Document,
+  Invoice,
+  InvoiceStatus,
   LoginResponse,
   Organization,
   OrgCampaignsResponse,
   OrgDocumentsResponse,
+  OrgInvoicesResponse,
   OrgUsersResponse,
   SessionUser,
 } from "../types";
@@ -139,6 +142,48 @@ export async function patchCampaign(
 
 export async function deleteCampaign(id: string): Promise<void> {
   await apiFetch(`/api/v1/campaigns/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchOrgInvoices(
+  orgId: string,
+): Promise<OrgInvoicesResponse> {
+  return apiFetch<OrgInvoicesResponse>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/invoices`,
+  );
+}
+
+export async function createInvoice(
+  orgId: string,
+  body: {
+    title: string;
+    description?: string;
+    amountCents: number;
+    currency?: string;
+    status?: InvoiceStatus;
+    invoiceDate: string;
+    dueDate?: string;
+  },
+): Promise<Invoice> {
+  return apiFetch<Invoice>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/invoices`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+export async function patchInvoice(
+  id: string,
+  body: { status?: InvoiceStatus },
+): Promise<Invoice> {
+  return apiFetch<Invoice>(
+    `/api/v1/invoices/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
+export async function deleteInvoice(id: string): Promise<void> {
+  await apiFetch(`/api/v1/invoices/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
