@@ -86,25 +86,26 @@
 
       /* ── Upper: brand + contact | affiliates ── */
       .footer-upper {
-        padding: clamp(2rem, 4.5vw, 2.75rem) clamp(1.25rem, 4vw, 2.25rem)
-          clamp(1.75rem, 3.5vw, 2.25rem);
+        padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1.25rem, 4vw, 2.25rem);
       }
       .footer-upper > .footer-shell {
         display: flex;
         flex-direction: column;
-        gap: clamp(1.75rem, 3.5vw, 2.25rem);
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
       }
       .footer-brand-col {
         display: flex;
         flex-direction: column;
-        gap: clamp(0.85rem, 1.6vw, 1.1rem);
+        align-items: center;
+        gap: clamp(0.65rem, 1.4vw, 0.85rem);
       }
       .footer-logo {
         display: inline-flex;
         line-height: 0;
         border-radius: 4px;
         transition: opacity 0.2s ease;
-        align-self: flex-start;
       }
       .footer-logo:hover {
         opacity: 0.82;
@@ -156,8 +157,8 @@
       .footer-affiliates-col {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: clamp(0.75rem, 1.4vw, 1rem);
+        align-items: center;
+        gap: 0.75rem;
       }
       .footer-label {
         margin: 0;
@@ -172,8 +173,8 @@
       .footer-affiliates {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: clamp(0.75rem, 1.4vw, 1rem);
+        align-items: center;
+        gap: 0.75rem;
       }
       .footer-affiliate {
         display: inline-flex;
@@ -197,10 +198,10 @@
         object-fit: contain;
       }
       .footer-affiliate--vision img {
-        width: clamp(9.5rem, 19vw, 11rem);
+        width: 9rem;
       }
       .footer-affiliate--adsell img {
-        width: clamp(6rem, 12vw, 7rem);
+        width: 5.75rem;
       }
 
       /* ── Lower bar ── */
@@ -213,11 +214,14 @@
       .footer-lower > .footer-shell {
         display: flex;
         flex-direction: column;
+        align-items: center;
+        text-align: center;
         gap: clamp(0.5rem, 1vw, 0.65rem);
       }
       .footer-nav {
         display: flex;
         flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
         gap: 0;
         font-family: "skolar-latin", serif;
@@ -250,6 +254,7 @@
       .footer-legal-block {
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: 0.15rem;
       }
       .footer-copyright {
@@ -271,42 +276,60 @@
         opacity: 0.44;
       }
 
-      /* ── Tablet ── */
+      /* ── Tablet (640–1023px) ── */
       @media (min-width: 640px) {
+        .footer-upper {
+          padding: clamp(1.75rem, 3.5vw, 2.25rem) clamp(1.25rem, 3.5vw, 2rem);
+        }
         .footer-upper > .footer-shell {
           flex-direction: row;
           justify-content: space-between;
+          align-items: flex-start;
+          text-align: left;
+          gap: 2rem;
+        }
+        .footer-brand-col {
           align-items: flex-start;
         }
         .footer-affiliates-col {
           align-items: flex-end;
         }
+        .footer-affiliates {
+          align-items: flex-end;
+        }
+        .footer-affiliate--vision img {
+          width: 10rem;
+        }
+        .footer-affiliate--adsell img {
+          width: 6.25rem;
+        }
         .footer-lower > .footer-shell {
           flex-direction: row;
           justify-content: space-between;
           align-items: baseline;
+          text-align: left;
         }
         .footer-legal-block {
           align-items: flex-end;
           text-align: right;
         }
       }
-      /* ── Desktop ── */
-      @media (min-width: 900px) {
+      /* ── Desktop (≥1024px) ── */
+      @media (min-width: 1024px) {
         .footer-upper {
-          padding-inline: clamp(2rem, 5vw, 3rem);
+          padding: 2.5rem clamp(2rem, 5vw, 3rem) 2.25rem;
         }
         .footer-lower {
           padding-inline: clamp(2rem, 5vw, 3rem);
         }
         .footer-logo img {
-          height: clamp(1.65rem, 2vw, 1.9rem);
+          height: 1.85rem;
         }
         .footer-affiliate--vision img {
-          width: clamp(10.5rem, 13vw, 11.5rem);
+          width: 11rem;
         }
         .footer-affiliate--adsell img {
-          width: clamp(6.5rem, 8.5vw, 7.25rem);
+          width: 7rem;
         }
       }
     </style>
