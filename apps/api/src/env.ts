@@ -20,6 +20,9 @@ const envSchema = z.object({
   S3_ENDPOINT: z.string().url().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
+
+  /** OpenAI API key for AI-assisted features (creative review, etc.) */
+  OPENAI_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

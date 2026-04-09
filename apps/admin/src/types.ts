@@ -195,3 +195,8 @@ export interface InviteStub {
 export interface AccountRequestWithInvite extends AccountRequest {
   invite?: InviteStub;
 }
+
+export interface AICreativeReview {
+  summary: string;
+  suggestions: string[];
+}

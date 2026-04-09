@@ -8,6 +8,7 @@ import {
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type {
+  AICreativeReview,
   Campaign,
   CreativeSubmission,
   CreativeType,
@@ -65,6 +66,11 @@ export function CreativeSubmissionsSection({ orgId }: { orgId: string }) {
   /* ── action state ── */
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  /* ── AI review state ── */
+  const [reviews, setReviews] = useState<Record<string, AICreativeReview>>({});
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   /* ── load campaigns for org ── */
   useEffect(() => {
@@ -194,6 +200,19 @@ export function CreativeSubmissionsSection({ orgId }: { orgId: string }) {
     }
   }
 
+  async function onAIReview(sub: CreativeSubmission) {
+    setReviewError(null);
+    setReviewingId(sub.id);
+    try {
+      const review = await api.reviewCreative(sub.id);
+      setReviews((prev) => ({ ...prev, [sub.id]: review }));
+    } catch (err) {
+      setReviewError(errorMessage(err));
+    } finally {
+      setReviewingId(null);
+    }
+  }
+
   return (
     <section className="card">
       <h2>Creative Submissions</h2>
@@ -308,6 +327,11 @@ export function CreativeSubmissionsSection({ orgId }: { orgId: string }) {
               {actionError}
             </p>
           )}
+          {reviewError && (
+            <p className="error" role="alert">
+              {reviewError}
+            </p>
+          )}
           {!loading && subs.length === 0 && !listError && (
             <p className="muted">No submissions yet.</p>
           )}
@@ -336,6 +360,43 @@ export function CreativeSubmissionsSection({ orgId }: { orgId: string }) {
                           <span className="small warning">
                             Note: {s.reviewNote}
                           </span>
+                        )}
+                        {reviews[s.id] && (
+                          <div
+                            style={{
+                              marginTop: "0.5rem",
+                              padding: "0.5rem 0.625rem",
+                              background: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "6px",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            <div style={{ marginBottom: "0.375rem" }}>
+                              <strong style={{ color: "var(--primary)", fontSize: "0.7rem", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                                AI Review
+                              </strong>
+                            </div>
+                            <div style={{ color: "var(--text)", lineHeight: 1.5 }}>
+                              {reviews[s.id].summary}
+                            </div>
+                            {reviews[s.id].suggestions.length > 0 && (
+                              <ul
+                                style={{
+                                  margin: "0.375rem 0 0",
+                                  paddingLeft: "1.125rem",
+                                  color: "var(--muted)",
+                                  lineHeight: 1.6,
+                                }}
+                              >
+                                {reviews[s.id].suggestions.map(
+                                  (sug, i) => (
+                                    <li key={i}>{sug}</li>
+                                  ),
+                                )}
+                              </ul>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td>
@@ -375,7 +436,22 @@ export function CreativeSubmissionsSection({ orgId }: { orgId: string }) {
                           </span>
                         )}
                       </td>
-                      <td>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          disabled={
+                            busyId === s.id || reviewingId === s.id
+                          }
+                          onClick={() => onAIReview(s)}
+                          style={{ marginRight: "0.375rem" }}
+                        >
+                          {reviewingId === s.id
+                            ? "Reviewing…"
+                            : reviews[s.id]
+                              ? "Re-review"
+                              : "AI Review"}
+                        </button>
                         <button
                           type="button"
                           className="btn danger ghost"

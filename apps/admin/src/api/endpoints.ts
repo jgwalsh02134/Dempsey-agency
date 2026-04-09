@@ -3,6 +3,7 @@ import type {
   AccountRequestWithInvite,
   AccountRequestStatus,
   AccountRequestsResponse,
+  AICreativeReview,
   Campaign,
   CampaignStatus,
   CampaignSubmissionsResponse,
@@ -244,4 +245,13 @@ export async function patchAccountRequest(
     `/api/v1/account-requests/${encodeURIComponent(id)}`,
     { method: "PATCH", body: JSON.stringify(body) },
   );
+}
+
+export async function reviewCreative(
+  submissionId: string,
+): Promise<AICreativeReview> {
+  return apiFetch<AICreativeReview>("/api/v1/ai/review-creative", {
+    method: "POST",
+    body: JSON.stringify({ submissionId }),
+  });
 }

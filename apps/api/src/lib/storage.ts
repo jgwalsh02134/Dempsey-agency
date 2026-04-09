@@ -80,6 +80,23 @@ export async function deleteObject(key: string): Promise<void> {
   );
 }
 
+export async function getObjectBuffer(
+  key: string,
+): Promise<{ body: Buffer; contentType: string }> {
+  const res = await getClient().send(
+    new GetObjectCommand({ Bucket: bucket(), Key: key }),
+  );
+  const stream = res.Body as AsyncIterable<Uint8Array>;
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return {
+    body: Buffer.concat(chunks),
+    contentType: res.ContentType ?? "application/octet-stream",
+  };
+}
+
 export async function getSignedDownloadUrl(
   key: string,
   filename: string,
