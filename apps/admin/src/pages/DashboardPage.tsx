@@ -5,6 +5,7 @@ import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import { CreateUserForm } from "../components/CreateUserForm";
+import { AccountRequestsSection } from "../components/AccountRequestsSection";
 import { BillingSection } from "../components/BillingSection";
 import { CampaignsSection } from "../components/CampaignsSection";
 import { CreativeSubmissionsSection } from "../components/CreativeSubmissionsSection";
@@ -143,6 +144,8 @@ export function DashboardPage() {
 
       <main className="dashboard-main">
         <SessionPanel session={session} />
+
+        <AccountRequestsSection />
 
         <section className="card">
           <h2>Organization</h2>

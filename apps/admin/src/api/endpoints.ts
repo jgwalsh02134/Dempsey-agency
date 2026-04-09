@@ -1,5 +1,8 @@
 import { apiFetch } from "./client";
 import type {
+  AccountRequest,
+  AccountRequestStatus,
+  AccountRequestsResponse,
   Campaign,
   CampaignStatus,
   CampaignSubmissionsResponse,
@@ -223,4 +226,18 @@ export async function deleteSubmission(id: string): Promise<void> {
   await apiFetch(`/api/v1/submissions/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+export async function fetchAccountRequests(): Promise<AccountRequestsResponse> {
+  return apiFetch<AccountRequestsResponse>("/api/v1/account-requests");
+}
+
+export async function patchAccountRequest(
+  id: string,
+  body: { status: AccountRequestStatus },
+): Promise<AccountRequest> {
+  return apiFetch<AccountRequest>(
+    `/api/v1/account-requests/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
 }

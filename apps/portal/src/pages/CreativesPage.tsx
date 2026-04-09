@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
@@ -48,6 +48,7 @@ export function CreativesPage() {
   /* ── campaign state ── */
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campsLoading, setCampsLoading] = useState(true);
+  const [campsError, setCampsError] = useState<string | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
 
   /* ── submissions state ── */
@@ -64,15 +65,18 @@ export function CreativesPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const successTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   /* ── download state ── */
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   /* ── load campaigns when org changes ── */
   useEffect(() => {
     if (!selectedOrgId) return;
     let cancelled = false;
     setCampsLoading(true);
+    setCampsError(null);
     setCampaigns([]);
     setSelectedCampaignId("");
     api
@@ -82,8 +86,13 @@ export function CreativesPage() {
         setCampaigns(res.campaigns);
         setSelectedCampaignId(res.campaigns[0]?.id ?? "");
       })
-      .catch(() => {
-        if (!cancelled) setCampaigns([]);
+      .catch((e) => {
+        if (!cancelled)
+          setCampsError(
+            e instanceof ApiError
+              ? e.message
+              : "Failed to load campaigns",
+          );
       })
       .finally(() => {
         if (!cancelled) setCampsLoading(false);
@@ -124,39 +133,57 @@ export function CreativesPage() {
     };
   }, [selectedCampaignId]);
 
+  /* ── clear success timer on unmount ── */
+  useEffect(() => {
+    return () => {
+      if (successTimer.current) clearTimeout(successTimer.current);
+    };
+  }, []);
+
   /* ── upload handler ── */
-  async function onUpload(e: FormEvent) {
-    e.preventDefault();
-    if (!file || !selectedCampaignId) return;
-    setUploadError(null);
-    setUploadSuccess(null);
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("title", title.trim());
-      if (description.trim()) fd.append("description", description.trim());
-      fd.append("creativeType", creativeType);
-      fd.append("file", file);
-      await api.uploadSubmission(selectedCampaignId, fd);
-      setUploadSuccess(`"${title.trim()}" submitted.`);
-      setTitle("");
-      setDescription("");
-      setFile(null);
-      if (fileRef.current) fileRef.current.value = "";
-      const res = await api.fetchCampaignSubmissions(selectedCampaignId);
-      setSubs(res.submissions);
-    } catch (err) {
-      setUploadError(
-        err instanceof ApiError ? err.message : "Upload failed",
-      );
-    } finally {
-      setUploading(false);
-    }
-  }
+  const onUpload = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      if (!file || !selectedCampaignId) return;
+      setUploadError(null);
+      setUploadSuccess(null);
+      if (successTimer.current) clearTimeout(successTimer.current);
+      setUploading(true);
+      try {
+        const fd = new FormData();
+        fd.append("title", title.trim());
+        if (description.trim())
+          fd.append("description", description.trim());
+        fd.append("creativeType", creativeType);
+        fd.append("file", file);
+        await api.uploadSubmission(selectedCampaignId, fd);
+        setUploadSuccess(`"${title.trim()}" submitted successfully.`);
+        setTitle("");
+        setDescription("");
+        setCreativeType("DIGITAL");
+        setFile(null);
+        if (fileRef.current) fileRef.current.value = "";
+        successTimer.current = setTimeout(
+          () => setUploadSuccess(null),
+          5000,
+        );
+        const res = await api.fetchCampaignSubmissions(selectedCampaignId);
+        setSubs(res.submissions);
+      } catch (err) {
+        setUploadError(
+          err instanceof ApiError ? err.message : "Upload failed",
+        );
+      } finally {
+        setUploading(false);
+      }
+    },
+    [file, selectedCampaignId, title, description, creativeType],
+  );
 
   /* ── download handler ── */
   async function download(sub: CreativeSubmission) {
     setDownloadingId(sub.id);
+    setDownloadError(null);
     try {
       const { url } = await api.fetchSubmissionDownloadUrl(sub.id);
       const a = document.createElement("a");
@@ -166,8 +193,10 @@ export function CreativesPage() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch {
-      /* download errors are non-critical */
+    } catch (err) {
+      setDownloadError(
+        err instanceof ApiError ? err.message : "Download failed",
+      );
     } finally {
       setDownloadingId(null);
     }
@@ -213,7 +242,13 @@ export function CreativesPage() {
           <p className="text-muted">Loading campaigns…</p>
         )}
 
-        {!campsLoading && campaigns.length === 0 && (
+        {campsError && (
+          <p className="form-error" role="alert">
+            {campsError}
+          </p>
+        )}
+
+        {!campsLoading && !campsError && campaigns.length === 0 && (
           <p className="text-muted">
             No campaigns are available for this organization yet. Creative
             submissions become available after a campaign has been set up.
@@ -258,6 +293,7 @@ export function CreativesPage() {
                 required
                 maxLength={255}
                 placeholder="e.g. Homepage Banner — 728x90"
+                disabled={uploading}
               />
             </div>
             <div className="field">
@@ -268,6 +304,7 @@ export function CreativesPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={1000}
                 placeholder="Notes about this creative"
+                disabled={uploading}
               />
             </div>
             <div className="field">
@@ -279,6 +316,7 @@ export function CreativesPage() {
                 onChange={(e) =>
                   setCreativeType(e.target.value as CreativeType)
                 }
+                disabled={uploading}
               >
                 {CREATIVE_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -296,6 +334,7 @@ export function CreativesPage() {
                 accept=".pdf,.png,.jpg,.jpeg,.gif"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 required
+                disabled={uploading}
               />
             </div>
             {uploadError && (
@@ -304,7 +343,9 @@ export function CreativesPage() {
               </p>
             )}
             {uploadSuccess && (
-              <p className="text-muted">{uploadSuccess}</p>
+              <p className="form-success" role="status">
+                {uploadSuccess}
+              </p>
             )}
             <button
               type="submit"
@@ -333,6 +374,12 @@ export function CreativesPage() {
             </p>
           )}
 
+          {downloadError && (
+            <p className="form-error" role="alert">
+              {downloadError}
+            </p>
+          )}
+
           {!loading && !error && subs.length === 0 && (
             <p className="text-muted">
               No creatives have been submitted for this campaign yet.
@@ -351,9 +398,7 @@ export function CreativesPage() {
                       </span>
                     )}
                     {s.reviewNote && (
-                      <span className="report-description">
-                        <strong>Review note:</strong> {s.reviewNote}
-                      </span>
+                      <div className="review-note">{s.reviewNote}</div>
                     )}
                     <div className="submission-meta">
                       <span className="doc-type-badge">

@@ -163,3 +163,26 @@ export interface CampaignSubmissionsResponse {
   campaignId: string;
   submissions: CreativeSubmission[];
 }
+
+export type AccountRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface AccountRequest {
+  id: string;
+  email: string;
+  name: string;
+  company: string;
+  message: string | null;
+  status: AccountRequestStatus;
+  reviewedById: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reviewedBy?: {
+    id: string;
+    email: string;
+    name: string | null;
+  } | null;
+}
+
+export interface AccountRequestsResponse {
+  requests: AccountRequest[];
+}

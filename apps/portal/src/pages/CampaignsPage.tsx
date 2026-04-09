@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
@@ -126,7 +127,11 @@ export function CampaignsPage() {
           <ul className="report-list">
             {campaigns.map((c) => (
               <li key={c.id} className="report-item">
-                <div className="report-info">
+                <Link
+                  to={`/campaigns/${c.id}`}
+                  state={{ campaign: c }}
+                  className="report-info campaign-link"
+                >
                   <span className="report-name">{c.title}</span>
                   {c.description && (
                     <span className="report-description">
@@ -136,7 +141,7 @@ export function CampaignsPage() {
                   <div className="campaign-meta">
                     <span>{dateRange(c.startDate, c.endDate)}</span>
                   </div>
-                </div>
+                </Link>
                 <span className={STATUS_BADGE[c.status]}>
                   {STATUS_LABEL[c.status]}
                 </span>

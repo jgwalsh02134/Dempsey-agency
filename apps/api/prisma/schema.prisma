@@ -43,6 +43,12 @@ enum SubmissionStatus {
   REVISION_REQUESTED
 }
 
+enum AccountRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum AuditAction {
   USER_CREATED
   ROLE_CHANGED
@@ -65,7 +71,8 @@ model User {
   uploadedDocuments    Document[]
   createdCampaigns     Campaign[]
   createdInvoices      Invoice[]
-  submissions          CreativeSubmission[]
+  submissions              CreativeSubmission[]
+  reviewedAccountRequests  AccountRequest[]
 }
 
 model Organization {
@@ -192,6 +199,23 @@ model CreativeSubmission {
 
   @@index([campaignId, status])
   @@index([organizationId])
+}
+
+model AccountRequest {
+  id           String               @id @default(cuid())
+  email        String
+  name         String
+  company      String
+  message      String?
+  status       AccountRequestStatus @default(PENDING)
+  reviewedById String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  reviewedBy User? @relation(fields: [reviewedById], references: [id])
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 /// Append-only security audit trail (admin / membership actions).
