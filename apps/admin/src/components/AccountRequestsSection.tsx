@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { useAuth } from "../auth/AuthContext";
 import type { AccountRequest, AccountRequestStatus } from "../types";
 
 function formatDate(iso: string): string {
@@ -26,11 +27,13 @@ function errorMessage(e: unknown): string {
 }
 
 export function AccountRequestsSection() {
+  const { session } = useAuth();
   const [requests, setRequests] = useState<AccountRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const loadRequests = useCallback(async () => {
     setLoading(true);
@@ -62,11 +65,20 @@ export function AccountRequestsSection() {
       return;
     }
     setActionError(null);
+    setActionSuccess(null);
     setBusyId(req.id);
     try {
       const updated = await api.patchAccountRequest(req.id, { status });
+      const reviewedBy = session
+        ? { id: session.id, email: session.email, name: session.name }
+        : null;
       setRequests((prev) =>
-        prev.map((r) => (r.id === req.id ? { ...r, ...updated } : r)),
+        prev.map((r) =>
+          r.id === req.id ? { ...r, ...updated, reviewedBy } : r,
+        ),
+      );
+      setActionSuccess(
+        `${req.name}'s request has been ${status.toLowerCase()}.`,
       );
     } catch (e) {
       setActionError(errorMessage(e));
@@ -93,6 +105,11 @@ export function AccountRequestsSection() {
           {actionError}
         </p>
       )}
+      {actionSuccess && (
+        <p className="success" role="status">
+          {actionSuccess}
+        </p>
+      )}
 
       {!loading && requests.length === 0 && !listError && (
         <p className="muted">No account requests yet.</p>
@@ -100,9 +117,7 @@ export function AccountRequestsSection() {
 
       {!loading && pending.length > 0 && (
         <>
-          <h3 className="h3-spaced">
-            Pending ({pending.length})
-          </h3>
+          <h3 className="h3-spaced">Pending ({pending.length})</h3>
           <div className="table-wrap">
             <table className="data-table">
               <thead>
@@ -164,13 +179,19 @@ export function AccountRequestsSection() {
                   <th>Email</th>
                   <th>Company</th>
                   <th>Status</th>
-                  <th>Reviewed</th>
+                  <th>Received</th>
+                  <th>Reviewed by</th>
                 </tr>
               </thead>
               <tbody>
                 {resolved.map((r) => (
                   <tr key={r.id}>
-                    <td>{r.name}</td>
+                    <td>
+                      <div>{r.name}</div>
+                      {r.message && (
+                        <span className="small">{r.message}</span>
+                      )}
+                    </td>
                     <td>{r.email}</td>
                     <td>{r.company}</td>
                     <td>
@@ -178,6 +199,7 @@ export function AccountRequestsSection() {
                         {r.status}
                       </span>
                     </td>
+                    <td>{formatDate(r.createdAt)}</td>
                     <td>
                       {r.reviewedBy && (
                         <span className="small">
