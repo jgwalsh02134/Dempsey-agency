@@ -373,6 +373,10 @@
         var API_BASE_URL = "https://api.dempsey.agency";
         var LOGIN_URL = API_BASE_URL + "/api/v1/auth/login";
         var TOKEN_KEY = "dempsey_portal_jwt";
+        var PORTAL_URL =
+          location.hostname === "localhost"
+            ? "http://localhost:5174"
+            : "https://portal.dempsey.agency";
 
         var form = document.getElementById("login-form");
         var emailInput = document.getElementById("email");
@@ -425,8 +429,11 @@
               } catch (_) {}
               submitBtn.textContent = "Signed in";
               successEl.textContent =
-                "Sign-in successful. Portal destination will be available soon.";
+                "Sign-in successful. Redirecting to portal\u2026";
               successEl.hidden = false;
+              setTimeout(function () {
+                window.location.href = PORTAL_URL;
+              }, 600);
             })
             .catch(function (err) {
               var msg =
