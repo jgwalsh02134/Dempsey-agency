@@ -1,11 +1,14 @@
 import { apiFetch } from "./client";
 import type {
+  CampaignSubmissionsResponse,
+  CreativeSubmission,
   DocumentDownloadResponse,
   LoginResponse,
   OrgCampaignsResponse,
   OrgDocumentsResponse,
   OrgInvoicesResponse,
   SessionUser,
+  SubmissionDownloadResponse,
 } from "../types";
 
 export async function login(
@@ -52,5 +55,31 @@ export async function fetchOrgInvoices(
 ): Promise<OrgInvoicesResponse> {
   return apiFetch<OrgInvoicesResponse>(
     `/api/v1/organizations/${encodeURIComponent(orgId)}/invoices`,
+  );
+}
+
+export async function fetchCampaignSubmissions(
+  campaignId: string,
+): Promise<CampaignSubmissionsResponse> {
+  return apiFetch<CampaignSubmissionsResponse>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/submissions`,
+  );
+}
+
+export async function uploadSubmission(
+  campaignId: string,
+  data: FormData,
+): Promise<CreativeSubmission> {
+  return apiFetch<CreativeSubmission>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/submissions`,
+    { method: "POST", body: data },
+  );
+}
+
+export async function fetchSubmissionDownloadUrl(
+  id: string,
+): Promise<SubmissionDownloadResponse> {
+  return apiFetch<SubmissionDownloadResponse>(
+    `/api/v1/submissions/${encodeURIComponent(id)}/download`,
   );
 }

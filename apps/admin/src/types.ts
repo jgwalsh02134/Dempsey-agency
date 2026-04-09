@@ -131,3 +131,35 @@ export interface OrgInvoicesResponse {
   organizationId: string;
   invoices: Invoice[];
 }
+
+export type CreativeType = "PRINT" | "DIGITAL";
+
+export type SubmissionStatus = "SUBMITTED" | "APPROVED" | "REVISION_REQUESTED";
+
+export interface CreativeSubmission {
+  id: string;
+  campaignId: string;
+  organizationId: string;
+  title: string;
+  description: string | null;
+  creativeType: CreativeType;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  status: SubmissionStatus;
+  reviewNote: string | null;
+  submittedById: string;
+  createdAt: string;
+  updatedAt: string;
+  submittedBy?: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+}
+
+export interface CampaignSubmissionsResponse {
+  campaignId: string;
+  submissions: CreativeSubmission[];
+}

@@ -4,6 +4,7 @@ import { useAuth } from "./auth/AuthContext";
 import { PortalLayout } from "./components/PortalLayout";
 import { BillingPage } from "./pages/BillingPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
+import { CreativesPage } from "./pages/CreativesPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -42,6 +43,7 @@ export function App() {
         <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="billing" element={<BillingPage />} />
+        <Route path="creatives" element={<CreativesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

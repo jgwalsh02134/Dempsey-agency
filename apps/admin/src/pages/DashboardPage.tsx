@@ -7,6 +7,7 @@ import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import { CreateUserForm } from "../components/CreateUserForm";
 import { BillingSection } from "../components/BillingSection";
 import { CampaignsSection } from "../components/CampaignsSection";
+import { CreativeSubmissionsSection } from "../components/CreativeSubmissionsSection";
 import { DocumentsSection } from "../components/DocumentsSection";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import { SessionPanel } from "../components/SessionPanel";
@@ -194,6 +195,10 @@ export function DashboardPage() {
 
         {selectedOrg && (
           <BillingSection key={`billing-${selectedOrgId}`} orgId={selectedOrgId} />
+        )}
+
+        {selectedOrg && (
+          <CreativeSubmissionsSection key={`creatives-${selectedOrgId}`} orgId={selectedOrgId} />
         )}
 
         <div className="two-col">

@@ -32,6 +32,17 @@ enum InvoiceStatus {
   OVERDUE
 }
 
+enum CreativeType {
+  PRINT
+  DIGITAL
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  APPROVED
+  REVISION_REQUESTED
+}
+
 enum AuditAction {
   USER_CREATED
   ROLE_CHANGED
@@ -54,6 +65,7 @@ model User {
   uploadedDocuments    Document[]
   createdCampaigns     Campaign[]
   createdInvoices      Invoice[]
+  submissions          CreativeSubmission[]
 }
 
 model Organization {
@@ -69,6 +81,7 @@ model Organization {
   documents           Document[]
   campaigns           Campaign[]
   invoices            Invoice[]
+  submissions         CreativeSubmission[]
 }
 
 model OrganizationMembership {
@@ -131,6 +144,7 @@ model Campaign {
 
   organization Organization @relation(fields: [organizationId], references: [id])
   createdBy    User         @relation(fields: [createdById], references: [id])
+  submissions  CreativeSubmission[]
 
   @@index([organizationId, status])
 }
@@ -153,6 +167,31 @@ model Invoice {
   createdBy    User         @relation(fields: [createdById], references: [id])
 
   @@index([organizationId, status])
+}
+
+model CreativeSubmission {
+  id             String           @id @default(cuid())
+  campaignId     String
+  organizationId String
+  title          String
+  description    String?
+  creativeType   CreativeType
+  filename       String
+  mimeType       String
+  sizeBytes      Int
+  storageKey     String
+  status         SubmissionStatus @default(SUBMITTED)
+  reviewNote     String?
+  submittedById  String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  campaign     Campaign     @relation(fields: [campaignId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  submittedBy  User         @relation(fields: [submittedById], references: [id])
+
+  @@index([campaignId, status])
+  @@index([organizationId])
 }
 
 /// Append-only security audit trail (admin / membership actions).

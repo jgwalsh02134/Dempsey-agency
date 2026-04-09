@@ -2,6 +2,8 @@ import { apiFetch } from "./client";
 import type {
   Campaign,
   CampaignStatus,
+  CampaignSubmissionsResponse,
+  CreativeSubmission,
   Document,
   Invoice,
   InvoiceStatus,
@@ -12,6 +14,7 @@ import type {
   OrgInvoicesResponse,
   OrgUsersResponse,
   SessionUser,
+  SubmissionStatus,
 } from "../types";
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -184,6 +187,40 @@ export async function patchInvoice(
 
 export async function deleteInvoice(id: string): Promise<void> {
   await apiFetch(`/api/v1/invoices/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchCampaignSubmissions(
+  campaignId: string,
+): Promise<CampaignSubmissionsResponse> {
+  return apiFetch<CampaignSubmissionsResponse>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/submissions`,
+  );
+}
+
+export async function uploadSubmission(
+  campaignId: string,
+  data: FormData,
+): Promise<CreativeSubmission> {
+  return apiFetch<CreativeSubmission>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/submissions`,
+    { method: "POST", body: data },
+  );
+}
+
+export async function patchSubmission(
+  id: string,
+  body: { status?: SubmissionStatus; reviewNote?: string | null },
+): Promise<CreativeSubmission> {
+  return apiFetch<CreativeSubmission>(
+    `/api/v1/submissions/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
+export async function deleteSubmission(id: string): Promise<void> {
+  await apiFetch(`/api/v1/submissions/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
