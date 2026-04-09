@@ -215,7 +215,8 @@ export function CreativesPage() {
 
         {!campsLoading && campaigns.length === 0 && (
           <p className="text-muted">
-            No campaigns are available for this organization yet.
+            No campaigns are available for this organization yet. Creative
+            submissions become available after a campaign has been set up.
           </p>
         )}
 
