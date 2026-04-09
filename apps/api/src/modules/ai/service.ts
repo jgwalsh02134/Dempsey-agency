@@ -19,7 +19,9 @@ export interface CreativeReview {
 }
 
 const IMAGE_MIMES = new Set(["image/png", "image/jpeg", "image/gif"]);
-const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+/** Max object size downloaded from storage for AI review (matches vision payload cap). */
+export const MAX_AI_REVIEW_DOWNLOAD_BYTES = 20 * 1024 * 1024;
+const MAX_IMAGE_BYTES = MAX_AI_REVIEW_DOWNLOAD_BYTES;
 
 const SYSTEM_PROMPT = `You are a senior creative director at a media advertising agency. You review creative assets submitted for advertising campaigns.
 
