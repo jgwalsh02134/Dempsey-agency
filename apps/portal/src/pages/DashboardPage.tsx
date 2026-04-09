@@ -38,43 +38,47 @@ export function DashboardPage() {
       </header>
 
       <main className="portal-main">
-        <section className="welcome-card">
+        <section className="section-welcome">
           <h1 className="welcome-heading">Welcome, {displayName}</h1>
           <p className="welcome-body">
-            Your portal dashboard is being built. Campaign reports, placement
-            details, and account tools will appear here.
+            Campaign reports, placement details, and account tools will appear
+            here as your portal is built out.
           </p>
         </section>
 
-        <section className="session-card">
-          <h2 className="card-heading">Account</h2>
-          <dl className="detail-list">
-            <div className="detail-row">
-              <dt>Email</dt>
-              <dd>{session.email}</dd>
-            </div>
-            {session.name && (
+        <div className="section-grid">
+          <section className="section-block">
+            <h2 className="section-heading">Account</h2>
+            <dl className="detail-list">
               <div className="detail-row">
-                <dt>Name</dt>
-                <dd>{session.name}</dd>
+                <dt>Email</dt>
+                <dd>{session.email}</dd>
               </div>
-            )}
-          </dl>
+              {session.name && (
+                <div className="detail-row">
+                  <dt>Name</dt>
+                  <dd>{session.name}</dd>
+                </div>
+              )}
+            </dl>
+          </section>
 
           {session.memberships.length > 0 && (
-            <>
-              <h3 className="card-subheading">Organizations</h3>
+            <section className="section-block">
+              <h2 className="section-heading">Organizations</h2>
               <ul className="org-list">
                 {session.memberships.map((m) => (
                   <li key={m.id} className="org-item">
                     <span className="org-name">{m.organization.name}</span>
-                    <span className="org-role">{m.role.replace(/_/g, " ")}</span>
+                    <span className="org-role">
+                      {m.role.replace(/_/g, " ")}
+                    </span>
                   </li>
                 ))}
               </ul>
-            </>
+            </section>
           )}
-        </section>
+        </div>
       </main>
     </div>
   );
