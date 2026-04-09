@@ -220,6 +220,26 @@
         color: var(--color-midnight);
       }
 
+      /* ── Status messages ── */
+      .login-error,
+      .login-success {
+        margin: 0;
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+      }
+      .login-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+      }
+      .login-success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+      }
+
       /* ── Submit ── */
       .login-submit {
         display: flex;
@@ -249,6 +269,10 @@
         outline-offset: 2px;
         background: var(--color-fir);
         border-color: var(--color-fir);
+      }
+      .login-submit:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
       }
 
       /* ── Module footer ── */
@@ -295,7 +319,7 @@
           Secure access for Dempsey Agency clients.
         </p>
 
-        <form class="login-form" method="post">
+        <form id="login-form" class="login-form" method="post">
           <div class="form-field">
             <label for="email">Email</label>
             <input
@@ -332,6 +356,9 @@
             <a class="forgot-link" href="/contact">Need help signing in?</a>
           </div>
 
+          <p id="login-error" class="login-error" role="alert" hidden></p>
+          <p id="login-success" class="login-success" hidden></p>
+
           <button type="submit" class="login-submit">Sign In</button>
         </form>
 
@@ -342,13 +369,78 @@
     </main>
 
     <script>
-      document.querySelector(".password-toggle").addEventListener("click", function () {
-        var input = document.getElementById("password");
-        var visible = input.type === "text";
-        input.type = visible ? "password" : "text";
-        this.textContent = visible ? "Show" : "Hide";
-        this.setAttribute("aria-label", visible ? "Show password" : "Hide password");
-      });
+      (function () {
+        var API_BASE_URL = "https://api.dempsey.agency";
+        var LOGIN_URL = API_BASE_URL + "/api/v1/auth/login";
+        var TOKEN_KEY = "dempsey_portal_jwt";
+
+        var form = document.getElementById("login-form");
+        var emailInput = document.getElementById("email");
+        var passwordInput = document.getElementById("password");
+        var submitBtn = form.querySelector(".login-submit");
+        var errorEl = document.getElementById("login-error");
+        var successEl = document.getElementById("login-success");
+        var toggle = document.querySelector(".password-toggle");
+
+        toggle.addEventListener("click", function () {
+          var visible = passwordInput.type === "text";
+          passwordInput.type = visible ? "password" : "text";
+          this.textContent = visible ? "Show" : "Hide";
+          this.setAttribute(
+            "aria-label",
+            visible ? "Show password" : "Hide password"
+          );
+        });
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          errorEl.hidden = true;
+          successEl.hidden = true;
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Signing in\u2026";
+
+          fetch(LOGIN_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: emailInput.value.trim(),
+              password: passwordInput.value,
+            }),
+          })
+            .then(function (res) {
+              if (res.ok) return res.json();
+              if (res.status === 401)
+                throw new Error("Invalid email or password");
+              if (res.status === 400)
+                throw new Error(
+                  "Please check your input and try again"
+                );
+              throw new Error(
+                "Something went wrong. Please try again."
+              );
+            })
+            .then(function (data) {
+              try {
+                localStorage.setItem(TOKEN_KEY, data.token);
+              } catch (_) {}
+              submitBtn.textContent = "Signed in";
+              successEl.textContent =
+                "You\u2019re signed in. Redirect coming soon.";
+              successEl.hidden = false;
+            })
+            .catch(function (err) {
+              var msg =
+                err instanceof TypeError
+                  ? "Unable to connect. Please check your connection and try again."
+                  : err.message ||
+                    "Something went wrong. Please try again.";
+              errorEl.textContent = msg;
+              errorEl.hidden = false;
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Sign In";
+            });
+        });
+      })();
     </script>
   </body>
 </html>
