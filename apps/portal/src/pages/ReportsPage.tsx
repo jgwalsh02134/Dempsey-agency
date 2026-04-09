@@ -33,9 +33,9 @@ export function ReportsPage() {
           </li>
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">Investment Overview</span>
+              <span className="report-name">Budget &amp; Delivery</span>
               <span className="report-description">
-                Spend allocation and pacing against your media plan.
+                Spend pacing and delivery progress against your media plan.
               </span>
             </div>
             <span className="report-badge">Coming soon</span>

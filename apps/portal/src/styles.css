@@ -305,8 +305,6 @@ a.portal-nav-link:focus-visible {
   color: var(--color-midnight);
   background: var(--color-ledger);
   font-weight: 600;
-  pointer-events: none;
-  cursor: default;
 }
 
 .btn-sign-out {
