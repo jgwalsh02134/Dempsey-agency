@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Portal — Dempsey Agency</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#10233F" />
+    <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        --color-midnight: #10233f;
+        --color-fir: #0f524a;
+        --color-ocean: #4b6b8a;
+        --color-ledger: #e2e8f0;
+        --color-canvas: #f8fafc;
+        --color-gold: #b18a53;
+        --bg: var(--color-canvas);
+        --text: var(--color-midnight);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "skolar-latin", serif;
+        display: flex;
+        flex-direction: column;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      /* ── Header ── */
+      .site-header {
+        border-bottom: 1px solid var(--color-ledger);
+        background: rgba(248, 250, 252, 0.96);
+        flex-shrink: 0;
+      }
+      .header-inner {
+        width: 100%;
+        max-width: 56rem;
+        margin-inline: auto;
+        padding-inline: clamp(1.25rem, 4vw, 2.25rem);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 4.75rem;
+      }
+      .header-logo {
+        display: inline-flex;
+        align-items: center;
+        line-height: 0;
+        flex-shrink: 0;
+      }
+      .header-logo img {
+        width: auto;
+        height: 2.5rem;
+        object-fit: contain;
+      }
+      .header-back {
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        color: var(--color-ocean);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+      .header-back:hover,
+      .header-back:focus-visible {
+        color: var(--color-midnight);
+      }
+
+      /* ── Login layout ── */
+      .login-page {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(2rem, 6vw, 4rem) clamp(1.25rem, 4vw, 2.25rem);
+      }
+      .login-module {
+        width: 100%;
+        max-width: 22rem;
+      }
+
+      /* ── Heading ── */
+      .login-heading {
+        margin: 0;
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--color-midnight);
+      }
+      .login-subheading {
+        margin: 0.5rem 0 0;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: var(--color-ocean);
+      }
+
+      /* ── Form ── */
+      .login-form {
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+      }
+      .form-field label {
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--color-midnight);
+      }
+      .form-field input {
+        width: 100%;
+        height: 2.75rem;
+        padding: 0 0.875rem;
+        border: 1px solid var(--color-ledger);
+        border-radius: 0.5rem;
+        background: #ffffff;
+        font-family: "skolar-latin", serif;
+        font-size: 0.9375rem;
+        color: var(--color-midnight);
+        transition: border-color 0.2s ease;
+      }
+      .form-field input::placeholder {
+        color: var(--color-ocean);
+        opacity: 0.5;
+      }
+      .form-field input:focus {
+        outline: none;
+        border-color: var(--color-ocean);
+      }
+      .form-field input:focus-visible {
+        outline: 2px solid var(--color-gold);
+        outline-offset: 2px;
+        border-color: var(--color-ocean);
+      }
+
+      /* ── Submit ── */
+      .login-submit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 2.875rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--color-midnight);
+        border-radius: 999px;
+        background: var(--color-midnight);
+        color: var(--color-canvas);
+        font-family: "neue-haas-grotesk-display", sans-serif;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+      }
+      .login-submit:hover {
+        background: var(--color-fir);
+        border-color: var(--color-fir);
+      }
+      .login-submit:focus-visible {
+        outline: 2px solid var(--color-gold);
+        outline-offset: 2px;
+        background: var(--color-fir);
+        border-color: var(--color-fir);
+      }
+
+      /* ── Footer link ── */
+      .login-footer {
+        margin-top: 1.75rem;
+        text-align: center;
+        font-size: 0.8125rem;
+        color: var(--color-ocean);
+      }
+      .login-footer a {
+        color: var(--color-ocean);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+      .login-footer a:hover,
+      .login-footer a:focus-visible {
+        color: var(--color-midnight);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="header-logo" href="/">
+          <img
+            src="assets/branding/hor-lockup-2.svg"
+            alt="Dempsey Agency"
+            decoding="async"
+          />
+        </a>
+        <a class="header-back" href="/">Back to site</a>
+      </div>
+    </header>
+
+    <main class="login-page">
+      <div class="login-module">
+        <h1 class="login-heading">Client Portal</h1>
+        <p class="login-subheading">
+          Sign in to access your campaign dashboard and reports.
+        </p>
+
+        <form class="login-form" action="/api/auth/login" method="post">
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              autocomplete="email"
+              placeholder="you@company.com"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="login-submit">Sign In</button>
+        </form>
+
+        <p class="login-footer">
+          <a href="/">← Return to dempsey.agency</a>
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
