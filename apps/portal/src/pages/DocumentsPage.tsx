@@ -4,8 +4,8 @@ export function DocumentsPage() {
       <section className="section-welcome">
         <h1 className="welcome-heading">Documents</h1>
         <p className="welcome-body">
-          Shared files, media plans, and billing documents from your Dempsey
-          Agency team will be accessible here.
+          Campaign files, media plans, and shared deliverables from your
+          Dempsey Agency team will be accessible here.
         </p>
       </section>
 
@@ -33,9 +33,9 @@ export function DocumentsPage() {
           </li>
           <li className="report-item">
             <div className="report-info">
-              <span className="report-name">Invoices</span>
+              <span className="report-name">Performance Reports</span>
               <span className="report-description">
-                Billing summaries and payment records for your account.
+                Exported campaign results and placement summaries.
               </span>
             </div>
             <span className="report-badge">Coming soon</span>

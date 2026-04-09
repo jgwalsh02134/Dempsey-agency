@@ -2,10 +2,11 @@ import { type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import { PortalLayout } from "./components/PortalLayout";
+import { BillingPage } from "./pages/BillingPage";
+import { CampaignsPage } from "./pages/CampaignsPage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { LoginPage } from "./pages/LoginPage";
-import { ReportsPage } from "./pages/ReportsPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
+import { LoginPage } from "./pages/LoginPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { token, loading } = useAuth();
@@ -38,8 +39,9 @@ export function App() {
         }
       >
         <Route index element={<DashboardPage />} />
-        <Route path="reports" element={<ReportsPage />} />
+        <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="documents" element={<DocumentsPage />} />
+        <Route path="billing" element={<BillingPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

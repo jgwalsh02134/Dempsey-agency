@@ -578,3 +578,31 @@ a.portal-nav-link:focus-visible {
   border-radius: 999px;
   margin-top: 0.125rem;
 }
+
+.badge-active {
+  color: var(--color-fir);
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  opacity: 1;
+}
+
+.badge-completed {
+  color: var(--color-ocean);
+  border-color: var(--color-ledger);
+  background: var(--color-canvas);
+  opacity: 0.8;
+}
+
+.badge-paid {
+  color: var(--color-fir);
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  opacity: 1;
+}
+
+.badge-pending {
+  color: #92400e;
+  border-color: #fde68a;
+  background: #fffbeb;
+  opacity: 1;
+}
