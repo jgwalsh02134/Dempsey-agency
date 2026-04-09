@@ -286,16 +286,16 @@ a {
   letter-spacing: 0.02em;
   color: var(--color-ocean);
   text-decoration: none;
-  padding: 0.375rem 0.625rem;
+  padding: 0.3125rem 0.625rem;
   border-radius: 0.375rem;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.portal-nav-link:hover {
+a.portal-nav-link:hover {
   color: var(--color-midnight);
 }
 
-.portal-nav-link:focus-visible {
+a.portal-nav-link:focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
   color: var(--color-midnight);
@@ -305,6 +305,7 @@ a {
   color: var(--color-midnight);
   background: var(--color-ledger);
   font-weight: 600;
+  cursor: default;
 }
 
 .btn-sign-out {
