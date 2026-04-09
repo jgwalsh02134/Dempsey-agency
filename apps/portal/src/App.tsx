@@ -5,6 +5,7 @@ import { PortalLayout } from "./components/PortalLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { DocumentsPage } from "./pages/DocumentsPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { token, loading } = useAuth();
@@ -38,6 +39,7 @@ export function App() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="documents" element={<DocumentsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

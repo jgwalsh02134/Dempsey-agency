@@ -38,6 +38,9 @@ export function PortalLayout() {
               <NavLink to="/reports" className={navLinkClass}>
                 Reports
               </NavLink>
+              <NavLink to="/documents" className={navLinkClass}>
+                Documents
+              </NavLink>
             </nav>
             <button type="button" className="btn-sign-out" onClick={logout}>
               Sign out
