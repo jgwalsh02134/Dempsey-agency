@@ -357,7 +357,7 @@
           </div>
 
           <p id="login-error" class="login-error" role="alert" hidden></p>
-          <p id="login-success" class="login-success" hidden></p>
+          <p id="login-success" class="login-success" role="status" hidden></p>
 
           <button type="submit" class="login-submit">Sign In</button>
         </form>
@@ -425,7 +425,7 @@
               } catch (_) {}
               submitBtn.textContent = "Signed in";
               successEl.textContent =
-                "You\u2019re signed in. Redirect coming soon.";
+                "Sign-in successful. Portal destination will be available soon.";
               successEl.hidden = false;
             })
             .catch(function (err) {
