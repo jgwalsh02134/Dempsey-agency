@@ -1,0 +1,210 @@
+import type { FastifyInstance } from "fastify";
+import { randomUUID } from "node:crypto";
+import { requireAuth } from "../../plugins/auth.js";
+import { assertCanManageOrganization } from "../../lib/rbac.js";
+import { resolveVisibleOrganizationIds } from "../../lib/org-scope.js";
+import {
+  uploadObject,
+  deleteObject,
+  getSignedDownloadUrl,
+} from "../../lib/storage.js";
+import { orgIdParamsSchema, documentIdParamsSchema } from "./schemas.js";
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 255);
+}
+
+function getFieldValue(
+  fields: Record<string, unknown>,
+  name: string,
+): string | undefined {
+  const field = fields[name] as
+    | { type: string; value: string }
+    | undefined;
+  if (!field || field.type !== "field") return undefined;
+  return field.value;
+}
+
+export async function documentRoutes(app: FastifyInstance) {
+  // ── List documents for an organization ──────────────────────────
+  app.get(
+    "/organizations/:orgId/documents",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { orgId } = orgIdParamsSchema.parse(request.params);
+
+      const visible = await resolveVisibleOrganizationIds(
+        app.prisma,
+        request.currentUser!,
+      );
+      if (visible !== null && !visible.includes(orgId)) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      const org = await app.prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { id: true },
+      });
+      if (!org) {
+        return reply.code(404).send({ error: "Organization not found" });
+      }
+
+      const documents = await app.prisma.document.findMany({
+        where: { organizationId: orgId },
+        orderBy: { createdAt: "desc" },
+        include: {
+          uploadedBy: {
+            select: { id: true, email: true, name: true },
+          },
+        },
+      });
+
+      return { organizationId: orgId, documents };
+    },
+  );
+
+  // ── Get presigned download URL ──────────────────────────────────
+  app.get(
+    "/documents/:id/download",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id } = documentIdParamsSchema.parse(request.params);
+
+      const document = await app.prisma.document.findUnique({
+        where: { id },
+      });
+      if (!document) {
+        return reply.code(404).send({ error: "Document not found" });
+      }
+
+      const visible = await resolveVisibleOrganizationIds(
+        app.prisma,
+        request.currentUser!,
+      );
+      if (visible !== null && !visible.includes(document.organizationId)) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      const url = await getSignedDownloadUrl(
+        document.storageKey,
+        document.filename,
+      );
+
+      return { url, filename: document.filename, mimeType: document.mimeType };
+    },
+  );
+
+  // ── Upload a document (admin only) ─────────────────────────────
+  app.post(
+    "/organizations/:orgId/documents",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { orgId } = orgIdParamsSchema.parse(request.params);
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        orgId,
+        reply,
+      );
+      if (!manage) return;
+
+      const file = await request.file({
+        limits: { fileSize: MAX_FILE_SIZE },
+      });
+      if (!file) {
+        return reply.code(400).send({ error: "File is required" });
+      }
+
+      const buffer = await file.toBuffer();
+
+      if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+        return reply.code(400).send({
+          error: `File type "${file.mimetype}" is not allowed. Accepted: PDF, PNG, JPEG, DOC, DOCX, XLS, XLSX.`,
+        });
+      }
+
+      if (file.file.truncated) {
+        return reply.code(413).send({
+          error: `File exceeds the ${MAX_FILE_SIZE / (1024 * 1024)}MB size limit`,
+        });
+      }
+
+      const title = getFieldValue(file.fields, "title");
+      if (!title || title.trim().length === 0) {
+        return reply.code(400).send({ error: "Title is required" });
+      }
+
+      const description =
+        getFieldValue(file.fields, "description")?.trim() || null;
+      const filename = sanitizeFilename(file.filename);
+      const storageKey = `documents/${orgId}/${randomUUID()}/${filename}`;
+
+      await uploadObject(storageKey, buffer, file.mimetype);
+
+      const document = await app.prisma.document.create({
+        data: {
+          organizationId: orgId,
+          title: title.trim(),
+          description,
+          filename,
+          mimeType: file.mimetype,
+          sizeBytes: buffer.length,
+          storageKey,
+          uploadedById: request.currentUser!.id,
+        },
+      });
+
+      return reply.code(201).send(document);
+    },
+  );
+
+  // ── Delete a document (admin only) ─────────────────────────────
+  app.delete(
+    "/documents/:id",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id } = documentIdParamsSchema.parse(request.params);
+
+      const document = await app.prisma.document.findUnique({
+        where: { id },
+      });
+      if (!document) {
+        return reply.code(404).send({ error: "Document not found" });
+      }
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        document.organizationId,
+        reply,
+      );
+      if (!manage) return;
+
+      await app.prisma.document.delete({ where: { id } });
+
+      try {
+        await deleteObject(document.storageKey);
+      } catch (storageErr) {
+        request.log.warn(
+          { storageKey: document.storageKey, err: storageErr },
+          "Document record deleted but storage cleanup failed; orphan file may remain",
+        );
+      }
+
+      return { success: true };
+    },
+  );
+}

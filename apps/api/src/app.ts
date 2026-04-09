@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { ZodError } from "zod";
 import { corsConfig } from "./env.js";
 import { healthRoutes } from "./routes/health.js";
@@ -47,6 +48,9 @@ export async function buildApp() {
       }
       return cb(null, false);
     },
+  });
+  await app.register(multipart, {
+    limits: { fileSize: 50 * 1024 * 1024, files: 1 },
   });
   await app.register(jwtPlugin);
   await app.register(prismaPlugin);

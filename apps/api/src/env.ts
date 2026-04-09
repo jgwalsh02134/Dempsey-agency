@@ -13,6 +13,13 @@ const envSchema = z.object({
     .default("development"),
   JWT_SECRET: z.string().default("unsafe-dev-secret"),
   JWT_EXPIRES_IN: z.string().default("7d"),
+
+  /** S3-compatible object storage (Cloudflare R2, AWS S3, MinIO, etc.) */
+  S3_BUCKET: z.string().optional(),
+  S3_REGION: z.string().default("auto"),
+  S3_ENDPOINT: z.string().url().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
