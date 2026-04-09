@@ -216,6 +216,7 @@ model AccountRequest {
 
   @@index([status])
   @@index([createdAt])
+  @@index([email])
 }
 
 /// Append-only security audit trail (admin / membership actions).
