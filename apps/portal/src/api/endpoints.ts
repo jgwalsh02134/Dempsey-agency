@@ -2,6 +2,7 @@ import { apiFetch } from "./client";
 import type {
   DocumentDownloadResponse,
   LoginResponse,
+  OrgCampaignsResponse,
   OrgDocumentsResponse,
   SessionUser,
 } from "../types";
@@ -34,5 +35,13 @@ export async function fetchDocumentDownloadUrl(
 ): Promise<DocumentDownloadResponse> {
   return apiFetch<DocumentDownloadResponse>(
     `/api/v1/documents/${encodeURIComponent(id)}/download`,
+  );
+}
+
+export async function fetchOrgCampaigns(
+  orgId: string,
+): Promise<OrgCampaignsResponse> {
+  return apiFetch<OrgCampaignsResponse>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/campaigns`,
   );
 }

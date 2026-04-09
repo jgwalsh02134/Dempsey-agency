@@ -693,3 +693,15 @@ a.portal-nav-link:focus-visible {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* ── Campaign metadata row ── */
+.campaign-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.25rem;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.75rem;
+  color: var(--color-ocean);
+}

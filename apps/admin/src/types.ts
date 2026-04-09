@@ -79,3 +79,28 @@ export interface OrgDocumentsResponse {
   organizationId: string;
   documents: Document[];
 }
+
+export type CampaignStatus = "ACTIVE" | "PAUSED" | "COMPLETED";
+
+export interface Campaign {
+  id: string;
+  organizationId: string;
+  title: string;
+  description: string | null;
+  status: CampaignStatus;
+  startDate: string | null;
+  endDate: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+}
+
+export interface OrgCampaignsResponse {
+  organizationId: string;
+  campaigns: Campaign[];
+}

@@ -59,3 +59,23 @@ export interface DocumentDownloadResponse {
   filename: string;
   mimeType: string;
 }
+
+export type CampaignStatus = "ACTIVE" | "PAUSED" | "COMPLETED";
+
+export interface Campaign {
+  id: string;
+  organizationId: string;
+  title: string;
+  description: string | null;
+  status: CampaignStatus;
+  startDate: string | null;
+  endDate: string | null;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrgCampaignsResponse {
+  organizationId: string;
+  campaigns: Campaign[];
+}

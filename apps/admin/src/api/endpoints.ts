@@ -1,8 +1,11 @@
 import { apiFetch } from "./client";
 import type {
+  Campaign,
+  CampaignStatus,
   Document,
   LoginResponse,
   Organization,
+  OrgCampaignsResponse,
   OrgDocumentsResponse,
   OrgUsersResponse,
   SessionUser,
@@ -96,6 +99,46 @@ export async function uploadDocument(
 
 export async function deleteDocument(id: string): Promise<void> {
   await apiFetch(`/api/v1/documents/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchOrgCampaigns(
+  orgId: string,
+): Promise<OrgCampaignsResponse> {
+  return apiFetch<OrgCampaignsResponse>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/campaigns`,
+  );
+}
+
+export async function createCampaign(
+  orgId: string,
+  body: {
+    title: string;
+    description?: string;
+    status?: CampaignStatus;
+    startDate?: string;
+    endDate?: string;
+  },
+): Promise<Campaign> {
+  return apiFetch<Campaign>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/campaigns`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+export async function patchCampaign(
+  id: string,
+  body: { status?: CampaignStatus },
+): Promise<Campaign> {
+  return apiFetch<Campaign>(
+    `/api/v1/campaigns/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
+export async function deleteCampaign(id: string): Promise<void> {
+  await apiFetch(`/api/v1/campaigns/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }

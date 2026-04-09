@@ -5,6 +5,7 @@ import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import { CreateUserForm } from "../components/CreateUserForm";
+import { CampaignsSection } from "../components/CampaignsSection";
 import { DocumentsSection } from "../components/DocumentsSection";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import { SessionPanel } from "../components/SessionPanel";
@@ -184,6 +185,10 @@ export function DashboardPage() {
 
         {selectedOrg && (
           <DocumentsSection key={`docs-${selectedOrgId}`} orgId={selectedOrgId} />
+        )}
+
+        {selectedOrg && (
+          <CampaignsSection key={`camps-${selectedOrgId}`} orgId={selectedOrgId} />
         )}
 
         <div className="two-col">
