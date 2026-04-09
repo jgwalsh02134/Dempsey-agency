@@ -31,9 +31,16 @@ export function DashboardPage() {
             />
             <span className="portal-title">Client Portal</span>
           </div>
-          <button type="button" className="btn-sign-out" onClick={logout}>
-            Sign out
-          </button>
+          <div className="portal-header-right">
+            <nav className="portal-nav" aria-label="Portal navigation">
+              <a href="/" className="portal-nav-link active" aria-current="page">
+                Dashboard
+              </a>
+            </nav>
+            <button type="button" className="btn-sign-out" onClick={logout}>
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
