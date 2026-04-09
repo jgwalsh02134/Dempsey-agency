@@ -1,7 +1,9 @@
 import { apiFetch } from "./client";
 import type {
+  Document,
   LoginResponse,
   Organization,
+  OrgDocumentsResponse,
   OrgUsersResponse,
   SessionUser,
 } from "../types";
@@ -71,5 +73,29 @@ export async function deactivateUser(userId: string): Promise<unknown> {
   return apiFetch(`/api/v1/users/${encodeURIComponent(userId)}/deactivate`, {
     method: "PATCH",
     body: JSON.stringify({}),
+  });
+}
+
+export async function fetchOrgDocuments(
+  orgId: string,
+): Promise<OrgDocumentsResponse> {
+  return apiFetch<OrgDocumentsResponse>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/documents`,
+  );
+}
+
+export async function uploadDocument(
+  orgId: string,
+  data: FormData,
+): Promise<Document> {
+  return apiFetch<Document>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/documents`,
+    { method: "POST", body: data },
+  );
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  await apiFetch(`/api/v1/documents/${encodeURIComponent(id)}`, {
+    method: "DELETE",
   });
 }

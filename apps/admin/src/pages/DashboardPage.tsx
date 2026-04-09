@@ -5,6 +5,7 @@ import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import { CreateUserForm } from "../components/CreateUserForm";
+import { DocumentsSection } from "../components/DocumentsSection";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import { SessionPanel } from "../components/SessionPanel";
 import type { Organization, OrgUsersResponse, Role } from "../types";
@@ -179,6 +180,10 @@ export function DashboardPage() {
             onLocalRoleUpdated={applyLocalMemberRole}
             onRefresh={() => loadMembers(selectedOrgId, { background: true })}
           />
+        )}
+
+        {selectedOrg && (
+          <DocumentsSection key={`docs-${selectedOrgId}`} orgId={selectedOrgId} />
         )}
 
         <div className="two-col">
