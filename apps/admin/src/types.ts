@@ -200,3 +200,24 @@ export interface AICreativeReview {
   summary: string;
   suggestions: string[];
 }
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  actorUserId: string | null;
+  targetUserId: string | null;
+  organizationId: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  actorUser: { id: string; email: string; name: string | null } | null;
+  targetUser: { id: string; email: string; name: string | null } | null;
+}
+
+export interface AdminOverview {
+  activeClients: number;
+  activeCampaigns: number;
+  pendingReviews: number;
+  pendingRequests: number;
+  overdueInvoices: number;
+  recentActivity: AuditLogEntry[];
+}

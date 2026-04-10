@@ -1,8 +1,12 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "./auth/AuthContext";
-import { DashboardPage } from "./pages/DashboardPage";
+import { AdminLayout } from "./components/AdminLayout";
+import { AccessPage } from "./pages/AccessPage";
+import { ClientDetailPage } from "./pages/ClientDetailPage";
+import { ClientsPage } from "./pages/ClientsPage";
 import { LoginPage } from "./pages/LoginPage";
+import { OverviewPage } from "./pages/OverviewPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { token, loading } = useAuth();
@@ -28,13 +32,17 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route
-        path="/"
         element={
           <RequireAuth>
-            <DashboardPage />
+            <AdminLayout />
           </RequireAuth>
         }
-      />
+      >
+        <Route index element={<OverviewPage />} />
+        <Route path="clients" element={<ClientsPage />} />
+        <Route path="clients/:id" element={<ClientDetailPage />} />
+        <Route path="access" element={<AccessPage />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

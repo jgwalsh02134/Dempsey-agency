@@ -11,6 +11,7 @@ import { submissionRoutes } from "./submissions/index.js";
 import { accountRequestRoutes } from "./account-requests/index.js";
 import { inviteRoutes } from "./invites/index.js";
 import { aiRoutes } from "./ai/index.js";
+import { adminRoutes } from "./admin/index.js";
 
 export async function v1Routes(app: FastifyInstance) {
   app.get("/", async () => ({ version: "v1", status: "ok" }));
@@ -27,4 +28,5 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(accountRequestRoutes);
   await app.register(inviteRoutes);
   await app.register(aiRoutes);
+  await app.register(adminRoutes, { prefix: "/admin" });
 }

@@ -3,6 +3,7 @@ import type {
   AccountRequestWithInvite,
   AccountRequestStatus,
   AccountRequestsResponse,
+  AdminOverview,
   AICreativeReview,
   Campaign,
   CampaignStatus,
@@ -31,6 +32,10 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
 export async function fetchSession(): Promise<SessionUser> {
   return apiFetch<SessionUser>("/api/v1/auth/me");
+}
+
+export async function fetchAdminOverview(): Promise<AdminOverview> {
+  return apiFetch<AdminOverview>("/api/v1/admin/overview");
 }
 
 export async function fetchOrganizations(): Promise<Organization[]> {
