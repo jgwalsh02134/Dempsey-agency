@@ -22,7 +22,7 @@ export function PortalLayout() {
         <div className="portal-header-top">
           <div className="portal-brand">
             <img
-              src="/brand-stack.svg"
+              src="/d-fav.svg"
               alt="Dempsey Agency"
               className="portal-logo"
             />
