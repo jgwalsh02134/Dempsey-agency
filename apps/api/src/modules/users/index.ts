@@ -161,6 +161,51 @@ export async function userRoutes(app: FastifyInstance) {
     },
   );
 
+  app.patch(
+    "/users/:id/reactivate",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id: targetUserId } = userParamsSchema.parse(request.params);
+
+      const target = await app.prisma.user.findUnique({
+        where: { id: targetUserId },
+        include: { memberships: true },
+      });
+      if (!target) {
+        return reply.code(404).send({ error: "User not found" });
+      }
+
+      if (target.active) {
+        return { success: true, alreadyActive: true };
+      }
+
+      const orgIds = target.memberships.map((m) => m.organizationId);
+      let canManageAny = false;
+      for (const oid of orgIds) {
+        const manage = await assertCanManageOrganization(
+          app.prisma,
+          request.currentUser!,
+          oid,
+          reply,
+        );
+        if (manage) {
+          canManageAny = true;
+          break;
+        }
+      }
+      if (!canManageAny) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      await app.prisma.user.update({
+        where: { id: targetUserId },
+        data: { active: true },
+      });
+
+      return { success: true };
+    },
+  );
+
   app.get("/users", { preHandler: [requireAuth] }, async (request) => {
     const userIds = await resolveVisibleUserIds(app, request.currentUser!);
     const where =

@@ -19,7 +19,7 @@ export function PortalLayout() {
   return (
     <div className="portal">
       <header className="portal-header">
-        <div className="portal-header-inner">
+        <div className="portal-header-top">
           <div className="portal-brand">
             <img
               src="/favicon.svg"
@@ -30,29 +30,27 @@ export function PortalLayout() {
             />
             <span className="portal-title">Client Portal</span>
           </div>
-          <div className="portal-header-right">
-            <nav className="portal-nav" aria-label="Portal navigation">
-              <NavLink to="/" end className={navLinkClass}>
-                Dashboard
-              </NavLink>
-              <NavLink to="/campaigns" className={navLinkClass}>
-                Campaigns
-              </NavLink>
-              <NavLink to="/documents" className={navLinkClass}>
-                Documents
-              </NavLink>
-              <NavLink to="/billing" className={navLinkClass}>
-                Billing
-              </NavLink>
-              <NavLink to="/creatives" className={navLinkClass}>
-                Creatives
-              </NavLink>
-            </nav>
-            <button type="button" className="btn-sign-out" onClick={logout}>
-              Sign out
-            </button>
-          </div>
+          <button type="button" className="btn-sign-out" onClick={logout}>
+            Sign out
+          </button>
         </div>
+        <nav className="portal-nav" aria-label="Portal navigation">
+          <NavLink to="/" end className={navLinkClass}>
+            Dashboard
+          </NavLink>
+          <NavLink to="/campaigns" className={navLinkClass}>
+            Campaigns
+          </NavLink>
+          <NavLink to="/documents" className={navLinkClass}>
+            Documents
+          </NavLink>
+          <NavLink to="/billing" className={navLinkClass}>
+            Billing
+          </NavLink>
+          <NavLink to="/creatives" className={navLinkClass}>
+            Creatives
+          </NavLink>
+        </nav>
       </header>
 
       <main className="portal-main">

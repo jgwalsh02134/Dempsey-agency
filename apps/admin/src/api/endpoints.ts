@@ -111,6 +111,20 @@ export async function deactivateUser(userId: string): Promise<unknown> {
   });
 }
 
+export async function reactivateUser(userId: string): Promise<unknown> {
+  return apiFetch(`/api/v1/users/${encodeURIComponent(userId)}/reactivate`, {
+    method: "PATCH",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function removeMembership(membershipId: string): Promise<void> {
+  await apiFetch(
+    `/api/v1/memberships/${encodeURIComponent(membershipId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function fetchOrgDocuments(
   orgId: string,
 ): Promise<OrgDocumentsResponse> {

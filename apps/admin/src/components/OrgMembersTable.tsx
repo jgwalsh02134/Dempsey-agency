@@ -15,16 +15,10 @@ function rolesForOrgType(t: OrganizationType): Role[] {
   return t === "AGENCY" ? AGENCY_ROLES : CLIENT_ROLES;
 }
 
-function patchRoleErrorMessage(e: unknown): string {
+function errMsg(e: unknown): string {
   if (e instanceof ApiError) return e.message;
   if (e instanceof Error && e.message) return e.message;
-  return "Could not update role.";
-}
-
-function refetchWarningMessage(prefix: string, e: unknown): string {
-  if (e instanceof ApiError) return `${prefix} (${e.message})`;
-  if (e instanceof Error && e.message) return `${prefix} (${e.message})`;
-  return prefix;
+  return "Something went wrong";
 }
 
 export function OrgMembersTable({
@@ -66,7 +60,7 @@ export function OrgMembersTable({
             role: newRole,
           });
         } catch (e) {
-          setFeedback({ type: "error", message: patchRoleErrorMessage(e) });
+          setFeedback({ type: "error", message: errMsg(e) });
           return;
         }
 
@@ -87,10 +81,7 @@ export function OrgMembersTable({
           window.clearTimeout(t);
           setFeedback({
             type: "warning",
-            message: refetchWarningMessage(
-              "Role saved, but reloading the member list failed.",
-              refetchErr,
-            ),
+            message: `Role saved, but reloading the member list failed. (${errMsg(refetchErr)})`,
           });
         }
       } finally {
@@ -102,41 +93,59 @@ export function OrgMembersTable({
 
   const deactivate = useCallback(
     async (userId: string) => {
-      if (!window.confirm("Deactivate this user? They will not be able to sign in.")) {
-        return;
-      }
+      if (!window.confirm("Deactivate this user? They will not be able to sign in.")) return;
       onClearListError();
       setFeedback(null);
       setBusyUser(userId);
-
       try {
-        try {
-          await api.deactivateUser(userId);
-        } catch (e) {
-          setFeedback({
-            type: "error",
-            message:
-              e instanceof ApiError
-                ? e.message
-                : e instanceof Error && e.message
-                  ? e.message
-                  : "Deactivate failed.",
-          });
-          return;
-        }
-
+        await api.deactivateUser(userId);
         setFeedback({ type: "success", message: "User deactivated." });
-        try {
-          await onRefresh();
-        } catch (refetchErr) {
-          setFeedback({
-            type: "warning",
-            message: refetchWarningMessage(
-              "User deactivated, but reloading the member list failed.",
-              refetchErr,
-            ),
-          });
-        }
+        try { await onRefresh(); } catch { /* best effort */ }
+      } catch (e) {
+        setFeedback({ type: "error", message: errMsg(e) });
+      } finally {
+        setBusyUser(null);
+      }
+    },
+    [onClearListError, onRefresh],
+  );
+
+  const reactivate = useCallback(
+    async (userId: string) => {
+      if (!window.confirm("Reactivate this user? They will be able to sign in again.")) return;
+      onClearListError();
+      setFeedback(null);
+      setBusyUser(userId);
+      try {
+        await api.reactivateUser(userId);
+        setFeedback({ type: "success", message: "User reactivated." });
+        try { await onRefresh(); } catch { /* best effort */ }
+      } catch (e) {
+        setFeedback({ type: "error", message: errMsg(e) });
+      } finally {
+        setBusyUser(null);
+      }
+    },
+    [onClearListError, onRefresh],
+  );
+
+  const removeMember = useCallback(
+    async (row: OrgMemberRow) => {
+      if (
+        !window.confirm(
+          `Remove ${row.user.email} from this organization? Their account will still exist but they will lose access to this org.`,
+        )
+      )
+        return;
+      onClearListError();
+      setFeedback(null);
+      setBusyUser(row.user.id);
+      try {
+        await api.removeMembership(row.membershipId);
+        setFeedback({ type: "success", message: "Member removed." });
+        try { await onRefresh(); } catch { /* best effort */ }
+      } catch (e) {
+        setFeedback({ type: "error", message: errMsg(e) });
       } finally {
         setBusyUser(null);
       }
@@ -156,24 +165,11 @@ export function OrgMembersTable({
   return (
     <section className="card">
       <h2>Members</h2>
-      <p className="muted">
-        Organization <code>{orgId}</code>
-      </p>
       {loading && <p className="muted">Loading…</p>}
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <p className="error" role="alert">{error}</p>}
       {feedback && (
         <p
-          className={
-            feedback.type === "error"
-              ? "error"
-              : feedback.type === "success"
-                ? "success"
-                : "warning"
-          }
+          className={feedback.type === "error" ? "error" : feedback.type === "success" ? "success" : "warning"}
           role={feedback.type === "error" ? "alert" : "status"}
         >
           {feedback.message}
@@ -185,7 +181,7 @@ export function OrgMembersTable({
             <thead>
               <tr>
                 <th>User</th>
-                <th>Active</th>
+                <th>Status</th>
                 <th>Role</th>
                 <th>Actions</th>
               </tr>
@@ -193,47 +189,78 @@ export function OrgMembersTable({
             <tbody>
               {data.users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="muted">
-                    No members
-                  </td>
+                  <td colSpan={4} className="muted">No members</td>
                 </tr>
               ) : (
-                data.users.map((row) => (
-                  <tr key={row.membershipId}>
-                    <td>
-                      <div>{row.user.email}</div>
-                      <code className="small">{row.user.id}</code>
-                    </td>
-                    <td>{row.user.active ? "Yes" : "No"}</td>
-                    <td>
-                      <select
-                        className="inline-select"
-                        value={row.role}
-                        disabled={busyUser === row.user.id}
-                        onChange={(e) => {
-                          const v = e.target.value as Role;
-                          if (v !== row.role) void changeRole(row, v);
-                        }}
-                      >
-                        {rolesForOrgType(orgType).map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn danger ghost"
-                        disabled={busyUser === row.user.id || !row.user.active}
-                        onClick={() => deactivate(row.user.id)}
-                      >
-                        Deactivate
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                data.users.map((row) => {
+                  const inactive = !row.user.active;
+                  const busy = busyUser === row.user.id;
+                  return (
+                    <tr key={row.membershipId} className={inactive ? "row-inactive" : ""}>
+                      <td>
+                        <div>
+                          {row.user.name && (
+                            <span style={{ marginRight: "0.375rem" }}>{row.user.name}</span>
+                          )}
+                          <span className={row.user.name ? "small" : ""}>{row.user.email}</span>
+                        </div>
+                      </td>
+                      <td>
+                        {inactive ? (
+                          <span className="status-pill status-inactive">Inactive</span>
+                        ) : (
+                          <span className="status-pill status-active">Active</span>
+                        )}
+                      </td>
+                      <td>
+                        <select
+                          className="inline-select"
+                          value={row.role}
+                          disabled={busy}
+                          onChange={(e) => {
+                            const v = e.target.value as Role;
+                            if (v !== row.role) void changeRole(row, v);
+                          }}
+                        >
+                          {rolesForOrgType(orgType).map((r) => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <div className="member-actions">
+                          {inactive ? (
+                            <button
+                              type="button"
+                              className="btn ghost"
+                              disabled={busy}
+                              onClick={() => reactivate(row.user.id)}
+                            >
+                              Reactivate
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn danger ghost"
+                              disabled={busy}
+                              onClick={() => deactivate(row.user.id)}
+                            >
+                              Deactivate
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn danger ghost"
+                            disabled={busy}
+                            onClick={() => removeMember(row)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
