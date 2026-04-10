@@ -30,3 +30,5 @@ export function apiUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
+
+export const MARKETING_URL = "https://dempsey.agency";

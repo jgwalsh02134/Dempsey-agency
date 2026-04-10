@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { MARKETING_URL } from "../api/config";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
@@ -94,10 +95,10 @@ export function LoginPage() {
         </form>
 
         <div className="auth-footer">
-          <a href="/contact" className="help-link">
+          <a href={`${MARKETING_URL}/contact`} className="help-link">
             Need help signing in?
           </a>
-          <a href="/" className="back-link">
+          <a href={MARKETING_URL} className="back-link">
             ← Return to dempsey.agency
           </a>
         </div>

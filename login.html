@@ -467,7 +467,8 @@
                 "Sign-in successful. Redirecting to portal\u2026";
               successEl.hidden = false;
               setTimeout(function () {
-                window.location.href = PORTAL_URL;
+                window.location.href =
+                  PORTAL_URL + "#token=" + encodeURIComponent(data.token);
               }, 600);
             })
             .catch(function (err) {
