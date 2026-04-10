@@ -244,6 +244,21 @@ a {
   font-weight: 500;
 }
 
+.inline-text-link {
+  color: var(--color-ocean);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inline-text-link:hover {
+  color: var(--color-midnight);
+}
+
+.inline-text-link:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
 /* ── Portal shell (dashboard) ── */
 .portal {
   min-height: 100vh;
@@ -797,21 +812,23 @@ a.portal-nav-link:focus-visible {
   padding: 0.5rem 0.875rem;
 }
 
-/* ── Campaign link row ── */
-.campaign-link {
+/* ── Campaign list row (entire row navigates to detail) ── */
+.campaign-row-full-link {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
   text-decoration: none;
   color: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
 }
 
-.campaign-link:hover .report-name {
+.campaign-row-full-link:hover .report-name {
   color: var(--color-fir);
 }
 
-.campaign-link:focus-visible {
+.campaign-row-full-link:focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 4px;
   border-radius: 2px;

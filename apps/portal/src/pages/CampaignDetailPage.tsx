@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import type {
   Campaign,
   CampaignStatus,
   CreativeSubmission,
-  Document,
   SubmissionStatus,
 } from "../types";
 
@@ -33,22 +33,6 @@ const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
   APPROVED: "report-badge badge-paid",
   REVISION_REQUESTED: "report-badge badge-overdue",
 };
-
-const MIME_LABELS: Record<string, string> = {
-  "application/pdf": "PDF",
-  "image/png": "PNG",
-  "image/jpeg": "JPEG",
-  "image/gif": "GIF",
-  "application/msword": "DOC",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-    "DOCX",
-  "application/vnd.ms-excel": "XLS",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "XLSX",
-};
-
-function mimeLabel(mime: string): string {
-  return MIME_LABELS[mime] ?? mime;
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -87,11 +71,9 @@ export function CampaignDetailPage() {
   const [campaignLoading, setCampaignLoading] = useState(!campaign);
   const [campaignError, setCampaignError] = useState<string | null>(null);
 
-  const [docs, setDocs] = useState<Document[]>([]);
-  const [docsLoading, setDocsLoading] = useState(false);
-
   const [subs, setSubs] = useState<CreativeSubmission[]>([]);
   const [subsLoading, setSubsLoading] = useState(false);
+  const [subsError, setSubsError] = useState<string | null>(null);
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -126,29 +108,27 @@ export function CampaignDetailPage() {
     };
   }, [id, campaign, memberships]);
 
-  /* ── fetch documents + submissions once campaign is resolved ── */
+  /* ── fetch submissions once campaign is resolved ── */
   useEffect(() => {
     if (!campaign) return;
     let cancelled = false;
 
-    setDocsLoading(true);
-    api
-      .fetchOrgDocuments(campaign.organizationId)
-      .then((res) => {
-        if (!cancelled) setDocs(res.documents);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setDocsLoading(false);
-      });
-
     setSubsLoading(true);
+    setSubsError(null);
+    setSubs([]);
     api
       .fetchCampaignSubmissions(campaign.id)
       .then((res) => {
         if (!cancelled) setSubs(res.submissions);
       })
-      .catch(() => {})
+      .catch((e) => {
+        if (!cancelled)
+          setSubsError(
+            e instanceof ApiError
+              ? e.message
+              : "Could not load submissions.",
+          );
+      })
       .finally(() => {
         if (!cancelled) setSubsLoading(false);
       });
@@ -157,24 +137,6 @@ export function CampaignDetailPage() {
       cancelled = true;
     };
   }, [campaign]);
-
-  async function downloadDoc(doc: Document) {
-    setDownloadingId(doc.id);
-    try {
-      const { url } = await api.fetchDocumentDownloadUrl(doc.id);
-      const a = document.createElement("a");
-      a.href = url;
-      a.rel = "noopener";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch {
-      /* non-blocking */
-    } finally {
-      setDownloadingId(null);
-    }
-  }
 
   async function downloadSub(sub: CreativeSubmission) {
     setDownloadingId(sub.id);
@@ -224,8 +186,10 @@ export function CampaignDetailPage() {
         <h1 className="welcome-heading" style={{ marginTop: "0.75rem" }}>
           {campaign.title}
         </h1>
-        {campaign.description && (
+        {campaign.description?.trim() ? (
           <p className="welcome-body">{campaign.description}</p>
+        ) : (
+          <p className="text-muted">No description provided.</p>
         )}
         <div className="detail-header-meta">
           <span className={STATUS_BADGE[campaign.status]}>
@@ -237,54 +201,16 @@ export function CampaignDetailPage() {
         </div>
       </section>
 
-      {/* ── Documents ── */}
+      {/* ── Documents (campaign-specific linking not available yet) ── */}
       <section className="section-block">
         <h2 className="section-heading">Documents</h2>
-
-        {docsLoading && (
-          <p className="text-muted">Loading documents…</p>
-        )}
-
-        {!docsLoading && docs.length === 0 && (
-          <p className="text-muted">
-            No documents have been shared with your organization yet.
-          </p>
-        )}
-
-        {!docsLoading && docs.length > 0 && (
-          <ul className="report-list">
-            {docs.map((doc) => (
-              <li key={doc.id} className="report-item">
-                <div className="report-info">
-                  <span className="report-name">{doc.title}</span>
-                  {doc.description && (
-                    <span className="report-description">
-                      {doc.description}
-                    </span>
-                  )}
-                  <div className="doc-meta">
-                    <span className="doc-type-badge">
-                      {mimeLabel(doc.mimeType)}
-                    </span>
-                    <span>
-                      {doc.filename} &middot;{" "}
-                      {formatBytes(doc.sizeBytes)} &middot;{" "}
-                      {formatDate(doc.createdAt)}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="doc-download"
-                  disabled={downloadingId === doc.id}
-                  onClick={() => downloadDoc(doc)}
-                >
-                  {downloadingId === doc.id ? "Preparing…" : "Download"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <p className="text-muted">
+          Campaign-specific documents are not shown here yet. Use{" "}
+          <Link to="/documents" className="inline-text-link">
+            Documents
+          </Link>{" "}
+          for files shared with your organization.
+        </p>
       </section>
 
       {/* ── Creative Submissions ── */}
@@ -295,13 +221,19 @@ export function CampaignDetailPage() {
           <p className="text-muted">Loading submissions…</p>
         )}
 
-        {!subsLoading && subs.length === 0 && (
+        {subsError && (
+          <p className="form-error" role="alert">
+            {subsError}
+          </p>
+        )}
+
+        {!subsLoading && !subsError && subs.length === 0 && (
           <p className="text-muted">
             No creatives have been submitted for this campaign yet.
           </p>
         )}
 
-        {!subsLoading && subs.length > 0 && (
+        {!subsLoading && !subsError && subs.length > 0 && (
           <ul className="report-list">
             {subs.map((s) => (
               <li key={s.id} className="report-item">

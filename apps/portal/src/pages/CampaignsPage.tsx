@@ -130,21 +130,23 @@ export function CampaignsPage() {
                 <Link
                   to={`/campaigns/${c.id}`}
                   state={{ campaign: c }}
-                  className="report-info campaign-link"
+                  className="campaign-row-full-link"
                 >
-                  <span className="report-name">{c.title}</span>
-                  {c.description && (
-                    <span className="report-description">
-                      {c.description}
-                    </span>
-                  )}
-                  <div className="campaign-meta">
-                    <span>{dateRange(c.startDate, c.endDate)}</span>
+                  <div className="report-info">
+                    <span className="report-name">{c.title}</span>
+                    {c.description && (
+                      <span className="report-description">
+                        {c.description}
+                      </span>
+                    )}
+                    <div className="campaign-meta">
+                      <span>{dateRange(c.startDate, c.endDate)}</span>
+                    </div>
                   </div>
+                  <span className={STATUS_BADGE[c.status]}>
+                    {STATUS_LABEL[c.status]}
+                  </span>
                 </Link>
-                <span className={STATUS_BADGE[c.status]}>
-                  {STATUS_LABEL[c.status]}
-                </span>
               </li>
             ))}
           </ul>
