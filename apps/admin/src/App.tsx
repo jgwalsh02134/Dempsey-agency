@@ -7,6 +7,7 @@ import { CampaignDetailPage } from "./pages/CampaignDetailPage";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { CreativesQueuePage } from "./pages/CreativesQueuePage";
+import { AgencyPage } from "./pages/AgencyPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PublisherDetailPage } from "./pages/PublisherDetailPage";
@@ -43,6 +44,7 @@ export function App() {
         }
       >
         <Route index element={<OverviewPage />} />
+        <Route path="agency" element={<AgencyPage />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="campaigns/:id" element={<CampaignDetailPage />} />
