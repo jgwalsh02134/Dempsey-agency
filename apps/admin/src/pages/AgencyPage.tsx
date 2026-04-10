@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
+import { CreateUserForm } from "../components/CreateUserForm";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import type {
   AuditLogEntry,
+  Organization,
   OrgUsersResponse,
   Role,
 } from "../types";
@@ -54,6 +56,9 @@ export function AgencyPage() {
   const [activity, setActivity] = useState<AuditLogEntry[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
 
+  const [agencyOrganization, setAgencyOrganization] =
+    useState<Organization | null>(null);
+
   const loadMembers = useCallback(
     async (opts?: { background?: boolean }) => {
       if (!agencyOrgId) return;
@@ -95,11 +100,31 @@ export function AgencyPage() {
     if (!members) return null;
     return {
       ...members,
-      users: members.users.filter((row) =>
-        INTERNAL_DOMAINS.some((d) => row.user.email.endsWith(d)),
-      ),
+      users: members.users.filter((row) => {
+        const e = row.user.email.toLowerCase();
+        return INTERNAL_DOMAINS.some((d) => e.endsWith(d.toLowerCase()));
+      }),
     };
   }, [members]);
+
+  /** Full org row from API when available; otherwise minimal org from session so CreateUserForm still works. */
+  const agencyOrgForCreate = useMemo((): Organization | null => {
+    if (!agencyOrgId) return null;
+    if (agencyOrganization?.id === agencyOrgId) return agencyOrganization;
+    const m = session?.memberships.find(
+      (mb) =>
+        mb.organizationId === agencyOrgId &&
+        mb.organization.type === "AGENCY",
+    );
+    if (!m) return null;
+    return {
+      id: m.organization.id,
+      name: m.organization.name,
+      type: m.organization.type,
+      createdAt: agencyOrganization?.createdAt ?? "",
+      updatedAt: agencyOrganization?.updatedAt ?? "",
+    };
+  }, [agencyOrgId, agencyOrganization, session]);
 
   const applyLocalMemberRole = useCallback(
     (args: { membershipId: string; userId: string; role: Role }) => {
@@ -129,6 +154,27 @@ export function AgencyPage() {
     void loadActivity();
   }, [loadActivity]);
 
+  useEffect(() => {
+    if (!agencyOrgId) {
+      setAgencyOrganization(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const list = await api.fetchOrganizations();
+        if (cancelled) return;
+        const org = list.find((o) => o.id === agencyOrgId) ?? null;
+        setAgencyOrganization(org);
+      } catch {
+        if (!cancelled) setAgencyOrganization(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [agencyOrgId]);
+
   return (
     <div>
       <div className="page-header">
@@ -143,6 +189,33 @@ export function AgencyPage() {
 
       {agencyOrgId && (
         <>
+          <section className="card" style={{ marginBottom: "1.25rem" }}>
+            <p className="muted" style={{ margin: 0 }}>
+              Internal Dempsey Agency administration only. Create staff accounts
+              with agency email domains; manage roles and access below. Client
+              onboarding and account requests stay under{" "}
+              <strong>Clients</strong>.
+            </p>
+          </section>
+
+          {agencyOrgForCreate && (
+            <div style={{ marginBottom: "1.25rem" }}>
+              <CreateUserForm
+                organizations={[agencyOrgForCreate]}
+                defaultOrgId={agencyOrgId}
+                allowedEmailDomainSuffixes={INTERNAL_DOMAINS}
+                heading="Create internal staff account"
+                onCreated={() => {
+                  void loadMembers({ background: true });
+                  void loadActivity();
+                }}
+              />
+              <p className="muted small" style={{ marginTop: "0.75rem" }}>
+                Allowed email domains: {INTERNAL_DOMAINS.join(", ")}.
+              </p>
+            </div>
+          )}
+
           <OrgMembersTable
               orgId={agencyOrgId}
               orgType="AGENCY"

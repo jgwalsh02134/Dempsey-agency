@@ -10,12 +10,27 @@ function rolesForOrgType(t: OrganizationType): Role[] {
   return t === "AGENCY" ? AGENCY_ROLES : CLIENT_ROLES;
 }
 
+function emailMatchesAllowedDomains(
+  email: string,
+  suffixes: string[],
+): boolean {
+  const norm = email.trim().toLowerCase();
+  return suffixes.some((s) => norm.endsWith(s.toLowerCase()));
+}
+
 export function CreateUserForm({
   organizations,
   defaultOrgId,
+  allowedEmailDomainSuffixes,
+  heading = "Create user",
+  onCreated,
 }: {
   organizations: Organization[];
   defaultOrgId: string;
+  /** If set, email must end with one of these suffixes (e.g. "@dempsey.agency"). */
+  allowedEmailDomainSuffixes?: string[];
+  heading?: string;
+  onCreated?: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,6 +54,16 @@ export function CreateUserForm({
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    const trimmedEmail = email.trim();
+    if (
+      allowedEmailDomainSuffixes?.length &&
+      !emailMatchesAllowedDomains(trimmedEmail, allowedEmailDomainSuffixes)
+    ) {
+      setError(
+        `Email must be one of: ${allowedEmailDomainSuffixes.join(", ")}`,
+      );
+      return;
+    }
     setLoading(true);
     try {
       const body: {
@@ -48,7 +73,7 @@ export function CreateUserForm({
         role: Role;
         name?: string;
       } = {
-        email: email.trim(),
+        email: trimmedEmail,
         password,
         organizationId,
         role,
@@ -59,6 +84,7 @@ export function CreateUserForm({
       setEmail("");
       setPassword("");
       setName("");
+      onCreated?.();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Request failed");
     } finally {
@@ -72,7 +98,7 @@ export function CreateUserForm({
 
   return (
     <section className="card">
-      <h2>Create user</h2>
+      <h2>{heading}</h2>
       <form onSubmit={onSubmit} className="stack">
         <label className="field">
           <span>Email</span>
