@@ -7,10 +7,12 @@ import type {
   AdminSubmissionsResponse,
   AICreativeReview,
   Campaign,
+  CampaignPlacementsResponse,
   CampaignStatus,
   CampaignSubmissionsResponse,
   CreativeSubmission,
   Document,
+  InventoryItem,
   Invoice,
   InvoiceStatus,
   LoginResponse,
@@ -19,6 +21,10 @@ import type {
   OrgDocumentsResponse,
   OrgInvoicesResponse,
   OrgUsersResponse,
+  Placement,
+  Publisher,
+  PublisherInventoryResponse,
+  PublishersResponse,
   SessionUser,
   SubmissionStatus,
 } from "../types";
@@ -163,6 +169,7 @@ export async function createCampaign(
     title: string;
     description?: string;
     status?: CampaignStatus;
+    budgetCents?: number;
     startDate?: string;
     endDate?: string;
   },
@@ -295,4 +302,99 @@ export async function reviewCreative(
     method: "POST",
     body: JSON.stringify({ submissionId }),
   });
+}
+
+// ── Publishers ──────────────────────────────────────────────────
+
+export async function fetchPublishers(): Promise<PublishersResponse> {
+  return apiFetch<PublishersResponse>("/api/v1/publishers");
+}
+
+export async function createPublisher(body: {
+  name: string;
+  city?: string;
+  state?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  contactEmail?: string;
+  circulation?: number;
+}): Promise<Publisher> {
+  return apiFetch<Publisher>("/api/v1/publishers", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchPublisher(
+  id: string,
+  body: Record<string, unknown>,
+): Promise<Publisher> {
+  return apiFetch<Publisher>(
+    `/api/v1/publishers/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
+export async function fetchPublisherInventory(
+  publisherId: string,
+): Promise<PublisherInventoryResponse> {
+  return apiFetch<PublisherInventoryResponse>(
+    `/api/v1/publishers/${encodeURIComponent(publisherId)}/inventory`,
+  );
+}
+
+export async function createInventory(
+  publisherId: string,
+  body: {
+    name: string;
+    mediaType: string;
+    pricingModel?: string;
+    rateCents?: number;
+    description?: string;
+  },
+): Promise<InventoryItem> {
+  return apiFetch<InventoryItem>(
+    `/api/v1/publishers/${encodeURIComponent(publisherId)}/inventory`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+// ── Placements ──────────────────────────────────────────────────
+
+export async function fetchCampaignPlacements(
+  campaignId: string,
+): Promise<CampaignPlacementsResponse> {
+  return apiFetch<CampaignPlacementsResponse>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/placements`,
+  );
+}
+
+export async function createPlacement(
+  campaignId: string,
+  body: {
+    inventoryId: string;
+    name: string;
+    status?: string;
+    grossCostCents: number;
+    netCostCents?: number;
+    quantity?: number;
+    notes?: string;
+  },
+): Promise<Placement> {
+  return apiFetch<Placement>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/placements`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
+export async function deletePlacement(id: string): Promise<void> {
+  await apiFetch(`/api/v1/placements/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchCampaign(id: string): Promise<Campaign> {
+  return apiFetch<Campaign>(
+    `/api/v1/campaigns/${encodeURIComponent(id)}`,
+  );
 }

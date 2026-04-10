@@ -10,6 +10,8 @@ import { invoiceRoutes } from "./invoices/index.js";
 import { submissionRoutes } from "./submissions/index.js";
 import { accountRequestRoutes } from "./account-requests/index.js";
 import { inviteRoutes } from "./invites/index.js";
+import { publisherRoutes } from "./publishers/index.js";
+import { placementRoutes } from "./placements/index.js";
 import { aiRoutes } from "./ai/index.js";
 import { adminRoutes } from "./admin/index.js";
 
@@ -25,6 +27,8 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(campaignRoutes);
   await app.register(invoiceRoutes);
   await app.register(submissionRoutes);
+  await app.register(publisherRoutes);
+  await app.register(placementRoutes);
   await app.register(accountRequestRoutes);
   await app.register(inviteRoutes);
   await app.register(aiRoutes);

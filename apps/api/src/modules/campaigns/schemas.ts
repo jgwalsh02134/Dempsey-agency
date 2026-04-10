@@ -16,6 +16,7 @@ export const createCampaignSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().max(1000).optional(),
   status: campaignStatus.default("ACTIVE"),
+  budgetCents: z.number().int().min(0).optional(),
   startDate: isoDate.optional(),
   endDate: isoDate.optional(),
 });
@@ -24,6 +25,7 @@ export const updateCampaignSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(1000).nullable().optional(),
   status: campaignStatus.optional(),
+  budgetCents: z.number().int().min(0).nullable().optional(),
   startDate: isoDate.nullable().optional(),
   endDate: isoDate.nullable().optional(),
 });

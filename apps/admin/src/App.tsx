@@ -3,11 +3,13 @@ import type { ReactNode } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { AdminLayout } from "./components/AdminLayout";
 import { AccessPage } from "./pages/AccessPage";
+import { CampaignDetailPage } from "./pages/CampaignDetailPage";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { CreativesQueuePage } from "./pages/CreativesQueuePage";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { PublishersPage } from "./pages/PublishersPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { token, loading } = useAuth();
@@ -42,6 +44,8 @@ export function App() {
         <Route index element={<OverviewPage />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
+        <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+        <Route path="publishers" element={<PublishersPage />} />
         <Route path="creatives" element={<CreativesQueuePage />} />
         <Route path="access" element={<AccessPage />} />
       </Route>

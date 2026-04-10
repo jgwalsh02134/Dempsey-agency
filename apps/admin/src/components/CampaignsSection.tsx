@@ -1,7 +1,13 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type { Campaign, CampaignStatus } from "../types";
+
+function formatCents(cents: number | null): string {
+  if (cents == null) return "—";
+  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 const STATUSES: CampaignStatus[] = ["ACTIVE", "PAUSED", "COMPLETED"];
 
@@ -39,6 +45,7 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<CampaignStatus>("ACTIVE");
+  const [budgetDollars, setBudgetDollars] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [creating, setCreating] = useState(false);
@@ -79,6 +86,9 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
         status,
       };
       if (description.trim()) body.description = description.trim();
+      if (budgetDollars.trim()) {
+        body.budgetCents = Math.round(parseFloat(budgetDollars) * 100);
+      }
       if (startDate) body.startDate = startDate;
       if (endDate) body.endDate = endDate;
       await api.createCampaign(orgId, body);
@@ -86,6 +96,7 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
       setTitle("");
       setDescription("");
       setStatus("ACTIVE");
+      setBudgetDollars("");
       setStartDate("");
       setEndDate("");
       void loadCampaigns();
@@ -175,6 +186,17 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
             ))}
           </select>
         </label>
+        <label className="field">
+          <span>Budget (optional, USD)</span>
+          <input
+            type="number"
+            value={budgetDollars}
+            onChange={(e) => setBudgetDollars(e.target.value)}
+            min="0"
+            step="0.01"
+            placeholder="e.g. 5000.00"
+          />
+        </label>
         <div className="two-col">
           <label className="field">
             <span>Start date (optional)</span>
@@ -231,6 +253,7 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
               <tr>
                 <th>Title</th>
                 <th>Status</th>
+                <th>Budget</th>
                 <th>Dates</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -240,7 +263,9 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
               {campaigns.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <div>{c.title}</div>
+                    <div>
+                      <Link to={`/campaigns/${c.id}`}>{c.title}</Link>
+                    </div>
                     {c.description && (
                       <span className="small">{c.description}</span>
                     )}
@@ -264,6 +289,7 @@ export function CampaignsSection({ orgId }: { orgId: string }) {
                       ))}
                     </select>
                   </td>
+                  <td>{formatCents(c.budgetCents)}</td>
                   <td>
                     <span className="small">
                       {dateRange(c.startDate, c.endDate)}

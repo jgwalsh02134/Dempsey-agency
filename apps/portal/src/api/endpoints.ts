@@ -1,5 +1,7 @@
 import { apiFetch } from "./client";
 import type {
+  Campaign,
+  CampaignPlacementsResponse,
   CampaignSubmissionsResponse,
   CreativeSubmission,
   DocumentDownloadResponse,
@@ -102,5 +104,19 @@ export async function fetchSubmissionDownloadUrl(
 ): Promise<SubmissionDownloadResponse> {
   return apiFetch<SubmissionDownloadResponse>(
     `/api/v1/submissions/${encodeURIComponent(id)}/download`,
+  );
+}
+
+export async function fetchCampaign(id: string): Promise<Campaign> {
+  return apiFetch<Campaign>(
+    `/api/v1/campaigns/${encodeURIComponent(id)}`,
+  );
+}
+
+export async function fetchCampaignPlacements(
+  campaignId: string,
+): Promise<CampaignPlacementsResponse> {
+  return apiFetch<CampaignPlacementsResponse>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/placements`,
   );
 }

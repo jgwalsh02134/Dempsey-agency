@@ -58,6 +58,36 @@ export async function campaignRoutes(app: FastifyInstance) {
     },
   );
 
+  // ── Get single campaign with placements ───────────────────────
+  app.get(
+    "/campaigns/:id",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id } = campaignIdParamsSchema.parse(request.params);
+
+      const campaign = await app.prisma.campaign.findUnique({
+        where: { id },
+        include: {
+          createdBy: { select: { id: true, email: true, name: true } },
+          organization: { select: { id: true, name: true, type: true } },
+        },
+      });
+      if (!campaign) {
+        return reply.code(404).send({ error: "Campaign not found" });
+      }
+
+      const visible = await resolveVisibleOrganizationIds(
+        app.prisma,
+        request.currentUser!,
+      );
+      if (visible !== null && !visible.includes(campaign.organizationId)) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      return campaign;
+    },
+  );
+
   // ── Create a campaign (admin only) ────────────────────────────
   app.post(
     "/organizations/:orgId/campaigns",
@@ -81,6 +111,7 @@ export async function campaignRoutes(app: FastifyInstance) {
           title: parsed.title,
           description: parsed.description ?? null,
           status: parsed.status,
+          budgetCents: parsed.budgetCents ?? null,
           startDate: parsed.startDate ? new Date(parsed.startDate) : null,
           endDate: parsed.endDate ? new Date(parsed.endDate) : null,
           createdById: request.currentUser!.id,
@@ -120,6 +151,8 @@ export async function campaignRoutes(app: FastifyInstance) {
       if (parsed.description !== undefined)
         data.description = parsed.description;
       if (parsed.status !== undefined) data.status = parsed.status;
+      if (parsed.budgetCents !== undefined)
+        data.budgetCents = parsed.budgetCents;
       if ("startDate" in parsed)
         data.startDate = parsed.startDate
           ? new Date(parsed.startDate)

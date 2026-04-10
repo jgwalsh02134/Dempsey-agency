@@ -25,6 +25,11 @@ function formatDate(iso: string): string {
   });
 }
 
+function formatCents(cents: number | null): string {
+  if (cents == null) return "";
+  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function dateRange(start: string | null, end: string | null): string {
   if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
   if (start) return `From ${formatDate(start)}`;
@@ -141,6 +146,12 @@ export function CampaignsPage() {
                     )}
                     <div className="campaign-meta">
                       <span>{dateRange(c.startDate, c.endDate)}</span>
+                      {c.budgetCents != null && (
+                        <>
+                          <span>·</span>
+                          <span>Budget: {formatCents(c.budgetCents)}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <span className={STATUS_BADGE[c.status]}>

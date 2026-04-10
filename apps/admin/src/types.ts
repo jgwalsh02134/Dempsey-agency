@@ -88,6 +88,7 @@ export interface Campaign {
   title: string;
   description: string | null;
   status: CampaignStatus;
+  budgetCents: number | null;
   startDate: string | null;
   endDate: string | null;
   createdById: string;
@@ -98,11 +99,103 @@ export interface Campaign {
     email: string;
     name: string | null;
   };
+  organization?: {
+    id: string;
+    name: string;
+    type: OrganizationType;
+  };
 }
 
 export interface OrgCampaignsResponse {
   organizationId: string;
   campaigns: Campaign[];
+}
+
+export type MediaType = "PRINT" | "DIGITAL" | "EMAIL" | "OTHER";
+
+export type PricingModel =
+  | "CPM"
+  | "VCPM"
+  | "CPC"
+  | "CPCV"
+  | "FLAT"
+  | "COLUMN_INCH"
+  | "PER_LINE"
+  | "OTHER";
+
+export type PlacementStatus =
+  | "DRAFT"
+  | "BOOKED"
+  | "LIVE"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export interface Publisher {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  websiteUrl: string | null;
+  logoUrl: string | null;
+  contactEmail: string | null;
+  circulation: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { inventory: number };
+}
+
+export interface PublishersResponse {
+  publishers: Publisher[];
+}
+
+export interface InventoryItem {
+  id: string;
+  publisherId: string;
+  name: string;
+  mediaType: MediaType;
+  pricingModel: PricingModel;
+  rateCents: number | null;
+  description: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublisherInventoryResponse {
+  publisherId: string;
+  inventory: InventoryItem[];
+}
+
+export interface Placement {
+  id: string;
+  campaignId: string;
+  inventoryId: string;
+  name: string;
+  status: PlacementStatus;
+  grossCostCents: number;
+  netCostCents: number | null;
+  quantity: number | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  inventory: {
+    id: string;
+    name: string;
+    mediaType: MediaType;
+    pricingModel: PricingModel;
+    publisher: {
+      id: string;
+      name: string;
+      city: string | null;
+      state: string | null;
+    };
+  };
+}
+
+export interface CampaignPlacementsResponse {
+  campaignId: string;
+  placements: Placement[];
 }
 
 export type InvoiceStatus = "PENDING" | "PAID" | "OVERDUE";

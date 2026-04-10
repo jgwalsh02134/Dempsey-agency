@@ -49,6 +49,32 @@ enum AccountRequestStatus {
   REJECTED
 }
 
+enum MediaType {
+  PRINT
+  DIGITAL
+  EMAIL
+  OTHER
+}
+
+enum PlacementStatus {
+  DRAFT
+  BOOKED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PricingModel {
+  CPM
+  VCPM
+  CPC
+  CPCV
+  FLAT
+  COLUMN_INCH
+  PER_LINE
+  OTHER
+}
+
 enum AuditAction {
   USER_CREATED
   ROLE_CHANGED
@@ -146,6 +172,7 @@ model Campaign {
   title          String
   description    String?
   status         CampaignStatus @default(ACTIVE)
+  budgetCents    Int?
   startDate      DateTime?
   endDate        DateTime?
   createdById    String
@@ -155,6 +182,7 @@ model Campaign {
   organization Organization @relation(fields: [organizationId], references: [id])
   createdBy    User         @relation(fields: [createdById], references: [id])
   submissions  CreativeSubmission[]
+  placements   Placement[]
 
   @@index([organizationId, status])
 }
@@ -254,6 +282,60 @@ model PasswordReset {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
+}
+
+model Publisher {
+  id           String   @id @default(cuid())
+  name         String
+  city         String?
+  state        String?
+  websiteUrl   String?
+  logoUrl      String?
+  contactEmail String?
+  circulation  Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inventory Inventory[]
+}
+
+model Inventory {
+  id           String       @id @default(cuid())
+  publisherId  String
+  name         String
+  mediaType    MediaType
+  pricingModel PricingModel @default(FLAT)
+  rateCents    Int?
+  description  String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  publisher  Publisher   @relation(fields: [publisherId], references: [id])
+  placements Placement[]
+
+  @@index([publisherId])
+}
+
+model Placement {
+  id             String          @id @default(cuid())
+  campaignId     String
+  inventoryId    String
+  name           String
+  status         PlacementStatus @default(DRAFT)
+  grossCostCents Int
+  netCostCents   Int?
+  quantity       Int?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  campaign  Campaign  @relation(fields: [campaignId], references: [id])
+  inventory Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@index([campaignId])
+  @@index([inventoryId])
 }
 
 /// Append-only security audit trail (admin / membership actions).

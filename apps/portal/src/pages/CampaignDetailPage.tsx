@@ -7,6 +7,8 @@ import type {
   Campaign,
   CampaignStatus,
   CreativeSubmission,
+  Placement,
+  PlacementStatus,
   SubmissionStatus,
 } from "../types";
 
@@ -48,12 +50,33 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatCents(cents: number | null): string {
+  if (cents == null) return "—";
+  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function dateRange(start: string | null, end: string | null): string {
   if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
   if (start) return `From ${formatDate(start)}`;
   if (end) return `Until ${formatDate(end)}`;
   return "Ongoing";
 }
+
+const PLACEMENT_STATUS_LABEL: Record<PlacementStatus, string> = {
+  DRAFT: "Draft",
+  BOOKED: "Booked",
+  LIVE: "Live",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+const PLACEMENT_STATUS_BADGE: Record<PlacementStatus, string> = {
+  DRAFT: "report-badge",
+  BOOKED: "report-badge badge-pending",
+  LIVE: "report-badge badge-active",
+  COMPLETED: "report-badge badge-completed",
+  CANCELLED: "report-badge badge-overdue",
+};
 
 export function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -70,6 +93,10 @@ export function CampaignDetailPage() {
   );
   const [campaignLoading, setCampaignLoading] = useState(!campaign);
   const [campaignError, setCampaignError] = useState<string | null>(null);
+
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [placementsLoading, setPlacementsLoading] = useState(false);
+  const [placementsError, setPlacementsError] = useState<string | null>(null);
 
   const [subs, setSubs] = useState<CreativeSubmission[]>([]);
   const [subsLoading, setSubsLoading] = useState(false);
@@ -107,6 +134,36 @@ export function CampaignDetailPage() {
       cancelled = true;
     };
   }, [id, campaign, memberships]);
+
+  /* ── fetch placements once campaign is resolved ── */
+  useEffect(() => {
+    if (!campaign) return;
+    let cancelled = false;
+
+    setPlacementsLoading(true);
+    setPlacementsError(null);
+    setPlacements([]);
+    api
+      .fetchCampaignPlacements(campaign.id)
+      .then((res) => {
+        if (!cancelled) setPlacements(res.placements);
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setPlacementsError(
+            e instanceof ApiError
+              ? e.message
+              : "Could not load placements.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setPlacementsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaign]);
 
   /* ── fetch submissions once campaign is resolved ── */
   useEffect(() => {
@@ -198,7 +255,61 @@ export function CampaignDetailPage() {
           <span className="text-muted">
             {dateRange(campaign.startDate, campaign.endDate)}
           </span>
+          {campaign.budgetCents != null && (
+            <span className="text-muted">
+              Budget: {formatCents(campaign.budgetCents)}
+            </span>
+          )}
         </div>
+      </section>
+
+      {/* ── Placements ── */}
+      <section className="section-block">
+        <h2 className="section-heading">Placements</h2>
+
+        {placementsLoading && (
+          <p className="text-muted">Loading placements…</p>
+        )}
+
+        {placementsError && (
+          <p className="form-error" role="alert">
+            {placementsError}
+          </p>
+        )}
+
+        {!placementsLoading && !placementsError && placements.length === 0 && (
+          <p className="text-muted">
+            No placements have been set up for this campaign yet.
+          </p>
+        )}
+
+        {!placementsLoading && !placementsError && placements.length > 0 && (
+          <ul className="report-list">
+            {placements.map((p) => (
+              <li key={p.id} className="report-item">
+                <div className="report-info">
+                  <span className="report-name">{p.name}</span>
+                  <div className="campaign-meta">
+                    <span>{p.inventory.publisher.name}</span>
+                    <span>·</span>
+                    <span>{p.inventory.mediaType}</span>
+                    <span>·</span>
+                    <span>{formatCents(p.grossCostCents)}</span>
+                    {p.quantity != null && (
+                      <>
+                        <span>·</span>
+                        <span>Qty: {p.quantity}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <span className={PLACEMENT_STATUS_BADGE[p.status]}>
+                  {PLACEMENT_STATUS_LABEL[p.status]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* ── Documents (campaign-specific linking not available yet) ── */}
