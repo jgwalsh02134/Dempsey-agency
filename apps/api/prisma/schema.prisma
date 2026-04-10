@@ -74,6 +74,7 @@ model User {
   submissions              CreativeSubmission[]
   reviewedAccountRequests  AccountRequest[]
   createdInvites           Invite[]           @relation("InviteCreator")
+  passwordResets           PasswordReset[]
 }
 
 model Organization {
@@ -239,6 +240,19 @@ model Invite {
   accountRequest AccountRequest? @relation(fields: [accountRequestId], references: [id])
 
   @@index([email])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([expiresAt])
 }
 

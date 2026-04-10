@@ -26,6 +26,27 @@ export async function fetchSession(): Promise<SessionUser> {
   return apiFetch<SessionUser>("/api/v1/auth/me");
 }
 
+export async function forgotPassword(
+  email: string,
+): Promise<{ success: boolean }> {
+  return apiFetch("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+    token: null,
+  });
+}
+
+export async function resetPassword(
+  token: string,
+  password: string,
+): Promise<{ success: boolean }> {
+  return apiFetch("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+    token: null,
+  });
+}
+
 export async function fetchOrgDocuments(
   orgId: string,
 ): Promise<OrgDocumentsResponse> {

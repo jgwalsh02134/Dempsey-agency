@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { MARKETING_URL } from "../api/config";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
@@ -83,6 +83,12 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+          </div>
+
+          <div className="form-utilities">
+            <Link to="/forgot-password" className="forgot-link">
+              Forgot password?
+            </Link>
           </div>
 
           {formError && (
