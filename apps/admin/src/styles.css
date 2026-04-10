@@ -349,17 +349,10 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .sidebar-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 6px;
-  background: var(--primary);
-  color: white;
-  font-weight: 700;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
 }
 
 .sidebar-title {
@@ -684,4 +677,133 @@ input[type="file"]::file-selector-button:hover {
   display: flex;
   gap: 0.375rem;
   flex-wrap: wrap;
+}
+
+/* ── Mobile: collapse sidebar to top bar ── */
+@media (max-width: 768px) {
+  .admin-shell {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.75rem 0.75rem 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-y: visible;
+  }
+
+  .sidebar-brand {
+    padding: 0 0.5rem 0.75rem 0;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 2px;
+    padding: 0;
+    flex: 1 1 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-top: 1px solid var(--border);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar-link {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8rem;
+  }
+
+  .sidebar-footer {
+    border-top: none;
+    margin-top: 0;
+    margin-left: auto;
+    padding: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sidebar-user {
+    margin-bottom: 0;
+  }
+
+  .sidebar-user-name {
+    font-size: 0.75rem;
+  }
+
+  .sidebar-user-email {
+    display: none;
+  }
+
+  .sidebar-logout {
+    width: auto;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .admin-content {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .page-header {
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .kpi-card {
+    padding: 0.875rem;
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+
+  .data-table {
+    font-size: 0.8rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.45rem 0.375rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .client-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .q-filters {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }

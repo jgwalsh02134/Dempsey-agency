@@ -17,7 +17,7 @@ export function AdminLayout() {
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="sidebar-brand">
-          <span className="sidebar-logo">DA</span>
+          <img src="/da-logo.svg" alt="Dempsey Agency" className="sidebar-logo" />
           <span className="sidebar-title">Admin</span>
         </div>
 
