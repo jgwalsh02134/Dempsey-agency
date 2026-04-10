@@ -464,6 +464,38 @@ a.portal-nav-link:focus-visible {
   color: var(--color-midnight);
 }
 
+.portal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-back-to-site {
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-ocean);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.btn-back-to-site:hover {
+  color: var(--color-midnight);
+}
+
+.btn-back-to-site:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  color: var(--color-midnight);
+}
+
+.back-to-site-short {
+  display: none;
+}
+
 /* ── Portal main ── */
 .portal-main {
   flex: 1;
@@ -976,6 +1008,18 @@ a.portal-nav-link:focus-visible {
 
   .btn-sign-out {
     padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .back-to-site-full {
+    display: none;
+  }
+
+  .back-to-site-short {
+    display: inline;
+  }
+
+  .btn-back-to-site {
     font-size: 0.75rem;
   }
 
