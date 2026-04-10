@@ -8,7 +8,14 @@ export const submissionIdParamsSchema = z.object({
   id: z.string().trim().min(1),
 });
 
-const submissionStatus = z.enum(["SUBMITTED", "APPROVED", "REVISION_REQUESTED"]);
+const submissionStatus = z.enum([
+  "UPLOADED",
+  "VALIDATION_FAILED",
+  "UNDER_REVIEW",
+  "NEEDS_RESIZING",
+  "READY_FOR_PUBLISHER",
+  "PUSHED",
+]);
 
 export const updateSubmissionSchema = z.object({
   status: submissionStatus.optional(),

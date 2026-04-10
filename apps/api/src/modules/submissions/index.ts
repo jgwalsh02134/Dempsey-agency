@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { requireAuth } from "../../plugins/auth.js";
 import { assertCanManageOrganization } from "../../lib/rbac.js";
@@ -13,6 +14,7 @@ import {
   submissionIdParamsSchema,
   updateSubmissionSchema,
 } from "./schemas.js";
+import { validateCreative } from "./validate.js";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
@@ -23,12 +25,15 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/gif",
 ]);
 
-const CREATIVE_TYPES = new Set(["PRINT", "DIGITAL"]);
+const CREATIVE_TYPES = new Set(["PRINT", "DIGITAL", "MASTER_ASSET"]);
 
 const STATUS_ORDER: Record<string, number> = {
-  SUBMITTED: 0,
-  REVISION_REQUESTED: 1,
-  APPROVED: 2,
+  VALIDATION_FAILED: 0,
+  UPLOADED: 1,
+  UNDER_REVIEW: 2,
+  NEEDS_RESIZING: 3,
+  READY_FOR_PUBLISHER: 4,
+  PUSHED: 5,
 };
 
 function sanitizeFilename(name: string): string {
@@ -152,17 +157,31 @@ export async function submissionRoutes(app: FastifyInstance) {
 
       await uploadObject(storageKey, buffer, file.mimetype);
 
+      const validation = validateCreative(
+        creativeType,
+        buffer,
+        file.mimetype,
+        buffer.length,
+      );
+
       const submission = await app.prisma.creativeSubmission.create({
         data: {
           campaignId,
           organizationId: campaign.organizationId,
           title: title.trim(),
           description,
-          creativeType: creativeType as "PRINT" | "DIGITAL",
+          creativeType: creativeType as "PRINT" | "DIGITAL" | "MASTER_ASSET",
           filename,
           mimeType: file.mimetype,
           sizeBytes: buffer.length,
           storageKey,
+          status: validation.status,
+          widthPx: validation.widthPx,
+          heightPx: validation.heightPx,
+          dpi: validation.dpi,
+          colorSpace: validation.colorSpace,
+          validationSummary:
+            validation.validationSummary as unknown as Prisma.InputJsonValue,
           submittedById: request.currentUser!.id,
         },
       });

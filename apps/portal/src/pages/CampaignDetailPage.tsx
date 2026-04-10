@@ -24,15 +24,21 @@ const STATUS_BADGE: Record<CampaignStatus, string> = {
 };
 
 const SUB_STATUS_LABEL: Record<SubmissionStatus, string> = {
-  SUBMITTED: "Submitted",
-  APPROVED: "Approved",
-  REVISION_REQUESTED: "Revision Requested",
+  UPLOADED: "Uploaded",
+  VALIDATION_FAILED: "Validation Failed",
+  UNDER_REVIEW: "Under Review",
+  NEEDS_RESIZING: "Needs Resizing",
+  READY_FOR_PUBLISHER: "Ready for Publisher",
+  PUSHED: "Pushed",
 };
 
 const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
-  SUBMITTED: "report-badge badge-pending",
-  APPROVED: "report-badge badge-paid",
-  REVISION_REQUESTED: "report-badge badge-overdue",
+  UPLOADED: "report-badge badge-pending",
+  VALIDATION_FAILED: "report-badge badge-overdue",
+  UNDER_REVIEW: "report-badge badge-pending",
+  NEEDS_RESIZING: "report-badge badge-overdue",
+  READY_FOR_PUBLISHER: "report-badge badge-paid",
+  PUSHED: "report-badge badge-paid",
 };
 
 function formatDate(iso: string): string {

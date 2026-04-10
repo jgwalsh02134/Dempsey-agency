@@ -3,9 +3,12 @@ import type { SubmissionStatus } from "@prisma/client";
 import { requireAuth } from "../../plugins/auth.js";
 
 const STATUS_SORT: Record<string, number> = {
-  SUBMITTED: 0,
-  REVISION_REQUESTED: 1,
-  APPROVED: 2,
+  VALIDATION_FAILED: 0,
+  UPLOADED: 1,
+  UNDER_REVIEW: 2,
+  NEEDS_RESIZING: 3,
+  READY_FOR_PUBLISHER: 4,
+  PUSHED: 5,
 };
 
 export async function adminRoutes(app: FastifyInstance) {
@@ -22,7 +25,9 @@ export async function adminRoutes(app: FastifyInstance) {
     ] = await Promise.all([
       prisma.organization.count({ where: { type: "CLIENT" } }),
       prisma.campaign.count({ where: { status: "ACTIVE" } }),
-      prisma.creativeSubmission.count({ where: { status: "SUBMITTED" } }),
+      prisma.creativeSubmission.count({
+        where: { status: { in: ["UPLOADED", "VALIDATION_FAILED"] } },
+      }),
       prisma.accountRequest.count({ where: { status: "PENDING" } }),
       prisma.invoice.count({ where: { status: "OVERDUE" } }),
       prisma.auditLog.findMany({

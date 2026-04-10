@@ -7,14 +7,33 @@ import type {
   CreativeType,
   Organization,
   SubmissionStatus,
+  ValidationSummary,
 } from "../types";
 
 const ALL_STATUSES: SubmissionStatus[] = [
-  "SUBMITTED",
-  "APPROVED",
-  "REVISION_REQUESTED",
+  "UPLOADED",
+  "VALIDATION_FAILED",
+  "UNDER_REVIEW",
+  "NEEDS_RESIZING",
+  "READY_FOR_PUBLISHER",
+  "PUSHED",
 ];
-const ALL_TYPES: CreativeType[] = ["PRINT", "DIGITAL"];
+const ALL_TYPES: CreativeType[] = ["DIGITAL", "PRINT", "MASTER_ASSET"];
+
+const STATUS_LABEL: Record<SubmissionStatus, string> = {
+  UPLOADED: "Uploaded",
+  VALIDATION_FAILED: "Validation Failed",
+  UNDER_REVIEW: "Under Review",
+  NEEDS_RESIZING: "Needs Resizing",
+  READY_FOR_PUBLISHER: "Ready for Publisher",
+  PUSHED: "Pushed",
+};
+
+const TYPE_LABEL: Record<CreativeType, string> = {
+  DIGITAL: "Digital",
+  PRINT: "Print",
+  MASTER_ASSET: "Master Asset",
+};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -91,7 +110,7 @@ export function CreativesQueuePage() {
     setBusyId(sub.id);
     try {
       let reviewNote: string | null | undefined;
-      if (newStatus === "REVISION_REQUESTED") {
+      if (newStatus === "NEEDS_RESIZING") {
         const note = window.prompt("Review note (optional):");
         if (note !== null) reviewNote = note || null;
       }
@@ -141,7 +160,9 @@ export function CreativesQueuePage() {
   }
 
   const clientOrgs = orgs.filter((o) => o.type === "CLIENT");
-  const submittedCount = subs.filter((s) => s.status === "SUBMITTED").length;
+  const pendingCount = subs.filter(
+    (s) => s.status === "UPLOADED" || s.status === "VALIDATION_FAILED",
+  ).length;
 
   return (
     <div>
@@ -151,7 +172,7 @@ export function CreativesQueuePage() {
           {!loading && (
             <p className="muted" style={{ margin: 0, fontSize: "0.85rem" }}>
               {subs.length} submission{subs.length !== 1 ? "s" : ""}
-              {submittedCount > 0 && ` · ${submittedCount} awaiting review`}
+              {pendingCount > 0 && ` · ${pendingCount} awaiting review`}
             </p>
           )}
         </div>
@@ -172,7 +193,7 @@ export function CreativesQueuePage() {
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="">All statuses</option>
             {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>{STATUS_LABEL[s]}</option>
             ))}
           </select>
         </label>
@@ -190,7 +211,7 @@ export function CreativesQueuePage() {
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="">All types</option>
             {ALL_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>{TYPE_LABEL[t]}</option>
             ))}
           </select>
         </label>
@@ -234,6 +255,26 @@ export function CreativesQueuePage() {
                     {s.reviewNote && (
                       <span className="small warning">Note: {s.reviewNote}</span>
                     )}
+                    {s.validationSummary && (() => {
+                      const vs = s.validationSummary as ValidationSummary;
+                      return (
+                        <div className="q-validation" style={{ marginTop: "0.25rem" }}>
+                          <span className={`small ${vs.passed ? "success" : "warning"}`}>
+                            Preflight: {vs.passed ? "Passed" : "Failed"}
+                          </span>
+                          {vs.errors.length > 0 && (
+                            <ul className="q-val-list small warning">
+                              {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
+                            </ul>
+                          )}
+                          {vs.warnings.length > 0 && (
+                            <ul className="q-val-list small muted">
+                              {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {reviews[s.id] && (
                       <div className="q-ai-review">
                         <div className="q-ai-label">AI Review</div>
@@ -250,11 +291,17 @@ export function CreativesQueuePage() {
                   </td>
                   <td className="small">{s.organization.name}</td>
                   <td className="small">{s.campaign.title}</td>
-                  <td><span className="type-badge">{s.creativeType}</span></td>
+                  <td><span className="type-badge">{TYPE_LABEL[s.creativeType] ?? s.creativeType}</span></td>
                   <td>
                     <code className="small">{s.filename}</code>
                     <br />
                     <span className="small">{formatBytes(s.sizeBytes)}</span>
+                    {s.widthPx != null && s.heightPx != null && (
+                      <>
+                        <br />
+                        <span className="small">{s.widthPx}×{s.heightPx}px</span>
+                      </>
+                    )}
                   </td>
                   <td>
                     <select
@@ -266,7 +313,7 @@ export function CreativesQueuePage() {
                       }
                     >
                       {ALL_STATUSES.map((st) => (
-                        <option key={st} value={st}>{st}</option>
+                        <option key={st} value={st}>{STATUS_LABEL[st]}</option>
                       ))}
                     </select>
                   </td>

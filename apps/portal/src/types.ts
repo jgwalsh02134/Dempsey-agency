@@ -152,9 +152,27 @@ export interface OrgInvoicesResponse {
   invoices: Invoice[];
 }
 
-export type CreativeType = "PRINT" | "DIGITAL";
+export type CreativeType = "PRINT" | "DIGITAL" | "MASTER_ASSET";
 
-export type SubmissionStatus = "SUBMITTED" | "APPROVED" | "REVISION_REQUESTED";
+export type SubmissionStatus =
+  | "UPLOADED"
+  | "VALIDATION_FAILED"
+  | "UNDER_REVIEW"
+  | "NEEDS_RESIZING"
+  | "READY_FOR_PUBLISHER"
+  | "PUSHED";
+
+export interface ValidationSummary {
+  passed: boolean;
+  errors: string[];
+  warnings: string[];
+  metadata: {
+    widthPx: number | null;
+    heightPx: number | null;
+    dpi: number | null;
+    colorSpace: string | null;
+  };
+}
 
 export interface CreativeSubmission {
   id: string;
@@ -169,6 +187,12 @@ export interface CreativeSubmission {
   storageKey: string;
   status: SubmissionStatus;
   reviewNote: string | null;
+  placementId: string | null;
+  widthPx: number | null;
+  heightPx: number | null;
+  dpi: number | null;
+  colorSpace: string | null;
+  validationSummary: ValidationSummary | null;
   submittedById: string;
   createdAt: string;
   updatedAt: string;

@@ -35,12 +35,16 @@ enum InvoiceStatus {
 enum CreativeType {
   PRINT
   DIGITAL
+  MASTER_ASSET
 }
 
 enum SubmissionStatus {
-  SUBMITTED
-  APPROVED
-  REVISION_REQUESTED
+  UPLOADED
+  VALIDATION_FAILED
+  UNDER_REVIEW
+  NEEDS_RESIZING
+  READY_FOR_PUBLISHER
+  PUSHED
 }
 
 enum AccountRequestStatus {
@@ -208,25 +212,32 @@ model Invoice {
 }
 
 model CreativeSubmission {
-  id             String           @id @default(cuid())
-  campaignId     String
-  organizationId String
-  title          String
-  description    String?
-  creativeType   CreativeType
-  filename       String
-  mimeType       String
-  sizeBytes      Int
-  storageKey     String
-  status         SubmissionStatus @default(SUBMITTED)
-  reviewNote     String?
-  submittedById  String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id                String           @id @default(cuid())
+  campaignId        String
+  organizationId    String
+  title             String
+  description       String?
+  creativeType      CreativeType
+  filename          String
+  mimeType          String
+  sizeBytes         Int
+  storageKey        String
+  status            SubmissionStatus @default(UPLOADED)
+  reviewNote        String?
+  placementId       String?
+  widthPx           Int?
+  heightPx          Int?
+  dpi               Int?
+  colorSpace        String?
+  validationSummary Json?
+  submittedById     String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   campaign     Campaign     @relation(fields: [campaignId], references: [id])
   organization Organization @relation(fields: [organizationId], references: [id])
   submittedBy  User         @relation(fields: [submittedById], references: [id])
+  placement    Placement?   @relation(fields: [placementId], references: [id], onDelete: SetNull)
 
   @@index([campaignId, status])
   @@index([organizationId])
@@ -331,8 +342,9 @@ model Placement {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
-  campaign  Campaign  @relation(fields: [campaignId], references: [id])
-  inventory Inventory @relation(fields: [inventoryId], references: [id])
+  campaign    Campaign             @relation(fields: [campaignId], references: [id])
+  inventory   Inventory            @relation(fields: [inventoryId], references: [id])
+  submissions CreativeSubmission[]
 
   @@index([campaignId])
   @@index([inventoryId])

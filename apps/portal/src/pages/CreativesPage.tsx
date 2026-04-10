@@ -7,20 +7,33 @@ import type {
   CreativeSubmission,
   CreativeType,
   SubmissionStatus,
+  ValidationSummary,
 } from "../types";
 
-const CREATIVE_TYPES: CreativeType[] = ["PRINT", "DIGITAL"];
+const CREATIVE_TYPES: CreativeType[] = ["DIGITAL", "PRINT", "MASTER_ASSET"];
+
+const CREATIVE_TYPE_LABEL: Record<CreativeType, string> = {
+  DIGITAL: "Digital",
+  PRINT: "Print",
+  MASTER_ASSET: "Master Asset",
+};
 
 const STATUS_LABEL: Record<SubmissionStatus, string> = {
-  SUBMITTED: "Submitted",
-  APPROVED: "Approved",
-  REVISION_REQUESTED: "Revision Requested",
+  UPLOADED: "Uploaded",
+  VALIDATION_FAILED: "Validation Failed",
+  UNDER_REVIEW: "Under Review",
+  NEEDS_RESIZING: "Needs Resizing",
+  READY_FOR_PUBLISHER: "Ready for Publisher",
+  PUSHED: "Pushed",
 };
 
 const STATUS_BADGE: Record<SubmissionStatus, string> = {
-  SUBMITTED: "report-badge badge-pending",
-  APPROVED: "report-badge badge-paid",
-  REVISION_REQUESTED: "report-badge badge-overdue",
+  UPLOADED: "report-badge badge-pending",
+  VALIDATION_FAILED: "report-badge badge-overdue",
+  UNDER_REVIEW: "report-badge badge-pending",
+  NEEDS_RESIZING: "report-badge badge-overdue",
+  READY_FOR_PUBLISHER: "report-badge badge-paid",
+  PUSHED: "report-badge badge-paid",
 };
 
 function formatDate(iso: string): string {
@@ -66,6 +79,10 @@ export function CreativesPage() {
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const successTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  /* ── last validation result ── */
+  const [lastValidation, setLastValidation] =
+    useState<ValidationSummary | null>(null);
 
   /* ── download state ── */
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -147,6 +164,7 @@ export function CreativesPage() {
       if (!file || !selectedCampaignId) return;
       setUploadError(null);
       setUploadSuccess(null);
+      setLastValidation(null);
       if (successTimer.current) clearTimeout(successTimer.current);
       setUploading(true);
       try {
@@ -156,16 +174,23 @@ export function CreativesPage() {
           fd.append("description", description.trim());
         fd.append("creativeType", creativeType);
         fd.append("file", file);
-        await api.uploadSubmission(selectedCampaignId, fd);
-        setUploadSuccess(`"${title.trim()}" submitted successfully.`);
+        const result = await api.uploadSubmission(selectedCampaignId, fd);
+        if (result.validationSummary) {
+          setLastValidation(result.validationSummary as ValidationSummary);
+        }
+        const label =
+          result.status === "VALIDATION_FAILED"
+            ? `"${title.trim()}" uploaded but failed validation.`
+            : `"${title.trim()}" submitted successfully.`;
+        setUploadSuccess(label);
         setTitle("");
         setDescription("");
         setCreativeType("DIGITAL");
         setFile(null);
         if (fileRef.current) fileRef.current.value = "";
         successTimer.current = setTimeout(
-          () => setUploadSuccess(null),
-          5000,
+          () => { setUploadSuccess(null); setLastValidation(null); },
+          15000,
         );
         const res = await api.fetchCampaignSubmissions(selectedCampaignId);
         setSubs(res.submissions);
@@ -320,7 +345,7 @@ export function CreativesPage() {
               >
                 {CREATIVE_TYPES.map((t) => (
                   <option key={t} value={t}>
-                    {t === "PRINT" ? "Print" : "Digital"}
+                    {CREATIVE_TYPE_LABEL[t]}
                   </option>
                 ))}
               </select>
@@ -343,9 +368,41 @@ export function CreativesPage() {
               </p>
             )}
             {uploadSuccess && (
-              <p className="form-success" role="status">
+              <p
+                className={
+                  lastValidation && !lastValidation.passed
+                    ? "form-error"
+                    : "form-success"
+                }
+                role="status"
+              >
                 {uploadSuccess}
               </p>
+            )}
+            {lastValidation && (
+              <div className="validation-summary">
+                {lastValidation.errors.length > 0 && (
+                  <ul className="validation-errors">
+                    {lastValidation.errors.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                )}
+                {lastValidation.warnings.length > 0 && (
+                  <ul className="validation-warnings">
+                    {lastValidation.warnings.map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                )}
+                {lastValidation.metadata.widthPx != null &&
+                  lastValidation.metadata.heightPx != null && (
+                    <p className="validation-meta">
+                      Detected: {lastValidation.metadata.widthPx}×
+                      {lastValidation.metadata.heightPx}px
+                    </p>
+                  )}
+              </div>
             )}
             <button
               type="submit"
@@ -402,13 +459,32 @@ export function CreativesPage() {
                     )}
                     <div className="submission-meta">
                       <span className="doc-type-badge">
-                        {s.creativeType}
+                        {CREATIVE_TYPE_LABEL[s.creativeType] ?? s.creativeType}
                       </span>
+                      {s.widthPx != null && s.heightPx != null && (
+                        <span>{s.widthPx}×{s.heightPx}px</span>
+                      )}
                       <span>
                         {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
                         &middot; {formatDate(s.createdAt)}
                       </span>
                     </div>
+                    {s.validationSummary &&
+                      !(s.validationSummary as ValidationSummary).passed && (
+                        <ul className="validation-errors" style={{ margin: "0.25rem 0 0" }}>
+                          {(s.validationSummary as ValidationSummary).errors.map(
+                            (e, i) => <li key={i}>{e}</li>,
+                          )}
+                        </ul>
+                      )}
+                    {s.validationSummary &&
+                      (s.validationSummary as ValidationSummary).warnings.length > 0 && (
+                        <ul className="validation-warnings" style={{ margin: "0.25rem 0 0" }}>
+                          {(s.validationSummary as ValidationSummary).warnings.map(
+                            (w, i) => <li key={i}>{w}</li>,
+                          )}
+                        </ul>
+                      )}
                   </div>
                   <div className="submission-actions">
                     <span className={STATUS_BADGE[s.status]}>

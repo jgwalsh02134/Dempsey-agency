@@ -620,6 +620,13 @@ input[type="file"]::file-selector-button:hover {
   color: var(--success);
 }
 
+.q-val-list {
+  margin: 0.125rem 0 0;
+  padding-left: 1.125rem;
+  line-height: 1.5;
+  font-size: 0.75rem;
+}
+
 .q-ai-review {
   margin-top: 0.5rem;
   padding: 0.5rem 0.625rem;
