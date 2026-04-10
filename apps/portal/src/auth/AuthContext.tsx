@@ -54,10 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (token) void refreshSession();
-    else {
+    if (token) {
+      void refreshSession();
+    } else {
       setSession(null);
       setLoading(false);
+      setError(null);
     }
   }, [token, refreshSession]);
 

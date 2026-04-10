@@ -1,14 +1,15 @@
 import { type FormEvent, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { MARKETING_URL } from "../api/config";
+import { ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
-  const { token, session, login, loading, error } = useAuth();
+  const { token, session, login, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const location = useLocation();
   const from = (location.state as { from?: string })?.from ?? "/";
 
@@ -25,12 +26,16 @@ export function LoginPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setLocalError(null);
+    setFormError(null);
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-    } catch {
-      setLocalError("Invalid email or password");
+    } catch (e) {
+      if (e instanceof ApiError) {
+        setFormError(e.message);
+      } else {
+        setFormError("Unable to sign in. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -41,13 +46,10 @@ export function LoginPage() {
       <div className="auth-card">
         <div className="auth-header">
           <img
-            src="/favicon.svg"
-            alt=""
-            className="auth-mark"
-            width="32"
-            height="32"
+            src="/brand-stack.svg"
+            alt="Dempsey Agency"
+            className="auth-logo"
           />
-          <h1 className="auth-heading">Client Portal</h1>
           <p className="auth-subheading">
             Secure access for Dempsey Agency clients.
           </p>
@@ -79,9 +81,9 @@ export function LoginPage() {
             />
           </div>
 
-          {(localError || error) && (
+          {formError && (
             <p className="form-error" role="alert">
-              {localError || error}
+              {formError}
             </p>
           )}
 
@@ -93,6 +95,15 @@ export function LoginPage() {
             {submitting ? "Signing in…" : "Sign In"}
           </button>
         </form>
+
+        <div className="auth-access">
+          <p>
+            Need access?{" "}
+            <a href={`${MARKETING_URL}/request-account.html`}>
+              Request an account
+            </a>
+          </p>
+        </div>
 
         <div className="auth-footer">
           <a href={`${MARKETING_URL}/contact`} className="help-link">
