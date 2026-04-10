@@ -2,11 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
-import { AccountRequestsSection } from "../components/AccountRequestsSection";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import type {
   AuditLogEntry,
-  Organization,
   OrgUsersResponse,
   Role,
 } from "../types";
@@ -47,23 +45,12 @@ export function AgencyPage() {
     return m?.organizationId ?? null;
   }, [session]);
 
-  const [orgs, setOrgs] = useState<Organization[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
   const [members, setMembers] = useState<OrgUsersResponse | null>(null);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersError, setMembersError] = useState<string | null>(null);
 
   const [activity, setActivity] = useState<AuditLogEntry[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
-
-  const loadOrgs = useCallback(async () => {
-    try {
-      setOrgs(await api.fetchOrganizations());
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Failed to load organizations");
-    }
-  }, []);
 
   const loadMembers = useCallback(
     async (opts?: { background?: boolean }) => {
@@ -123,10 +110,6 @@ export function AgencyPage() {
   );
 
   useEffect(() => {
-    void loadOrgs();
-  }, [loadOrgs]);
-
-  useEffect(() => {
     if (agencyOrgId) void loadMembers();
   }, [agencyOrgId, loadMembers]);
 
@@ -145,14 +128,10 @@ export function AgencyPage() {
           Your account does not belong to an agency organization.
         </p>
       )}
-      {error && <p className="error" role="alert">{error}</p>}
 
       {agencyOrgId && (
         <>
-          <AccountRequestsSection organizations={orgs} />
-
-          <div style={{ marginTop: "1.25rem" }}>
-            <OrgMembersTable
+          <OrgMembersTable
               orgId={agencyOrgId}
               orgType="AGENCY"
               data={members}
@@ -162,7 +141,6 @@ export function AgencyPage() {
               onLocalRoleUpdated={applyLocalMemberRole}
               onRefresh={() => loadMembers({ background: true })}
             />
-          </div>
 
           <section className="card" style={{ marginTop: "1.25rem" }}>
             <h2>Recent Activity</h2>
