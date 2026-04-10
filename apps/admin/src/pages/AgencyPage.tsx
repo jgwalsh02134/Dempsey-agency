@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { useAuth } from "../auth/AuthContext";
 import { AccountRequestsSection } from "../components/AccountRequestsSection";
 import { OrgMembersTable } from "../components/OrgMembersTable";
 import type {
@@ -37,9 +38,16 @@ function timeAgo(iso: string): string {
 }
 
 export function AgencyPage() {
+  const { session } = useAuth();
+
+  const agencyOrgId = useMemo(() => {
+    const m = session?.memberships.find(
+      (mb) => mb.organization.type === "AGENCY",
+    );
+    return m?.organizationId ?? null;
+  }, [session]);
+
   const [orgs, setOrgs] = useState<Organization[]>([]);
-  const [agencyOrg, setAgencyOrg] = useState<Organization | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [members, setMembers] = useState<OrgUsersResponse | null>(null);
@@ -50,30 +58,22 @@ export function AgencyPage() {
   const [activityLoading, setActivityLoading] = useState(true);
 
   const loadOrgs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const list = await api.fetchOrganizations();
-      setOrgs(list);
-      const agency = list.find((o) => o.type === "AGENCY") ?? null;
-      setAgencyOrg(agency);
-      if (!agency) setError("No agency organization found.");
+      setOrgs(await api.fetchOrganizations());
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to load organizations");
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   const loadMembers = useCallback(
     async (opts?: { background?: boolean }) => {
-      if (!agencyOrg) return;
+      if (!agencyOrgId) return;
       if (!opts?.background) {
         setMembersLoading(true);
         setMembersError(null);
       }
       try {
-        const data = await api.fetchOrgUsers(agencyOrg.id);
+        const data = await api.fetchOrgUsers(agencyOrgId);
         setMembers(data);
         setMembersError(null);
       } catch (e) {
@@ -87,7 +87,7 @@ export function AgencyPage() {
         if (!opts?.background) setMembersLoading(false);
       }
     },
-    [agencyOrg],
+    [agencyOrgId],
   );
 
   const loadActivity = useCallback(async () => {
@@ -105,7 +105,7 @@ export function AgencyPage() {
   const applyLocalMemberRole = useCallback(
     (args: { membershipId: string; userId: string; role: Role }) => {
       setMembers((prev) => {
-        if (!prev || !agencyOrg || prev.organizationId !== agencyOrg.id)
+        if (!prev || !agencyOrgId || prev.organizationId !== agencyOrgId)
           return prev;
         return {
           ...prev,
@@ -119,7 +119,7 @@ export function AgencyPage() {
       });
       setMembersError(null);
     },
-    [agencyOrg],
+    [agencyOrgId],
   );
 
   useEffect(() => {
@@ -127,8 +127,8 @@ export function AgencyPage() {
   }, [loadOrgs]);
 
   useEffect(() => {
-    if (agencyOrg) void loadMembers();
-  }, [agencyOrg, loadMembers]);
+    if (agencyOrgId) void loadMembers();
+  }, [agencyOrgId, loadMembers]);
 
   useEffect(() => {
     void loadActivity();
@@ -140,27 +140,29 @@ export function AgencyPage() {
         <h1 className="page-title">Agency</h1>
       </div>
 
-      {loading && <p className="muted">Loading…</p>}
+      {!agencyOrgId && (
+        <p className="error" role="alert">
+          Your account does not belong to an agency organization.
+        </p>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
 
-      {!loading && (
+      {agencyOrgId && (
         <>
           <AccountRequestsSection organizations={orgs} />
 
-          {agencyOrg && (
-            <div style={{ marginTop: "1.25rem" }}>
-              <OrgMembersTable
-                orgId={agencyOrg.id}
-                orgType="AGENCY"
-                data={members}
-                loading={membersLoading}
-                error={membersError}
-                onClearListError={() => setMembersError(null)}
-                onLocalRoleUpdated={applyLocalMemberRole}
-                onRefresh={() => loadMembers({ background: true })}
-              />
-            </div>
-          )}
+          <div style={{ marginTop: "1.25rem" }}>
+            <OrgMembersTable
+              orgId={agencyOrgId}
+              orgType="AGENCY"
+              data={members}
+              loading={membersLoading}
+              error={membersError}
+              onClearListError={() => setMembersError(null)}
+              onLocalRoleUpdated={applyLocalMemberRole}
+              onRefresh={() => loadMembers({ background: true })}
+            />
+          </div>
 
           <section className="card" style={{ marginTop: "1.25rem" }}>
             <h2>Recent Activity</h2>
