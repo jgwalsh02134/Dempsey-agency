@@ -19,7 +19,7 @@ export function resolveCorsConfig(env: CorsEnvInput): CorsResolution {
 
   if (!raw) {
     throw new Error(
-      "Set CORS_ORIGINS (comma-separated) or CORS_ORIGIN in production — e.g. https://dempsey.agency,https://admin.dempsey.agency",
+      "Set CORS_ORIGINS (comma-separated) or CORS_ORIGIN in production — e.g. https://dempsey.agency,https://portal.dempsey.agency,https://admin.dempsey.agency",
     );
   }
 
