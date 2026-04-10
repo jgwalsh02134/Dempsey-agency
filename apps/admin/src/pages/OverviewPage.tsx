@@ -41,7 +41,10 @@ function KpiCard({ label, value, accent = "default", linkTo }: KpiCardProps) {
   const inner = (
     <div className={`kpi-card kpi-${accent}`}>
       <span className="kpi-value">{value}</span>
-      <span className="kpi-label">{label}</span>
+      <span className="kpi-label">
+        {label}
+        {linkTo && <span className="kpi-arrow" aria-hidden="true"> &rarr;</span>}
+      </span>
     </div>
   );
   if (linkTo) {
@@ -99,11 +102,16 @@ export function OverviewPage() {
               value={data.activeClients}
               linkTo="/clients"
             />
-            <KpiCard label="Active Campaigns" value={data.activeCampaigns} />
+            <KpiCard
+              label="Active Campaigns"
+              value={data.activeCampaigns}
+              linkTo="/clients"
+            />
             <KpiCard
               label="Pending Reviews"
               value={data.pendingReviews}
               accent={data.pendingReviews > 0 ? "warning" : "default"}
+              linkTo="/creatives?status=UPLOADED"
             />
             <KpiCard
               label="Pending Requests"
@@ -115,6 +123,7 @@ export function OverviewPage() {
               label="Overdue Invoices"
               value={data.overdueInvoices}
               accent={data.overdueInvoices > 0 ? "danger" : "default"}
+              linkTo="/clients"
             />
           </div>
 

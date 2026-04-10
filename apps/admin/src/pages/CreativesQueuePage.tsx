@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type {
@@ -56,12 +57,15 @@ function errMsg(e: unknown): string {
 }
 
 export function CreativesQueuePage() {
+  const [searchParams] = useSearchParams();
   const [subs, setSubs] = useState<AdminSubmission[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState(
+    () => searchParams.get("status") ?? "",
+  );
   const [filterOrg, setFilterOrg] = useState("");
   const [filterType, setFilterType] = useState("");
 
@@ -159,10 +163,25 @@ export function CreativesQueuePage() {
     }
   }
 
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   const clientOrgs = orgs.filter((o) => o.type === "CLIENT");
   const pendingCount = subs.filter(
     (s) => s.status === "UPLOADED" || s.status === "VALIDATION_FAILED",
   ).length;
+
+  function toggleExpand(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
+
+  const STATUS_ACCENT: Record<SubmissionStatus, string> = {
+    UPLOADED: "q-status-uploaded",
+    VALIDATION_FAILED: "q-status-failed",
+    UNDER_REVIEW: "q-status-review",
+    NEEDS_RESIZING: "q-status-resize",
+    READY_FOR_PUBLISHER: "q-status-ready",
+    PUSHED: "q-status-pushed",
+  };
 
   return (
     <div>
@@ -230,129 +249,148 @@ export function CreativesQueuePage() {
       )}
 
       {!loading && subs.length > 0 && (
-        <div className="table-wrap" style={{ marginTop: "0.75rem" }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Client</th>
-                <th>Campaign</th>
-                <th>Type</th>
-                <th>File</th>
-                <th>Status</th>
-                <th>Submitted</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subs.map((s) => (
-                <tr key={s.id}>
-                  <td>
-                    <div>{s.title}</div>
-                    {s.description && (
-                      <span className="small">{s.description}</span>
-                    )}
-                    {s.reviewNote && (
-                      <span className="small warning">Note: {s.reviewNote}</span>
-                    )}
-                    {s.validationSummary && (() => {
-                      const vs = s.validationSummary as ValidationSummary;
-                      return (
-                        <div className="q-validation" style={{ marginTop: "0.25rem" }}>
-                          <span className={`small ${vs.passed ? "success" : "warning"}`}>
-                            Preflight: {vs.passed ? "Passed" : "Failed"}
-                          </span>
-                          {vs.errors.length > 0 && (
-                            <ul className="q-val-list small warning">
-                              {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
-                            </ul>
-                          )}
-                          {vs.warnings.length > 0 && (
-                            <ul className="q-val-list small muted">
-                              {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
-                            </ul>
-                          )}
-                        </div>
-                      );
-                    })()}
-                    {reviews[s.id] && (
-                      <div className="q-ai-review">
-                        <div className="q-ai-label">AI Review</div>
-                        <div>{reviews[s.id].summary}</div>
-                        {reviews[s.id].suggestions.length > 0 && (
-                          <ul className="q-ai-suggestions">
-                            {reviews[s.id].suggestions.map((sug, i) => (
-                              <li key={i}>{sug}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="small">{s.organization.name}</td>
-                  <td className="small">{s.campaign.title}</td>
-                  <td><span className="type-badge">{TYPE_LABEL[s.creativeType] ?? s.creativeType}</span></td>
-                  <td>
-                    <code className="small">{s.filename}</code>
-                    <br />
-                    <span className="small">{formatBytes(s.sizeBytes)}</span>
-                    {s.widthPx != null && s.heightPx != null && (
-                      <>
-                        <br />
-                        <span className="small">{s.widthPx}×{s.heightPx}px</span>
-                      </>
-                    )}
-                  </td>
-                  <td>
-                    <select
-                      className="inline-select"
-                      value={s.status}
-                      disabled={busyId === s.id}
-                      onChange={(e) =>
-                        onStatusChange(s, e.target.value as SubmissionStatus)
-                      }
-                    >
-                      {ALL_STATUSES.map((st) => (
-                        <option key={st} value={st}>{STATUS_LABEL[st]}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <div>{formatDate(s.createdAt)}</div>
+        <ul className="q-list">
+          {subs.map((s) => {
+            const expanded = expandedId === s.id;
+            const vs = s.validationSummary as ValidationSummary | null;
+            return (
+              <li key={s.id} className={`q-row ${expanded ? "q-row-expanded" : ""}`}>
+                {/* ── Summary row (always visible, clickable to expand) ── */}
+                <button
+                  type="button"
+                  className="q-row-summary"
+                  onClick={() => toggleExpand(s.id)}
+                  aria-expanded={expanded}
+                >
+                  <div className="q-row-primary">
+                    <span className="q-row-title">{s.title}</span>
+                    <span className="q-row-meta">
+                      {s.organization.name} · {s.campaign.title}
+                    </span>
+                  </div>
+                  <div className="q-row-badges">
+                    <span className="type-badge">{TYPE_LABEL[s.creativeType] ?? s.creativeType}</span>
+                    <span className={`q-status-badge ${STATUS_ACCENT[s.status]}`}>
+                      {STATUS_LABEL[s.status]}
+                    </span>
+                  </div>
+                  <div className="q-row-file">
+                    <span>{s.filename}</span>
+                    <span className="muted">
+                      {formatBytes(s.sizeBytes)}
+                      {s.widthPx != null && s.heightPx != null && ` · ${s.widthPx}×${s.heightPx}`}
+                    </span>
+                  </div>
+                  <div className="q-row-date">
+                    <span>{formatDate(s.createdAt)}</span>
                     {s.submittedBy && (
-                      <span className="small">
+                      <span className="muted">
                         {s.submittedBy.name || s.submittedBy.email}
                       </span>
                     )}
-                  </td>
-                  <td style={{ whiteSpace: "nowrap" }}>
-                    <button
-                      type="button"
-                      className="btn ghost"
-                      disabled={busyId === s.id || reviewingId === s.id}
-                      onClick={() => onAIReview(s)}
-                      style={{ marginRight: "0.375rem" }}
-                    >
-                      {reviewingId === s.id
-                        ? "Reviewing…"
-                        : reviews[s.id]
-                          ? "Re-review"
-                          : "AI Review"}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn danger ghost"
-                      disabled={busyId === s.id}
-                      onClick={() => onDelete(s)}
-                    >
-                      {busyId === s.id ? "…" : "Delete"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                  <span className="q-row-chevron" aria-hidden="true">
+                    {expanded ? "▾" : "▸"}
+                  </span>
+                </button>
+
+                {/* ── Expanded detail panel ── */}
+                {expanded && (
+                  <div className="q-detail">
+                    <div className="q-detail-grid">
+                      {/* Left: Metadata + Validation */}
+                      <div className="q-detail-col">
+                        {s.description && (
+                          <p className="q-detail-desc">{s.description}</p>
+                        )}
+                        {s.reviewNote && (
+                          <p className="q-detail-note">
+                            <strong>Review note:</strong> {s.reviewNote}
+                          </p>
+                        )}
+
+                        {/* Validation summary */}
+                        {vs && (
+                          <div className="q-detail-validation">
+                            <div className="q-detail-section-label">
+                              Preflight {vs.passed ? "Passed" : "Failed"}
+                            </div>
+                            {vs.errors.length > 0 && (
+                              <ul className="q-val-list warning">
+                                {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
+                              </ul>
+                            )}
+                            {vs.warnings.length > 0 && (
+                              <ul className="q-val-list muted">
+                                {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+
+                        {/* AI Review */}
+                        {reviews[s.id] && (
+                          <div className="q-ai-review">
+                            <div className="q-ai-label">AI Review</div>
+                            <div>{reviews[s.id].summary}</div>
+                            {reviews[s.id].suggestions.length > 0 && (
+                              <ul className="q-ai-suggestions">
+                                {reviews[s.id].suggestions.map((sug, i) => (
+                                  <li key={i}>{sug}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="q-detail-actions">
+                        <label className="q-action-field">
+                          <span className="small">Workflow Status</span>
+                          <select
+                            className="inline-select"
+                            value={s.status}
+                            disabled={busyId === s.id}
+                            onChange={(e) =>
+                              onStatusChange(s, e.target.value as SubmissionStatus)
+                            }
+                          >
+                            {ALL_STATUSES.map((st) => (
+                              <option key={st} value={st}>{STATUS_LABEL[st]}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="q-action-buttons">
+                          <button
+                            type="button"
+                            className="btn ghost"
+                            disabled={busyId === s.id || reviewingId === s.id}
+                            onClick={() => onAIReview(s)}
+                          >
+                            {reviewingId === s.id
+                              ? "Reviewing…"
+                              : reviews[s.id]
+                                ? "Re-review"
+                                : "AI Review"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn danger ghost"
+                            disabled={busyId === s.id}
+                            onClick={() => onDelete(s)}
+                          >
+                            {busyId === s.id ? "…" : "Delete"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

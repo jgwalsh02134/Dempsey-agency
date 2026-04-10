@@ -232,8 +232,9 @@ export function CreativesPage() {
       <section className="section-welcome">
         <h1 className="welcome-heading">Creatives</h1>
         <p className="welcome-body">
-          Submit creative assets for your campaigns. Your Dempsey Agency
-          team will review submissions and provide feedback.
+          Upload creative assets for your campaigns. Each file is checked
+          automatically and your Dempsey Agency team will review every
+          submission.
         </p>
 
         {memberships.length > 1 && (
@@ -304,10 +305,50 @@ export function CreativesPage() {
         )}
       </section>
 
-      {/* ── Upload form ── */}
+      {/* ── Upload form with guidance ── */}
       {selectedCampaignId && (
         <section className="section-block">
           <h2 className="section-heading">Submit Creative</h2>
+
+          {/* Guidance panel */}
+          <div className="creative-guidance">
+            <div className="guidance-col">
+              <h3 className="guidance-heading">Digital ads</h3>
+              <p className="guidance-text">
+                PNG, JPEG, or GIF — max 5 MB.
+                Accepted sizes:
+              </p>
+              <ul className="guidance-sizes">
+                <li><span className="guidance-size">300 &times; 250</span> Medium Rectangle</li>
+                <li><span className="guidance-size">728 &times; 90</span> Leaderboard</li>
+                <li><span className="guidance-size">320 &times; 50</span> Mobile Banner</li>
+                <li><span className="guidance-size">300 &times; 600</span> Half Page</li>
+              </ul>
+            </div>
+            <div className="guidance-col">
+              <h3 className="guidance-heading">Print</h3>
+              <p className="guidance-text">
+                PDF only. Please confirm resolution and color space
+                with your print vendor — automated checks for DPI and
+                CMYK are not available yet.
+              </p>
+              <h3 className="guidance-heading" style={{ marginTop: "0.75rem" }}>Master assets</h3>
+              <p className="guidance-text">
+                Original source files or high-res assets.
+                Any accepted format — no size restrictions enforced.
+              </p>
+            </div>
+            <div className="guidance-col">
+              <h3 className="guidance-heading">After upload</h3>
+              <p className="guidance-text">
+                Your file is checked automatically. Digital ads are
+                validated for format and dimensions. You will see results
+                immediately. Your agency team will review the submission
+                and update its status.
+              </p>
+            </div>
+          </div>
+
           <form className="creative-form" onSubmit={onUpload}>
             <div className="field">
               <label htmlFor="creative-title">Title</label>
@@ -328,39 +369,41 @@ export function CreativesPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={1000}
-                placeholder="Notes about this creative"
+                placeholder="Any notes for the review team"
                 disabled={uploading}
               />
             </div>
-            <div className="field">
-              <label htmlFor="creative-type">Creative type</label>
-              <select
-                id="creative-type"
-                className="org-select"
-                value={creativeType}
-                onChange={(e) =>
-                  setCreativeType(e.target.value as CreativeType)
-                }
-                disabled={uploading}
-              >
-                {CREATIVE_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {CREATIVE_TYPE_LABEL[t]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="creative-file">File</label>
-              <input
-                id="creative-file"
-                ref={fileRef}
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.gif"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                required
-                disabled={uploading}
-              />
+            <div className="creative-form-row">
+              <div className="field" style={{ flex: 1 }}>
+                <label htmlFor="creative-type">Creative type</label>
+                <select
+                  id="creative-type"
+                  className="org-select"
+                  value={creativeType}
+                  onChange={(e) =>
+                    setCreativeType(e.target.value as CreativeType)
+                  }
+                  disabled={uploading}
+                >
+                  {CREATIVE_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {CREATIVE_TYPE_LABEL[t]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field" style={{ flex: 2 }}>
+                <label htmlFor="creative-file">File</label>
+                <input
+                  id="creative-file"
+                  ref={fileRef}
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.gif"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  required
+                  disabled={uploading}
+                />
+              </div>
             </div>
             {uploadError && (
               <p className="form-error" role="alert">
@@ -398,7 +441,7 @@ export function CreativesPage() {
                 {lastValidation.metadata.widthPx != null &&
                   lastValidation.metadata.heightPx != null && (
                     <p className="validation-meta">
-                      Detected: {lastValidation.metadata.widthPx}×
+                      Detected dimensions: {lastValidation.metadata.widthPx} &times;{" "}
                       {lastValidation.metadata.heightPx}px
                     </p>
                   )}
@@ -419,7 +462,7 @@ export function CreativesPage() {
       {/* ── Submissions list ── */}
       {selectedCampaignId && (
         <section className="section-block">
-          <h2 className="section-heading">Submissions</h2>
+          <h2 className="section-heading">Your Submissions</h2>
 
           {loading && (
             <p className="text-muted">Loading submissions…</p>
@@ -445,62 +488,59 @@ export function CreativesPage() {
 
           {!loading && subs.length > 0 && (
             <ul className="report-list">
-              {subs.map((s) => (
-                <li key={s.id} className="report-item">
-                  <div className="report-info">
-                    <span className="report-name">{s.title}</span>
-                    {s.description && (
-                      <span className="report-description">
-                        {s.description}
-                      </span>
-                    )}
-                    {s.reviewNote && (
-                      <div className="review-note">{s.reviewNote}</div>
-                    )}
-                    <div className="submission-meta">
-                      <span className="doc-type-badge">
-                        {CREATIVE_TYPE_LABEL[s.creativeType] ?? s.creativeType}
-                      </span>
-                      {s.widthPx != null && s.heightPx != null && (
-                        <span>{s.widthPx}×{s.heightPx}px</span>
+              {subs.map((s) => {
+                const vs = s.validationSummary as ValidationSummary | null;
+                return (
+                  <li key={s.id} className="report-item">
+                    <div className="report-info">
+                      <span className="report-name">{s.title}</span>
+                      {s.description && (
+                        <span className="report-description">
+                          {s.description}
+                        </span>
                       )}
-                      <span>
-                        {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
-                        &middot; {formatDate(s.createdAt)}
-                      </span>
+                      {s.reviewNote && (
+                        <div className="review-note">{s.reviewNote}</div>
+                      )}
+                      <div className="submission-meta">
+                        <span className="doc-type-badge">
+                          {CREATIVE_TYPE_LABEL[s.creativeType] ?? s.creativeType}
+                        </span>
+                        {s.widthPx != null && s.heightPx != null && (
+                          <span>{s.widthPx} &times; {s.heightPx}px</span>
+                        )}
+                        <span>
+                          {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
+                          &middot; {formatDate(s.createdAt)}
+                        </span>
+                      </div>
+                      {vs && !vs.passed && vs.errors.length > 0 && (
+                        <ul className="validation-errors sub-validation">
+                          {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
+                        </ul>
+                      )}
+                      {vs && vs.warnings.length > 0 && (
+                        <ul className="validation-warnings sub-validation">
+                          {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                        </ul>
+                      )}
                     </div>
-                    {s.validationSummary &&
-                      !(s.validationSummary as ValidationSummary).passed && (
-                        <ul className="validation-errors" style={{ margin: "0.25rem 0 0" }}>
-                          {(s.validationSummary as ValidationSummary).errors.map(
-                            (e, i) => <li key={i}>{e}</li>,
-                          )}
-                        </ul>
-                      )}
-                    {s.validationSummary &&
-                      (s.validationSummary as ValidationSummary).warnings.length > 0 && (
-                        <ul className="validation-warnings" style={{ margin: "0.25rem 0 0" }}>
-                          {(s.validationSummary as ValidationSummary).warnings.map(
-                            (w, i) => <li key={i}>{w}</li>,
-                          )}
-                        </ul>
-                      )}
-                  </div>
-                  <div className="submission-actions">
-                    <span className={STATUS_BADGE[s.status]}>
-                      {STATUS_LABEL[s.status]}
-                    </span>
-                    <button
-                      type="button"
-                      className="doc-download"
-                      disabled={downloadingId === s.id}
-                      onClick={() => download(s)}
-                    >
-                      {downloadingId === s.id ? "Preparing…" : "Download"}
-                    </button>
-                  </div>
-                </li>
-              ))}
+                    <div className="submission-actions">
+                      <span className={STATUS_BADGE[s.status]}>
+                        {STATUS_LABEL[s.status]}
+                      </span>
+                      <button
+                        type="button"
+                        className="doc-download"
+                        disabled={downloadingId === s.id}
+                        onClick={() => download(s)}
+                      >
+                        {downloadingId === s.id ? "Preparing…" : "Download"}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
