@@ -36,6 +36,9 @@ export async function buildApp() {
   });
 
   await app.register(cors, {
+    // @fastify/cors v11+ defaults to CORS-safelisted methods only (GET, HEAD, POST).
+    // Cross-origin PATCH/PUT/DELETE (e.g. admin approve/reject) requires explicit methods.
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
     origin: (origin, cb) => {
       if (corsConfig.mode === "wildcard") {
         return cb(null, true);
