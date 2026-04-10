@@ -369,8 +369,10 @@ a {
   flex-shrink: 0;
 }
 
-.portal-mark {
-  opacity: 0.85;
+.portal-logo {
+  height: 28px;
+  width: auto;
+  display: block;
 }
 
 .portal-title {
