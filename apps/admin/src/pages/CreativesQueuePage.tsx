@@ -33,7 +33,7 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
 const TYPE_LABEL: Record<CreativeType, string> = {
   DIGITAL: "Digital",
   PRINT: "Print",
-  MASTER_ASSET: "Master Asset",
+  MASTER_ASSET: "Source Asset",
 };
 
 function formatDate(iso: string): string {

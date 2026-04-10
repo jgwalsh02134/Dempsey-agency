@@ -26,7 +26,7 @@ const CREATIVE_TYPE_DESC: Record<CreativeType, string> = {
   PRINT:
     "Print-ready file — PDF or TIFF. Confirm resolution (typically 300 DPI) and color space (typically CMYK) with your publisher.",
   MASTER_ASSET:
-    "Original source file or high-resolution asset. Any accepted format. No dimension or size restrictions.",
+    "Original design files for your agency team — AI, EPS, SVG, PSD (as PDF), TIFF, PNG, JPEG, or ZIP. No dimension or format validation is applied.",
 };
 
 const STATUS_LABEL: Record<SubmissionStatus, string> = {
@@ -59,7 +59,7 @@ const STATUS_BADGE: Record<SubmissionStatus, string> = {
 const ACCEPT_BY_TYPE: Record<CreativeType, string> = {
   DIGITAL: ".png,.jpg,.jpeg,.gif",
   PRINT: ".pdf,.tif,.tiff",
-  MASTER_ASSET: ".pdf,.png,.jpg,.jpeg,.gif,.tif,.tiff",
+  MASTER_ASSET: ".pdf,.png,.jpg,.jpeg,.gif,.tif,.tiff,.svg,.eps,.ai,.zip",
 };
 
 function formatDate(iso: string): string {
@@ -112,6 +112,7 @@ export function CreativesPage() {
   /* ── last validation result ── */
   const [lastValidation, setLastValidation] =
     useState<ValidationSummary | null>(null);
+  const [lastUploadType, setLastUploadType] = useState<CreativeType | null>(null);
 
   /* ── preview state ── */
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
@@ -193,6 +194,7 @@ export function CreativesPage() {
       setUploadError(null);
       setUploadSuccess(null);
       setLastValidation(null);
+      setLastUploadType(creativeType);
       if (successTimer.current) clearTimeout(successTimer.current);
       setUploading(true);
       try {
@@ -215,7 +217,7 @@ export function CreativesPage() {
         setFile(null);
         if (fileRef.current) fileRef.current.value = "";
         successTimer.current = setTimeout(
-          () => { setUploadSuccess(null); setLastValidation(null); },
+          () => { setUploadSuccess(null); setLastValidation(null); setLastUploadType(null); },
           20000,
         );
         const res = await api.fetchCampaignSubmissions(selectedCampaignId);
@@ -435,7 +437,7 @@ export function CreativesPage() {
                 {uploadSuccess}
               </p>
             )}
-            {lastValidation && (
+            {lastValidation && lastUploadType !== "MASTER_ASSET" && (
               <div className="validation-summary">
                 {lastValidation.errors.map((e, i) => (
                   <p key={i} className="cr-val-error">{e}</p>
@@ -537,7 +539,7 @@ export function CreativesPage() {
                       )}
 
                       {/* Validation */}
-                      {vs && (vs.errors.length > 0 || vs.warnings.length > 0) && (
+                      {vs && s.creativeType !== "MASTER_ASSET" && (vs.errors.length > 0 || vs.warnings.length > 0) && (
                         <div className="cr-val-block">
                           <span className="cr-val-label">
                             Preflight check — {vs.passed ? "passed with notes" : "issues found"}

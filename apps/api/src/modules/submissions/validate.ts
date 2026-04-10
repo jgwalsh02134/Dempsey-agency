@@ -165,23 +165,18 @@ export function validateMasterAsset(
   buffer: Buffer,
   mimeType: string,
 ): ValidationResult {
-  const warnings: string[] = [];
   let widthPx: number | null = null;
   let heightPx: number | null = null;
 
-  const isImage = mimeType.startsWith("image/");
-  if (isImage) {
+  const isRasterImage =
+    mimeType.startsWith("image/") &&
+    mimeType !== "image/svg+xml";
+  if (isRasterImage) {
     const dims = extractImageDimensions(buffer);
     if (dims) {
       widthPx = dims.width;
       heightPx = dims.height;
-    } else {
-      warnings.push("Could not extract image dimensions.");
     }
-  } else {
-    warnings.push(
-      "Dimension extraction is not supported for this file type.",
-    );
   }
 
   return {
@@ -193,7 +188,7 @@ export function validateMasterAsset(
     validationSummary: {
       passed: true,
       errors: [],
-      warnings,
+      warnings: [],
       metadata: { widthPx, heightPx, dpi: null, colorSpace: null },
     },
   };

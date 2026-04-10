@@ -27,6 +27,14 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/tiff",
 ]);
 
+const MASTER_ASSET_MIME_TYPES = new Set([
+  ...ALLOWED_MIME_TYPES,
+  "image/svg+xml",
+  "application/postscript",
+  "application/illustrator",
+  "application/zip",
+]);
+
 const CREATIVE_TYPES = new Set(["PRINT", "DIGITAL", "MASTER_ASSET"]);
 
 const STATUS_ORDER: Record<string, number> = {
@@ -128,12 +136,6 @@ export async function submissionRoutes(app: FastifyInstance) {
 
       const buffer = await file.toBuffer();
 
-      if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-        return reply.code(400).send({
-          error: `File type "${file.mimetype}" is not allowed. Accepted: PDF, PNG, JPEG, GIF, TIFF.`,
-        });
-      }
-
       if (file.file.truncated) {
         return reply.code(413).send({
           error: `File exceeds the ${MAX_FILE_SIZE / (1024 * 1024)}MB size limit`,
@@ -148,7 +150,21 @@ export async function submissionRoutes(app: FastifyInstance) {
       const creativeType = getFieldValue(file.fields, "creativeType");
       if (!creativeType || !CREATIVE_TYPES.has(creativeType)) {
         return reply.code(400).send({
-          error: "creativeType is required (PRINT or DIGITAL)",
+          error: "creativeType is required (PRINT, DIGITAL, or MASTER_ASSET)",
+        });
+      }
+
+      const allowedMimes =
+        creativeType === "MASTER_ASSET"
+          ? MASTER_ASSET_MIME_TYPES
+          : ALLOWED_MIME_TYPES;
+      if (!allowedMimes.has(file.mimetype)) {
+        const accepted =
+          creativeType === "MASTER_ASSET"
+            ? "PDF, PNG, JPEG, GIF, TIFF, SVG, EPS/AI, ZIP"
+            : "PDF, PNG, JPEG, GIF, TIFF";
+        return reply.code(400).send({
+          error: `File type "${file.mimetype}" is not allowed. Accepted: ${accepted}.`,
         });
       }
 
