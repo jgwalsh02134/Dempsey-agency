@@ -1,13 +1,14 @@
 /**
  * API origin for fetch().
  *
- * Development:
+ * Development (`vite`):
  * - If VITE_API_BASE_URL is set → use it (direct API calls).
- * - Otherwise → "" (same-origin `/api/...` via Vite proxy).
+ * - Otherwise → "" (same-origin `/api/...` via Vite proxy in vite.config.ts).
  *
- * Production (static build):
- * - Uses VITE_API_BASE_URL from the build environment.
- * - Falls back to https://api.dempsey.agency only if unset.
+ * Production (`vite build`):
+ * - Vite loads `apps/portal/.env.production` → sets VITE_API_BASE_URL.
+ * - Build-time env (e.g. Railway) overrides the same variable if set.
+ * - Code fallback below if still unset after build.
  */
 export function getApiBase(): string {
   const raw = import.meta.env.VITE_API_BASE_URL?.trim();
