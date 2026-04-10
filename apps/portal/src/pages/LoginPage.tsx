@@ -33,6 +33,10 @@ export function LoginPage() {
     } catch (e) {
       if (e instanceof ApiError) {
         setFormError(e.message);
+      } else if (e instanceof TypeError) {
+        setFormError(
+          "Unable to reach the server. Please check your connection and try again.",
+        );
       } else {
         setFormError("Unable to sign in. Please try again.");
       }
