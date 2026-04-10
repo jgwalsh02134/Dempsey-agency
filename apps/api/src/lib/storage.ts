@@ -112,3 +112,20 @@ export async function getSignedDownloadUrl(
     { expiresIn },
   );
 }
+
+export async function getSignedPreviewUrl(
+  key: string,
+  contentType: string,
+  expiresIn = 900,
+): Promise<string> {
+  return getSignedUrl(
+    getClient(),
+    new GetObjectCommand({
+      Bucket: bucket(),
+      Key: key,
+      ResponseContentDisposition: "inline",
+      ResponseContentType: contentType,
+    }),
+    { expiresIn },
+  );
+}

@@ -76,6 +76,9 @@ export function CreativesQueuePage() {
   const [reviewingId, setReviewingId] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [previewMimes, setPreviewMimes] = useState<Record<string, string>>({});
+
   const loadOrgs = useCallback(async () => {
     try {
       setOrgs(await api.fetchOrganizations());
@@ -170,8 +173,47 @@ export function CreativesQueuePage() {
     (s) => s.status === "UPLOADED" || s.status === "VALIDATION_FAILED",
   ).length;
 
-  function toggleExpand(id: string) {
-    setExpandedId((prev) => (prev === id ? null : id));
+  function toggleExpand(id: string, mimeType?: string) {
+    const next = expandedId === id ? null : id;
+    setExpandedId(next);
+    if (next && !previewUrls[id] && mimeType) {
+      void loadPreview(id);
+    }
+  }
+
+  async function loadPreview(id: string) {
+    try {
+      const res = await api.fetchSubmissionPreviewUrl(id);
+      if (res.previewable) {
+        setPreviewUrls((prev) => ({ ...prev, [id]: res.url }));
+        setPreviewMimes((prev) => ({ ...prev, [id]: res.mimeType }));
+      }
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  async function markSentToPublisher(sub: AdminSubmission) {
+    if (
+      !window.confirm(
+        `Mark "${sub.title}" as sent to publisher?\n\nThis records that the creative has been delivered. It does not send the file automatically.`,
+      )
+    )
+      return;
+    setActionError(null);
+    setBusyId(sub.id);
+    try {
+      await api.patchSubmission(sub.id, { status: "PUSHED" });
+      setSubs((prev) =>
+        prev.map((s) =>
+          s.id === sub.id ? { ...s, status: "PUSHED" as SubmissionStatus } : s,
+        ),
+      );
+    } catch (e) {
+      setActionError(errMsg(e));
+    } finally {
+      setBusyId(null);
+    }
   }
 
   const STATUS_ACCENT: Record<SubmissionStatus, string> = {
@@ -259,7 +301,7 @@ export function CreativesQueuePage() {
                 <button
                   type="button"
                   className="q-row-summary"
-                  onClick={() => toggleExpand(s.id)}
+                  onClick={() => toggleExpand(s.id, s.mimeType)}
                   aria-expanded={expanded}
                 >
                   <div className="q-row-primary">
@@ -295,98 +337,156 @@ export function CreativesQueuePage() {
                 </button>
 
                 {/* ── Expanded detail panel ── */}
-                {expanded && (
-                  <div className="q-detail">
-                    <div className="q-detail-grid">
-                      {/* Left: Metadata + Validation */}
-                      <div className="q-detail-col">
-                        {s.description && (
-                          <p className="q-detail-desc">{s.description}</p>
-                        )}
-                        {s.reviewNote && (
-                          <p className="q-detail-note">
-                            <strong>Review note:</strong> {s.reviewNote}
-                          </p>
-                        )}
+                {expanded && (() => {
+                  const pUrl = previewUrls[s.id];
+                  const pMime = previewMimes[s.id];
+                  const isImage = s.mimeType.startsWith("image/") && s.mimeType !== "image/tiff";
+                  const isPdf = s.mimeType === "application/pdf";
+                  const review = reviews[s.id];
 
-                        {/* Validation summary */}
-                        {vs && (
-                          <div className="q-detail-validation">
-                            <div className="q-detail-section-label">
-                              Preflight {vs.passed ? "Passed" : "Failed"}
+                  return (
+                    <div className="q-detail">
+                      {/* Preview */}
+                      {pUrl && (isImage || isPdf) && (
+                        <div className="q-preview">
+                          {isImage && pMime?.startsWith("image/") && (
+                            <img src={pUrl} alt={s.title} className="q-preview-img" />
+                          )}
+                          {isPdf && (
+                            <iframe src={pUrl} title={`Preview: ${s.title}`} className="q-preview-pdf" />
+                          )}
+                        </div>
+                      )}
+
+                      <div className="q-detail-grid">
+                        {/* Left: Metadata + Validation + AI Review */}
+                        <div className="q-detail-col">
+                          {s.description && (
+                            <p className="q-detail-desc">{s.description}</p>
+                          )}
+                          {s.reviewNote && (
+                            <p className="q-detail-note">
+                              <strong>Review note:</strong> {s.reviewNote}
+                            </p>
+                          )}
+
+                          {/* Validation summary */}
+                          {vs && (
+                            <div className="q-detail-validation">
+                              <div className="q-detail-section-label">
+                                Preflight {vs.passed ? "Passed" : "Failed"}
+                              </div>
+                              {vs.errors.length > 0 && (
+                                <ul className="q-val-list warning">
+                                  {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
+                                </ul>
+                              )}
+                              {vs.warnings.length > 0 && (
+                                <ul className="q-val-list muted">
+                                  {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                                </ul>
+                              )}
                             </div>
-                            {vs.errors.length > 0 && (
-                              <ul className="q-val-list warning">
-                                {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
-                              </ul>
-                            )}
-                            {vs.warnings.length > 0 && (
-                              <ul className="q-val-list muted">
-                                {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
-                              </ul>
-                            )}
-                          </div>
-                        )}
+                          )}
 
-                        {/* AI Review */}
-                        {reviews[s.id] && (
-                          <div className="q-ai-review">
-                            <div className="q-ai-label">AI Review</div>
-                            <div>{reviews[s.id].summary}</div>
-                            {reviews[s.id].suggestions.length > 0 && (
-                              <ul className="q-ai-suggestions">
-                                {reviews[s.id].suggestions.map((sug, i) => (
-                                  <li key={i}>{sug}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                          {/* AI Review (structured) */}
+                          {review && (
+                            <div className="q-ai-review">
+                              <div className="q-ai-header">
+                                <span className="q-ai-label">AI Review</span>
+                                <span className={`q-ai-verdict q-ai-verdict-${review.verdict}`}>
+                                  {review.verdict === "approve"
+                                    ? "Approve"
+                                    : review.verdict === "reject"
+                                      ? "Reject"
+                                      : "Revise"}
+                                </span>
+                              </div>
+                              <p className="q-ai-summary">{review.summary}</p>
+                              {review.issues.length > 0 && (
+                                <>
+                                  <div className="q-ai-section-label">Issues</div>
+                                  <ul className="q-ai-issues">
+                                    {review.issues.map((issue, i) => (
+                                      <li key={i}>{issue}</li>
+                                    ))}
+                                  </ul>
+                                </>
+                              )}
+                              {review.suggestions.length > 0 && (
+                                <>
+                                  <div className="q-ai-section-label">Suggestions</div>
+                                  <ul className="q-ai-suggestions">
+                                    {review.suggestions.map((sug, i) => (
+                                      <li key={i}>{sug}</li>
+                                    ))}
+                                  </ul>
+                                </>
+                              )}
+                              <p className="q-ai-next">
+                                <strong>Next:</strong> {review.nextAction}
+                              </p>
+                            </div>
+                          )}
+                        </div>
 
-                      {/* Right: Actions */}
-                      <div className="q-detail-actions">
-                        <label className="q-action-field">
-                          <span className="small">Workflow Status</span>
-                          <select
-                            className="inline-select"
-                            value={s.status}
-                            disabled={busyId === s.id}
-                            onChange={(e) =>
-                              onStatusChange(s, e.target.value as SubmissionStatus)
-                            }
-                          >
-                            {ALL_STATUSES.map((st) => (
-                              <option key={st} value={st}>{STATUS_LABEL[st]}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <div className="q-action-buttons">
-                          <button
-                            type="button"
-                            className="btn ghost"
-                            disabled={busyId === s.id || reviewingId === s.id}
-                            onClick={() => onAIReview(s)}
-                          >
-                            {reviewingId === s.id
-                              ? "Reviewing…"
-                              : reviews[s.id]
-                                ? "Re-review"
-                                : "AI Review"}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn danger ghost"
-                            disabled={busyId === s.id}
-                            onClick={() => onDelete(s)}
-                          >
-                            {busyId === s.id ? "…" : "Delete"}
-                          </button>
+                        {/* Right: Actions */}
+                        <div className="q-detail-actions">
+                          <label className="q-action-field">
+                            <span className="small">Workflow Status</span>
+                            <select
+                              className="inline-select"
+                              value={s.status}
+                              disabled={busyId === s.id}
+                              onChange={(e) =>
+                                onStatusChange(s, e.target.value as SubmissionStatus)
+                              }
+                            >
+                              {ALL_STATUSES.map((st) => (
+                                <option key={st} value={st}>{STATUS_LABEL[st]}</option>
+                              ))}
+                            </select>
+                          </label>
+
+                          {/* Send to publisher — only when READY_FOR_PUBLISHER */}
+                          {s.status === "READY_FOR_PUBLISHER" && (
+                            <button
+                              type="button"
+                              className="btn primary"
+                              disabled={busyId === s.id}
+                              onClick={() => markSentToPublisher(s)}
+                            >
+                              {busyId === s.id ? "…" : "Mark sent to publisher"}
+                            </button>
+                          )}
+
+                          <div className="q-action-buttons">
+                            <button
+                              type="button"
+                              className="btn ghost"
+                              disabled={busyId === s.id || reviewingId === s.id}
+                              onClick={() => onAIReview(s)}
+                            >
+                              {reviewingId === s.id
+                                ? "Reviewing…"
+                                : review
+                                  ? "Re-review"
+                                  : "AI Review"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn danger ghost"
+                              disabled={busyId === s.id}
+                              onClick={() => onDelete(s)}
+                            >
+                              {busyId === s.id ? "…" : "Delete"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </li>
             );
           })}

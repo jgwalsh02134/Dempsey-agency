@@ -11,6 +11,7 @@ import type {
   OrgInvoicesResponse,
   SessionUser,
   SubmissionDownloadResponse,
+  SubmissionPreviewResponse,
 } from "../types";
 
 export async function login(
@@ -104,6 +105,14 @@ export async function fetchSubmissionDownloadUrl(
 ): Promise<SubmissionDownloadResponse> {
   return apiFetch<SubmissionDownloadResponse>(
     `/api/v1/submissions/${encodeURIComponent(id)}/download`,
+  );
+}
+
+export async function fetchSubmissionPreviewUrl(
+  id: string,
+): Promise<SubmissionPreviewResponse> {
+  return apiFetch<SubmissionPreviewResponse>(
+    `/api/v1/submissions/${encodeURIComponent(id)}/preview`,
   );
 }
 

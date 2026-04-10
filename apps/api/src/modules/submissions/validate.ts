@@ -105,40 +105,58 @@ export function validateDigital(
   };
 }
 
+const PRINT_ALLOWED_MIME = new Set([
+  "application/pdf",
+  "image/tiff",
+]);
+
 export function validatePrint(
-  _buffer: Buffer,
+  buffer: Buffer,
   mimeType: string,
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
+  let widthPx: number | null = null;
+  let heightPx: number | null = null;
 
-  if (mimeType !== "application/pdf") {
+  if (!PRINT_ALLOWED_MIME.has(mimeType)) {
     errors.push(
-      `File type "${mimeType}" is not accepted for print creatives. Only PDF is allowed.`,
+      `File type "${mimeType}" is not accepted for print creatives. Accepted: PDF, TIFF.`,
     );
   }
 
   if (!errors.length) {
-    warnings.push(
-      "DPI could not be verified from PDF in this version. Please confirm print resolution meets publisher requirements.",
-    );
-    warnings.push(
-      "Color space (CMYK/RGB) could not be verified from PDF in this version. Confirm with your print vendor.",
-    );
+    if (mimeType === "image/tiff") {
+      const dims = extractImageDimensions(buffer);
+      if (dims) {
+        widthPx = dims.width;
+        heightPx = dims.height;
+      }
+      warnings.push(
+        "TIFF DPI and color space could not be verified in this version. Please confirm print resolution with your publisher.",
+      );
+    } else {
+      warnings.push(
+        "DPI could not be verified from PDF in this version. Please confirm print resolution meets publisher requirements.",
+      );
+      warnings.push(
+        "Color space (CMYK/RGB) could not be verified from PDF in this version. Confirm with your print vendor.",
+      );
+    }
   }
 
   const passed = errors.length === 0;
   return {
     status: passed ? "UPLOADED" : "VALIDATION_FAILED",
-    widthPx: null,
-    heightPx: null,
+    widthPx,
+    heightPx,
     dpi: null,
     colorSpace: null,
     validationSummary: {
       passed,
       errors,
       warnings,
-      metadata: { widthPx: null, heightPx: null, dpi: null, colorSpace: null },
+      metadata: { widthPx, heightPx, dpi: null, colorSpace: null },
     },
   };
 }

@@ -84,6 +84,11 @@ export function CreativesPage() {
   const [lastValidation, setLastValidation] =
     useState<ValidationSummary | null>(null);
 
+  /* ── preview state ── */
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [previewMimes, setPreviewMimes] = useState<Record<string, string>>({});
+  const [expandedSubId, setExpandedSubId] = useState<string | null>(null);
+
   /* ── download state ── */
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -204,6 +209,26 @@ export function CreativesPage() {
     },
     [file, selectedCampaignId, title, description, creativeType],
   );
+
+  /* ── expand/preview handler ── */
+  async function togglePreview(sub: CreativeSubmission) {
+    if (expandedSubId === sub.id) {
+      setExpandedSubId(null);
+      return;
+    }
+    setExpandedSubId(sub.id);
+    if (!previewUrls[sub.id]) {
+      try {
+        const res = await api.fetchSubmissionPreviewUrl(sub.id);
+        if (res.previewable) {
+          setPreviewUrls((prev) => ({ ...prev, [sub.id]: res.url }));
+          setPreviewMimes((prev) => ({ ...prev, [sub.id]: res.mimeType }));
+        }
+      } catch {
+        /* preview not critical — fallback to no preview */
+      }
+    }
+  }
 
   /* ── download handler ── */
   async function download(sub: CreativeSubmission) {
@@ -328,7 +353,7 @@ export function CreativesPage() {
             <div className="guidance-col">
               <h3 className="guidance-heading">Print</h3>
               <p className="guidance-text">
-                PDF only. Please confirm resolution and color space
+                PDF or TIFF. Please confirm resolution and color space
                 with your print vendor — automated checks for DPI and
                 CMYK are not available yet.
               </p>
@@ -398,7 +423,7 @@ export function CreativesPage() {
                   id="creative-file"
                   ref={fileRef}
                   type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,.gif"
+                  accept=".pdf,.png,.jpg,.jpeg,.gif,.tif,.tiff"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   required
                   disabled={uploading}
@@ -490,54 +515,100 @@ export function CreativesPage() {
             <ul className="report-list">
               {subs.map((s) => {
                 const vs = s.validationSummary as ValidationSummary | null;
+                const expanded = expandedSubId === s.id;
+                const pUrl = previewUrls[s.id];
+                const pMime = previewMimes[s.id];
+                const isImage = s.mimeType.startsWith("image/") && s.mimeType !== "image/tiff";
+                const isPdf = s.mimeType === "application/pdf";
+
                 return (
-                  <li key={s.id} className="report-item">
-                    <div className="report-info">
-                      <span className="report-name">{s.title}</span>
-                      {s.description && (
-                        <span className="report-description">
-                          {s.description}
-                        </span>
-                      )}
-                      {s.reviewNote && (
-                        <div className="review-note">{s.reviewNote}</div>
-                      )}
-                      <div className="submission-meta">
-                        <span className="doc-type-badge">
-                          {CREATIVE_TYPE_LABEL[s.creativeType] ?? s.creativeType}
-                        </span>
-                        {s.widthPx != null && s.heightPx != null && (
-                          <span>{s.widthPx} &times; {s.heightPx}px</span>
+                  <li key={s.id} className={`report-item sub-card${expanded ? " sub-card-expanded" : ""}`}>
+                    <div className="sub-card-header">
+                      <div className="report-info">
+                        <span className="report-name">{s.title}</span>
+                        {s.description && (
+                          <span className="report-description">
+                            {s.description}
+                          </span>
                         )}
-                        <span>
-                          {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
-                          &middot; {formatDate(s.createdAt)}
-                        </span>
+                        {s.reviewNote && (
+                          <div className="review-note">{s.reviewNote}</div>
+                        )}
+                        <div className="submission-meta">
+                          <span className="doc-type-badge">
+                            {CREATIVE_TYPE_LABEL[s.creativeType] ?? s.creativeType}
+                          </span>
+                          {s.widthPx != null && s.heightPx != null && (
+                            <span>{s.widthPx} &times; {s.heightPx}px</span>
+                          )}
+                          <span>
+                            {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
+                            &middot; {formatDate(s.createdAt)}
+                          </span>
+                        </div>
                       </div>
-                      {vs && !vs.passed && vs.errors.length > 0 && (
-                        <ul className="validation-errors sub-validation">
-                          {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
-                        </ul>
-                      )}
-                      {vs && vs.warnings.length > 0 && (
-                        <ul className="validation-warnings sub-validation">
-                          {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
-                        </ul>
-                      )}
+                      <div className="submission-actions">
+                        <span className={STATUS_BADGE[s.status]}>
+                          {STATUS_LABEL[s.status]}
+                        </span>
+                        <div className="sub-action-row">
+                          {(isImage || isPdf) && (
+                            <button
+                              type="button"
+                              className="doc-download"
+                              onClick={() => togglePreview(s)}
+                            >
+                              {expanded ? "Hide preview" : "Preview"}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="doc-download"
+                            disabled={downloadingId === s.id}
+                            onClick={() => download(s)}
+                          >
+                            {downloadingId === s.id ? "Preparing…" : "Download"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="submission-actions">
-                      <span className={STATUS_BADGE[s.status]}>
-                        {STATUS_LABEL[s.status]}
-                      </span>
-                      <button
-                        type="button"
-                        className="doc-download"
-                        disabled={downloadingId === s.id}
-                        onClick={() => download(s)}
-                      >
-                        {downloadingId === s.id ? "Preparing…" : "Download"}
-                      </button>
-                    </div>
+
+                    {/* Validation display */}
+                    {vs && !vs.passed && vs.errors.length > 0 && (
+                      <ul className="validation-errors sub-validation">
+                        {vs.errors.map((e, i) => <li key={i}>{e}</li>)}
+                      </ul>
+                    )}
+                    {vs && vs.warnings.length > 0 && (
+                      <ul className="validation-warnings sub-validation">
+                        {vs.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                      </ul>
+                    )}
+
+                    {/* Preview panel */}
+                    {expanded && pUrl && (
+                      <div className="sub-preview">
+                        {isImage && pMime?.startsWith("image/") && (
+                          <img
+                            src={pUrl}
+                            alt={s.title}
+                            className="sub-preview-img"
+                          />
+                        )}
+                        {isPdf && (
+                          <iframe
+                            src={pUrl}
+                            title={`Preview: ${s.title}`}
+                            className="sub-preview-pdf"
+                          />
+                        )}
+                      </div>
+                    )}
+                    {expanded && !pUrl && (
+                      <p className="text-muted" style={{ fontSize: "0.8125rem", margin: "0.5rem 0 0" }}>
+                        Preview not available for this file type. Use download instead.
+                      </p>
+                    )}
                   </li>
                 );
               })}

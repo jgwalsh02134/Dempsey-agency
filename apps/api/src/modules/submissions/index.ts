@@ -8,6 +8,7 @@ import {
   uploadObject,
   deleteObject,
   getSignedDownloadUrl,
+  getSignedPreviewUrl,
 } from "../../lib/storage.js";
 import {
   campaignIdParamsSchema,
@@ -23,6 +24,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/png",
   "image/jpeg",
   "image/gif",
+  "image/tiff",
 ]);
 
 const CREATIVE_TYPES = new Set(["PRINT", "DIGITAL", "MASTER_ASSET"]);
@@ -128,7 +130,7 @@ export async function submissionRoutes(app: FastifyInstance) {
 
       if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
         return reply.code(400).send({
-          error: `File type "${file.mimetype}" is not allowed. Accepted: PDF, PNG, JPEG, GIF.`,
+          error: `File type "${file.mimetype}" is not allowed. Accepted: PDF, PNG, JPEG, GIF, TIFF.`,
         });
       }
 
@@ -299,6 +301,56 @@ export async function submissionRoutes(app: FastifyInstance) {
         url,
         filename: submission.filename,
         mimeType: submission.mimeType,
+      };
+    },
+  );
+
+  // ── Preview URL (inline viewing) ─────────────────────────────
+  const PREVIEWABLE_MIMES = new Set([
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/tiff",
+    "application/pdf",
+  ]);
+
+  app.get(
+    "/submissions/:id/preview",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id } = submissionIdParamsSchema.parse(request.params);
+
+      const submission = await app.prisma.creativeSubmission.findUnique({
+        where: { id },
+      });
+      if (!submission) {
+        return reply.code(404).send({ error: "Submission not found" });
+      }
+
+      const visible = await resolveVisibleOrganizationIds(
+        app.prisma,
+        request.currentUser!,
+      );
+      if (visible !== null && !visible.includes(submission.organizationId)) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      if (!PREVIEWABLE_MIMES.has(submission.mimeType)) {
+        return reply.code(400).send({
+          error: "Preview is not available for this file type.",
+          previewable: false,
+        });
+      }
+
+      const url = await getSignedPreviewUrl(
+        submission.storageKey,
+        submission.mimeType,
+      );
+
+      return {
+        url,
+        mimeType: submission.mimeType,
+        previewable: true,
       };
     },
   );

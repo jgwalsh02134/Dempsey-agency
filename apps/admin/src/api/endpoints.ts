@@ -26,6 +26,7 @@ import type {
   PublisherInventoryResponse,
   PublishersResponse,
   SessionUser,
+  SubmissionPreviewResponse,
   SubmissionStatus,
 } from "../types";
 
@@ -270,6 +271,14 @@ export async function deleteSubmission(id: string): Promise<void> {
   await apiFetch(`/api/v1/submissions/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+export async function fetchSubmissionPreviewUrl(
+  id: string,
+): Promise<SubmissionPreviewResponse> {
+  return apiFetch<SubmissionPreviewResponse>(
+    `/api/v1/submissions/${encodeURIComponent(id)}/preview`,
+  );
 }
 
 export async function fetchAccountRequests(

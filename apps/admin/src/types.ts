@@ -314,8 +314,17 @@ export interface AccountRequestWithInvite extends AccountRequest {
 }
 
 export interface AICreativeReview {
+  verdict: "approve" | "revise" | "reject";
   summary: string;
+  issues: string[];
   suggestions: string[];
+  nextAction: string;
+}
+
+export interface SubmissionPreviewResponse {
+  url: string;
+  mimeType: string;
+  previewable: boolean;
 }
 
 export interface AdminSubmission extends CreativeSubmission {

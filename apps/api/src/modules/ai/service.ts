@@ -14,8 +14,11 @@ function getClient(): OpenAI {
 }
 
 export interface CreativeReview {
+  verdict: "approve" | "revise" | "reject";
   summary: string;
+  issues: string[];
   suggestions: string[];
+  nextAction: string;
 }
 
 const IMAGE_MIMES = new Set(["image/png", "image/jpeg", "image/gif"]);
@@ -23,13 +26,24 @@ const IMAGE_MIMES = new Set(["image/png", "image/jpeg", "image/gif"]);
 export const MAX_AI_REVIEW_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_IMAGE_BYTES = MAX_AI_REVIEW_DOWNLOAD_BYTES;
 
-const SYSTEM_PROMPT = `You are a senior creative director at a media advertising agency. You review creative assets submitted for advertising campaigns.
+const SYSTEM_PROMPT = `You are a senior creative director at a media advertising agency reviewing creative assets submitted for advertising campaigns.
 
-Provide a concise, professional review with actionable suggestions.
+Evaluate the creative for:
+- Visual quality and clarity
+- Brand professionalism
+- Technical suitability (resolution, format, composition)
+- Effectiveness for the intended ad placement
 
-Respond ONLY with a JSON object containing exactly two fields:
-- "summary": a 1–2 sentence overview of the creative's quality and effectiveness
-- "suggestions": an array of 3–5 short, specific improvement recommendations`;
+Respond ONLY with a JSON object containing exactly these fields:
+- "verdict": one of "approve", "revise", or "reject"
+  - "approve": ready to send to publisher as-is
+  - "revise": has potential but needs specific changes
+  - "reject": fundamentally unsuitable
+- "summary": 1–2 sentence overview of the creative's quality
+- "issues": array of 0–3 specific problems found (empty if none)
+- "issues" should be specific and factual (e.g. "Text is too small to read at 300x250")
+- "suggestions": array of 2–4 short, actionable improvement recommendations
+- "nextAction": one sentence telling the reviewer exactly what to do next (e.g. "Approve and send to publisher" or "Return to client with resize request")`;
 
 function buildContext(opts: {
   title: string;
@@ -47,22 +61,36 @@ function buildContext(opts: {
   return lines.filter(Boolean).join("\n");
 }
 
+const VALID_VERDICTS = new Set(["approve", "revise", "reject"]);
+
 function parseResponse(raw: string): CreativeReview {
   try {
     const parsed = JSON.parse(raw);
+    const filterStrings = (arr: unknown): string[] =>
+      Array.isArray(arr)
+        ? arr.filter((s): s is string => typeof s === "string")
+        : [];
     return {
+      verdict: VALID_VERDICTS.has(parsed.verdict) ? parsed.verdict : "revise",
       summary:
         typeof parsed.summary === "string"
           ? parsed.summary
           : "Review could not be generated.",
-      suggestions: Array.isArray(parsed.suggestions)
-        ? parsed.suggestions.filter(
-            (s: unknown): s is string => typeof s === "string",
-          )
-        : [],
+      issues: filterStrings(parsed.issues),
+      suggestions: filterStrings(parsed.suggestions),
+      nextAction:
+        typeof parsed.nextAction === "string"
+          ? parsed.nextAction
+          : "Review manually before proceeding.",
     };
   } catch {
-    return { summary: "Review response could not be parsed.", suggestions: [] };
+    return {
+      verdict: "revise",
+      summary: "Review response could not be parsed.",
+      issues: [],
+      suggestions: [],
+      nextAction: "Review manually before proceeding.",
+    };
   }
 }
 

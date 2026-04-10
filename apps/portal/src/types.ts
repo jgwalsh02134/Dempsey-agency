@@ -213,3 +213,9 @@ export interface SubmissionDownloadResponse {
   filename: string;
   mimeType: string;
 }
+
+export interface SubmissionPreviewResponse {
+  url: string;
+  mimeType: string;
+  previewable: boolean;
+}

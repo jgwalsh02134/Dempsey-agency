@@ -12,6 +12,7 @@ const ALLOWED_REVIEW_MIME_TYPES = new Set([
   "image/png",
   "image/jpeg",
   "image/gif",
+  "image/tiff",
 ]);
 
 export async function aiRoutes(app: FastifyInstance) {
@@ -53,7 +54,7 @@ export async function aiRoutes(app: FastifyInstance) {
       if (!ALLOWED_REVIEW_MIME_TYPES.has(submission.mimeType)) {
         return reply.code(400).send({
           error:
-            "This file type cannot be reviewed. Supported: PDF, PNG, JPEG, GIF.",
+            "This file type cannot be reviewed. Supported: PDF, PNG, JPEG, GIF, TIFF.",
         });
       }
 
