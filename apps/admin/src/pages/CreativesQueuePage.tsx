@@ -25,9 +25,9 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
   UPLOADED: "Uploaded",
   VALIDATION_FAILED: "Validation Failed",
   UNDER_REVIEW: "Under Review",
-  NEEDS_RESIZING: "Needs Resizing",
+  NEEDS_RESIZING: "Changes Requested",
   READY_FOR_PUBLISHER: "Ready for Publisher",
-  PUSHED: "Pushed",
+  PUSHED: "Sent to Publisher",
 };
 
 const TYPE_LABEL: Record<CreativeType, string> = {
@@ -79,12 +79,11 @@ export function CreativesQueuePage() {
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [previewMimes, setPreviewMimes] = useState<Record<string, string>>({});
 
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
+
   const loadOrgs = useCallback(async () => {
-    try {
-      setOrgs(await api.fetchOrganizations());
-    } catch {
-      /* non-critical */
-    }
+    try { setOrgs(await api.fetchOrganizations()); } catch { /* non-critical */ }
   }, []);
 
   const loadSubmissions = useCallback(async () => {
@@ -104,23 +103,18 @@ export function CreativesQueuePage() {
     }
   }, [filterStatus, filterOrg, filterType]);
 
-  useEffect(() => {
-    void loadOrgs();
-  }, [loadOrgs]);
+  useEffect(() => { void loadOrgs(); }, [loadOrgs]);
+  useEffect(() => { void loadSubmissions(); }, [loadSubmissions]);
 
-  useEffect(() => {
-    void loadSubmissions();
-  }, [loadSubmissions]);
-
-  async function onStatusChange(sub: AdminSubmission, newStatus: SubmissionStatus) {
+  /* ── status transition ── */
+  async function transitionStatus(
+    sub: AdminSubmission,
+    newStatus: SubmissionStatus,
+    reviewNote?: string | null,
+  ) {
     setActionError(null);
     setBusyId(sub.id);
     try {
-      let reviewNote: string | null | undefined;
-      if (newStatus === "NEEDS_RESIZING") {
-        const note = window.prompt("Review note (optional):");
-        if (note !== null) reviewNote = note || null;
-      }
       await api.patchSubmission(sub.id, {
         status: newStatus,
         ...(reviewNote !== undefined ? { reviewNote } : {}),
@@ -146,6 +140,7 @@ export function CreativesQueuePage() {
     try {
       await api.deleteSubmission(sub.id);
       setSubs((prev) => prev.filter((s) => s.id !== sub.id));
+      if (expandedId === sub.id) setExpandedId(null);
     } catch (e) {
       setActionError(errMsg(e));
     } finally {
@@ -166,16 +161,10 @@ export function CreativesQueuePage() {
     }
   }
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const clientOrgs = orgs.filter((o) => o.type === "CLIENT");
-  const pendingCount = subs.filter(
-    (s) => s.status === "UPLOADED" || s.status === "VALIDATION_FAILED",
-  ).length;
-
   function toggleExpand(id: string, mimeType?: string) {
     const next = expandedId === id ? null : id;
     setExpandedId(next);
+    setNoteText("");
     if (next && !previewUrls[id] && mimeType) {
       void loadPreview(id);
     }
@@ -185,36 +174,16 @@ export function CreativesQueuePage() {
     try {
       const res = await api.fetchSubmissionPreviewUrl(id);
       if (res.previewable) {
-        setPreviewUrls((prev) => ({ ...prev, [id]: res.url }));
-        setPreviewMimes((prev) => ({ ...prev, [id]: res.mimeType }));
+        setPreviewUrls((p) => ({ ...p, [id]: res.url }));
+        setPreviewMimes((p) => ({ ...p, [id]: res.mimeType }));
       }
-    } catch {
-      /* non-critical */
-    }
+    } catch { /* non-critical */ }
   }
 
-  async function markSentToPublisher(sub: AdminSubmission) {
-    if (
-      !window.confirm(
-        `Mark "${sub.title}" as sent to publisher?\n\nThis records that the creative has been delivered. It does not send the file automatically.`,
-      )
-    )
-      return;
-    setActionError(null);
-    setBusyId(sub.id);
-    try {
-      await api.patchSubmission(sub.id, { status: "PUSHED" });
-      setSubs((prev) =>
-        prev.map((s) =>
-          s.id === sub.id ? { ...s, status: "PUSHED" as SubmissionStatus } : s,
-        ),
-      );
-    } catch (e) {
-      setActionError(errMsg(e));
-    } finally {
-      setBusyId(null);
-    }
-  }
+  const clientOrgs = orgs.filter((o) => o.type === "CLIENT");
+  const pendingCount = subs.filter(
+    (s) => s.status === "UPLOADED" || s.status === "VALIDATION_FAILED",
+  ).length;
 
   const STATUS_ACCENT: Record<SubmissionStatus, string> = {
     UPLOADED: "q-status-uploaded",
@@ -285,9 +254,7 @@ export function CreativesQueuePage() {
       {loading && <p className="muted">Loading submissions…</p>}
 
       {!loading && subs.length === 0 && !error && (
-        <p className="muted" style={{ marginTop: "1rem" }}>
-          No submissions match the current filters.
-        </p>
+        <p className="muted" style={{ marginTop: "1rem" }}>No submissions match the current filters.</p>
       )}
 
       {!loading && subs.length > 0 && (
@@ -295,9 +262,10 @@ export function CreativesQueuePage() {
           {subs.map((s) => {
             const expanded = expandedId === s.id;
             const vs = s.validationSummary as ValidationSummary | null;
+            const busy = busyId === s.id;
             return (
-              <li key={s.id} className={`q-row ${expanded ? "q-row-expanded" : ""}`}>
-                {/* ── Summary row (always visible, clickable to expand) ── */}
+              <li key={s.id} className={`q-row${expanded ? " q-row-expanded" : ""}`}>
+                {/* ── Summary row ── */}
                 <button
                   type="button"
                   className="q-row-summary"
@@ -336,7 +304,7 @@ export function CreativesQueuePage() {
                   </span>
                 </button>
 
-                {/* ── Expanded detail panel ── */}
+                {/* ── Detail panel ── */}
                 {expanded && (() => {
                   const pUrl = previewUrls[s.id];
                   const pMime = previewMimes[s.id];
@@ -359,18 +327,18 @@ export function CreativesQueuePage() {
                       )}
 
                       <div className="q-detail-grid">
-                        {/* Left: Metadata + Validation + AI Review */}
+                        {/* Left: info + validation + AI */}
                         <div className="q-detail-col">
                           {s.description && (
                             <p className="q-detail-desc">{s.description}</p>
                           )}
                           {s.reviewNote && (
                             <p className="q-detail-note">
-                              <strong>Review note:</strong> {s.reviewNote}
+                              <strong>Client-facing note:</strong> {s.reviewNote}
                             </p>
                           )}
 
-                          {/* Validation summary */}
+                          {/* Validation */}
                           {vs && (
                             <div className="q-detail-validation">
                               <div className="q-detail-section-label">
@@ -389,17 +357,13 @@ export function CreativesQueuePage() {
                             </div>
                           )}
 
-                          {/* AI Review (structured) */}
+                          {/* AI Review */}
                           {review && (
                             <div className="q-ai-review">
                               <div className="q-ai-header">
                                 <span className="q-ai-label">AI Review</span>
                                 <span className={`q-ai-verdict q-ai-verdict-${review.verdict}`}>
-                                  {review.verdict === "approve"
-                                    ? "Approve"
-                                    : review.verdict === "reject"
-                                      ? "Reject"
-                                      : "Revise"}
+                                  {review.verdict === "approve" ? "Approve" : review.verdict === "reject" ? "Reject" : "Revise"}
                                 </span>
                               </div>
                               <p className="q-ai-summary">{review.summary}</p>
@@ -407,9 +371,7 @@ export function CreativesQueuePage() {
                                 <>
                                   <div className="q-ai-section-label">Issues</div>
                                   <ul className="q-ai-issues">
-                                    {review.issues.map((issue, i) => (
-                                      <li key={i}>{issue}</li>
-                                    ))}
+                                    {review.issues.map((issue, i) => <li key={i}>{issue}</li>)}
                                   </ul>
                                 </>
                               )}
@@ -417,9 +379,7 @@ export function CreativesQueuePage() {
                                 <>
                                   <div className="q-ai-section-label">Suggestions</div>
                                   <ul className="q-ai-suggestions">
-                                    {review.suggestions.map((sug, i) => (
-                                      <li key={i}>{sug}</li>
-                                    ))}
+                                    {review.suggestions.map((sug, i) => <li key={i}>{sug}</li>)}
                                   </ul>
                                 </>
                               )}
@@ -430,56 +390,133 @@ export function CreativesQueuePage() {
                           )}
                         </div>
 
-                        {/* Right: Actions */}
+                        {/* Right: workflow actions */}
                         <div className="q-detail-actions">
-                          <label className="q-action-field">
-                            <span className="small">Workflow Status</span>
+                          {/* ── Workflow buttons (context-sensitive) ── */}
+                          <div className="q-wf-section">
+                            <span className="q-wf-label">Workflow</span>
+
+                            {/* Begin review */}
+                            {(s.status === "UPLOADED" || s.status === "VALIDATION_FAILED") && (
+                              <button
+                                type="button"
+                                className="btn primary"
+                                disabled={busy}
+                                onClick={() => transitionStatus(s, "UNDER_REVIEW")}
+                              >
+                                {busy ? "…" : "Begin review"}
+                              </button>
+                            )}
+
+                            {/* Under review → approve or request changes */}
+                            {s.status === "UNDER_REVIEW" && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn primary"
+                                  disabled={busy}
+                                  onClick={() => transitionStatus(s, "READY_FOR_PUBLISHER")}
+                                >
+                                  {busy ? "…" : "Approve"}
+                                </button>
+                                <div className="q-wf-note-group">
+                                  <textarea
+                                    className="q-wf-textarea"
+                                    placeholder="Feedback for client (optional)"
+                                    value={noteText}
+                                    onChange={(e) => setNoteText(e.target.value)}
+                                    rows={2}
+                                    maxLength={2000}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="btn ghost"
+                                    disabled={busy}
+                                    onClick={() => {
+                                      void transitionStatus(
+                                        s,
+                                        "NEEDS_RESIZING",
+                                        noteText.trim() || null,
+                                      );
+                                      setNoteText("");
+                                    }}
+                                  >
+                                    {busy ? "…" : "Request changes"}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Changes requested → back to review */}
+                            {s.status === "NEEDS_RESIZING" && (
+                              <button
+                                type="button"
+                                className="btn ghost"
+                                disabled={busy}
+                                onClick={() => transitionStatus(s, "UNDER_REVIEW")}
+                              >
+                                {busy ? "…" : "Resume review"}
+                              </button>
+                            )}
+
+                            {/* Ready → send to publisher */}
+                            {s.status === "READY_FOR_PUBLISHER" && (
+                              <button
+                                type="button"
+                                className="btn primary"
+                                disabled={busy}
+                                onClick={() => {
+                                  if (window.confirm(
+                                    `Mark "${s.title}" as sent to publisher?\n\nThis records delivery — it does not send the file automatically.`,
+                                  )) {
+                                    void transitionStatus(s, "PUSHED");
+                                  }
+                                }}
+                              >
+                                {busy ? "…" : "Mark sent to publisher"}
+                              </button>
+                            )}
+
+                            {/* Sent — completed */}
+                            {s.status === "PUSHED" && (
+                              <p className="q-wf-done">Delivered to publisher.</p>
+                            )}
+                          </div>
+
+                          {/* ── Status override ── */}
+                          <details className="q-status-override">
+                            <summary className="small">Manual status override</summary>
                             <select
                               className="inline-select"
                               value={s.status}
-                              disabled={busyId === s.id}
+                              disabled={busy}
                               onChange={(e) =>
-                                onStatusChange(s, e.target.value as SubmissionStatus)
+                                transitionStatus(s, e.target.value as SubmissionStatus)
                               }
                             >
                               {ALL_STATUSES.map((st) => (
                                 <option key={st} value={st}>{STATUS_LABEL[st]}</option>
                               ))}
                             </select>
-                          </label>
+                          </details>
 
-                          {/* Send to publisher — only when READY_FOR_PUBLISHER */}
-                          {s.status === "READY_FOR_PUBLISHER" && (
-                            <button
-                              type="button"
-                              className="btn primary"
-                              disabled={busyId === s.id}
-                              onClick={() => markSentToPublisher(s)}
-                            >
-                              {busyId === s.id ? "…" : "Mark sent to publisher"}
-                            </button>
-                          )}
-
+                          {/* ── Tools ── */}
                           <div className="q-action-buttons">
                             <button
                               type="button"
                               className="btn ghost"
-                              disabled={busyId === s.id || reviewingId === s.id}
+                              disabled={busy || reviewingId === s.id}
                               onClick={() => onAIReview(s)}
                             >
-                              {reviewingId === s.id
-                                ? "Reviewing…"
-                                : review
-                                  ? "Re-review"
-                                  : "AI Review"}
+                              {reviewingId === s.id ? "Reviewing…" : review ? "Re-review" : "AI Review"}
                             </button>
                             <button
                               type="button"
                               className="btn danger ghost"
-                              disabled={busyId === s.id}
+                              disabled={busy}
                               onClick={() => onDelete(s)}
                             >
-                              {busyId === s.id ? "…" : "Delete"}
+                              {busy ? "…" : "Delete"}
                             </button>
                           </div>
                         </div>

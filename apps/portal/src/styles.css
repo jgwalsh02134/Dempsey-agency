@@ -1122,6 +1122,302 @@ a.portal-nav-link:focus-visible {
   width: 100%;
 }
 
+/* ── Creative type selector ── */
+.cr-type-group {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+
+.cr-type-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-ledger);
+  border-radius: 0.375rem;
+  background: var(--color-white);
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-ocean);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.cr-type-btn:hover {
+  border-color: var(--color-ocean);
+  color: var(--color-midnight);
+}
+
+.cr-type-active {
+  border-color: var(--color-midnight);
+  color: var(--color-midnight);
+  background: #f1f5f9;
+  font-weight: 600;
+}
+
+.cr-type-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-ocean);
+}
+
+/* ── Drop zone ── */
+.cr-dropzone {
+  border: 2px dashed var(--color-ledger);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+
+.cr-dropzone-active {
+  border-color: var(--color-gold);
+  background: #fffbeb;
+}
+
+.cr-dropzone-has-file {
+  border-style: solid;
+  border-color: var(--color-ledger);
+  background: var(--color-canvas);
+  cursor: default;
+}
+
+.cr-drop-prompt {
+  display: flex;
+  justify-content: center;
+}
+
+.cr-drop-text {
+  font-size: 0.875rem;
+  color: var(--color-ocean);
+}
+
+.cr-drop-browse {
+  display: inline;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-fir);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cr-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cr-file-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-midnight);
+  word-break: break-all;
+}
+
+.cr-file-size {
+  font-size: 0.75rem;
+  color: var(--color-ocean);
+}
+
+.cr-file-remove {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-ocean);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cr-file-remove:hover {
+  color: var(--color-error-text);
+}
+
+/* ── Validation feedback ── */
+.cr-val-error {
+  margin: 0.25rem 0;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--color-error-bg);
+  border-left: 3px solid var(--color-error-border);
+  font-size: 0.8125rem;
+  color: var(--color-error-text);
+}
+
+.cr-val-warn {
+  margin: 0.25rem 0;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: #fffbeb;
+  border-left: 3px solid #fde68a;
+  font-size: 0.8125rem;
+  color: #92400e;
+}
+
+/* ── Submission list ── */
+.cr-sub-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cr-sub-card {
+  border: 1px solid var(--color-ledger);
+  border-radius: 0.5rem;
+  background: var(--color-white);
+  overflow: hidden;
+}
+
+.cr-sub-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cr-sub-header:hover {
+  background: var(--color-canvas);
+}
+
+.cr-sub-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.cr-sub-title {
+  font-weight: 500;
+  font-size: 0.9375rem;
+  color: var(--color-midnight);
+}
+
+.cr-sub-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.75rem;
+  color: var(--color-ocean);
+}
+
+.cr-sub-status-area {
+  flex-shrink: 0;
+  padding-top: 0.125rem;
+}
+
+/* ── Submission detail (expand/collapse) ── */
+.cr-sub-detail {
+  display: none;
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--color-ledger);
+}
+
+.cr-sub-detail-open {
+  display: block;
+}
+
+.cr-status-explain {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-ocean);
+}
+
+.cr-agency-note {
+  margin-top: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--color-gold);
+  background: #fffbf5;
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.cr-agency-note-label {
+  display: block;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  margin-bottom: 0.125rem;
+}
+
+.cr-agency-note-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-midnight);
+}
+
+.cr-val-block {
+  margin-top: 0.625rem;
+}
+
+.cr-val-label {
+  display: block;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ocean);
+  margin-bottom: 0.25rem;
+}
+
+.cr-sub-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cr-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--color-ledger);
+  border-radius: 0.5rem;
+}
+
+.cr-empty-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-ocean);
+}
+
+@media (max-width: 639px) {
+  .cr-type-group {
+    flex-direction: column;
+  }
+
+  .cr-sub-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
 /* ── Campaign list row (entire row navigates to detail) ── */
 .campaign-row-full-link {
   display: flex;
