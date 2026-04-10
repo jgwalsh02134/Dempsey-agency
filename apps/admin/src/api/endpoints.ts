@@ -4,6 +4,7 @@ import type {
   AccountRequestStatus,
   AccountRequestsResponse,
   AdminOverview,
+  AdminSubmissionsResponse,
   AICreativeReview,
   Campaign,
   CampaignStatus,
@@ -36,6 +37,22 @@ export async function fetchSession(): Promise<SessionUser> {
 
 export async function fetchAdminOverview(): Promise<AdminOverview> {
   return apiFetch<AdminOverview>("/api/v1/admin/overview");
+}
+
+export async function fetchAdminSubmissions(filters?: {
+  status?: string;
+  organizationId?: string;
+  creativeType?: string;
+}): Promise<AdminSubmissionsResponse> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.organizationId)
+    params.set("organizationId", filters.organizationId);
+  if (filters?.creativeType) params.set("creativeType", filters.creativeType);
+  const qs = params.toString();
+  return apiFetch<AdminSubmissionsResponse>(
+    `/api/v1/admin/submissions${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function fetchOrganizations(): Promise<Organization[]> {

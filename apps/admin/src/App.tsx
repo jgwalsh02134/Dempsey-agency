@@ -5,6 +5,7 @@ import { AdminLayout } from "./components/AdminLayout";
 import { AccessPage } from "./pages/AccessPage";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
+import { CreativesQueuePage } from "./pages/CreativesQueuePage";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
 
@@ -41,6 +42,7 @@ export function App() {
         <Route index element={<OverviewPage />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
+        <Route path="creatives" element={<CreativesQueuePage />} />
         <Route path="access" element={<AccessPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

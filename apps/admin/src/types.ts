@@ -201,6 +201,15 @@ export interface AICreativeReview {
   suggestions: string[];
 }
 
+export interface AdminSubmission extends CreativeSubmission {
+  campaign: { id: string; title: string; status: CampaignStatus };
+  organization: { id: string; name: string };
+}
+
+export interface AdminSubmissionsResponse {
+  submissions: AdminSubmission[];
+}
+
 export interface AuditLogEntry {
   id: string;
   action: string;
