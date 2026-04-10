@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import { useAuth } from "../auth/AuthContext";
 import type {
   Campaign,
   CampaignStatus,
@@ -81,8 +80,6 @@ const PLACEMENT_STATUS_BADGE: Record<PlacementStatus, string> = {
 export function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const { session } = useAuth();
-  const memberships = session!.memberships;
 
   const stateCampaign = (
     location.state as { campaign?: Campaign } | null
@@ -104,36 +101,35 @@ export function CampaignDetailPage() {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  /* ── resolve campaign if not passed via route state ── */
+  /* ── always fetch fresh campaign data ── */
   useEffect(() => {
-    if (campaign || !id) return;
+    if (!id) return;
     let cancelled = false;
-    setCampaignLoading(true);
+    if (!campaign) setCampaignLoading(true);
 
-    (async () => {
-      for (const m of memberships) {
-        try {
-          const res = await api.fetchOrgCampaigns(m.organizationId);
-          const found = res.campaigns.find((c) => c.id === id);
-          if (found && !cancelled) {
-            setCampaign(found);
-            setCampaignLoading(false);
-            return;
-          }
-        } catch {
-          /* try next org */
+    api
+      .fetchCampaign(id)
+      .then((fresh) => {
+        if (!cancelled) {
+          setCampaign(fresh);
+          setCampaignError(null);
         }
-      }
-      if (!cancelled) {
-        setCampaignError("Campaign not found");
-        setCampaignLoading(false);
-      }
-    })();
+      })
+      .catch((e) => {
+        if (!cancelled && !campaign) {
+          setCampaignError(
+            e instanceof ApiError ? e.message : "Campaign not found",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCampaignLoading(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [id, campaign, memberships]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── fetch placements once campaign is resolved ── */
   useEffect(() => {
@@ -285,29 +281,35 @@ export function CampaignDetailPage() {
 
         {!placementsLoading && !placementsError && placements.length > 0 && (
           <ul className="report-list">
-            {placements.map((p) => (
-              <li key={p.id} className="report-item">
-                <div className="report-info">
-                  <span className="report-name">{p.name}</span>
-                  <div className="campaign-meta">
-                    <span>{p.inventory.publisher.name}</span>
-                    <span>·</span>
-                    <span>{p.inventory.mediaType}</span>
-                    <span>·</span>
-                    <span>{formatCents(p.grossCostCents)}</span>
-                    {p.quantity != null && (
-                      <>
-                        <span>·</span>
-                        <span>Qty: {p.quantity}</span>
-                      </>
-                    )}
+            {placements.map((p) => {
+              const pub = p.inventory.publisher;
+              const loc = [pub.city, pub.state].filter(Boolean).join(", ");
+              return (
+                <li key={p.id} className="report-item">
+                  <div className="report-info">
+                    <span className="report-name">{p.name}</span>
+                    <span className="report-description">
+                      {pub.name}{loc ? ` — ${loc}` : ""}
+                    </span>
+                    <div className="campaign-meta">
+                      <span className="doc-type-badge">
+                        {p.inventory.mediaType}
+                      </span>
+                      <span>{formatCents(p.grossCostCents)}</span>
+                      {p.quantity != null && (
+                        <>
+                          <span>·</span>
+                          <span>Qty: {p.quantity}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <span className={PLACEMENT_STATUS_BADGE[p.status]}>
-                  {PLACEMENT_STATUS_LABEL[p.status]}
-                </span>
-              </li>
-            ))}
+                  <span className={PLACEMENT_STATUS_BADGE[p.status]}>
+                    {PLACEMENT_STATUS_LABEL[p.status]}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
