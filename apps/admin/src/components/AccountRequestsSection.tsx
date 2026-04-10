@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
@@ -38,6 +38,7 @@ function statusClass(status: AccountRequestStatus): string {
 }
 
 function errorMessage(e: unknown): string {
+  if (e instanceof DOMException && e.name === "AbortError") return "";
   if (e instanceof ApiError) return e.message;
   if (e instanceof Error && e.message) return e.message;
   return "Something went wrong";
@@ -69,22 +70,40 @@ export function AccountRequestsSection({
   /* Invite link to display after successful approval */
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
-  const loadRequests = useCallback(async () => {
+  useEffect(() => {
+    const ac = new AbortController();
+    let active = true;
+
     setLoading(true);
     setListError(null);
-    try {
-      const res = await api.fetchAccountRequests();
-      setRequests(res.requests);
-    } catch (e) {
-      setListError(errorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    void loadRequests();
-  }, [loadRequests]);
+    (async () => {
+      try {
+        const res = await api.fetchAccountRequests({ signal: ac.signal });
+        if (!active) return;
+        const list = res?.requests;
+        if (!Array.isArray(list)) {
+          setRequests([]);
+          setListError("Unexpected response from server.");
+          return;
+        }
+        setRequests(list);
+        setListError(null);
+      } catch (e) {
+        if (!active) return;
+        const msg = errorMessage(e);
+        if (!msg) return;
+        setListError(msg);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+      ac.abort();
+    };
+  }, []);
 
   function openApprovePanel(req: AccountRequest) {
     setApprovingId(req.id);

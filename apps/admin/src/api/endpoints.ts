@@ -229,8 +229,13 @@ export async function deleteSubmission(id: string): Promise<void> {
   });
 }
 
-export async function fetchAccountRequests(): Promise<AccountRequestsResponse> {
-  return apiFetch<AccountRequestsResponse>("/api/v1/account-requests");
+export async function fetchAccountRequests(
+  init?: RequestInit,
+): Promise<AccountRequestsResponse> {
+  return apiFetch<AccountRequestsResponse>(
+    "/api/v1/account-requests",
+    init ?? {},
+  );
 }
 
 export async function patchAccountRequest(
