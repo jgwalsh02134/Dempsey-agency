@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { AccountRequestsSection } from "../components/AccountRequestsSection";
 import { CreateClientOrgForm } from "../components/CreateClientOrgForm";
 import type { Organization } from "../types";
 
@@ -80,6 +81,10 @@ export function ClientsPage() {
           onCreated={() => void load()}
         />
       </section>
+
+      <div style={{ marginTop: "2rem" }}>
+        <AccountRequestsSection organizations={orgs} />
+      </div>
     </div>
   );
 }

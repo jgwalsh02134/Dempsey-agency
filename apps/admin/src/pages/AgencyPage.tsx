@@ -35,6 +35,8 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
+const INTERNAL_DOMAINS = ["@dempsey.agency", "@adsell.ai", "@vdata.com"];
+
 export function AgencyPage() {
   const { session } = useAuth();
 
@@ -89,6 +91,16 @@ export function AgencyPage() {
     }
   }, []);
 
+  const filteredMembers = useMemo<OrgUsersResponse | null>(() => {
+    if (!members) return null;
+    return {
+      ...members,
+      users: members.users.filter((row) =>
+        INTERNAL_DOMAINS.some((d) => row.user.email.endsWith(d)),
+      ),
+    };
+  }, [members]);
+
   const applyLocalMemberRole = useCallback(
     (args: { membershipId: string; userId: string; role: Role }) => {
       setMembers((prev) => {
@@ -134,7 +146,7 @@ export function AgencyPage() {
           <OrgMembersTable
               orgId={agencyOrgId}
               orgType="AGENCY"
-              data={members}
+              data={filteredMembers}
               loading={membersLoading}
               error={membersError}
               onClearListError={() => setMembersError(null)}
