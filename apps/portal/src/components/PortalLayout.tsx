@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { MARKETING_URL } from "../api/config";
 
 export function PortalLayout() {
   const { session, logout, loading, token } = useAuth();
@@ -28,9 +29,15 @@ export function PortalLayout() {
             />
             <span className="portal-title">Client Portal</span>
           </div>
-          <button type="button" className="btn-sign-out" onClick={logout}>
-            Sign out
-          </button>
+          <div className="portal-header-actions">
+            <a href={MARKETING_URL} className="btn-back-to-site">
+              <span className="back-to-site-full">&larr; Back to site</span>
+              <span className="back-to-site-short">&larr; Home</span>
+            </a>
+            <button type="button" className="btn-sign-out" onClick={logout}>
+              Sign out
+            </button>
+          </div>
         </div>
         <nav className="portal-nav" aria-label="Portal navigation">
           <NavLink to="/" end className={navLinkClass}>
