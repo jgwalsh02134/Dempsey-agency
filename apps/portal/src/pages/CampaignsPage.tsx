@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
-import type { Campaign, CampaignStatus } from "../types";
+import type { Campaign, CampaignStatus, CreativeSubmission } from "../types";
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
   ACTIVE: "Active",
@@ -19,9 +19,7 @@ const STATUS_BADGE: Record<CampaignStatus, string> = {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: "numeric", month: "short", day: "numeric",
   });
 }
 
@@ -46,6 +44,7 @@ export function CampaignsPage() {
   );
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [subsBycamp, setSubsByCamp] = useState<Record<string, CreativeSubmission[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,26 +54,77 @@ export function CampaignsPage() {
     setLoading(true);
     setError(null);
     setCampaigns([]);
-    api
-      .fetchOrgCampaigns(selectedOrgId)
-      .then((res) => {
-        if (!cancelled) setCampaigns(res.campaigns);
-      })
-      .catch((e) => {
+    setSubsByCamp({});
+
+    (async () => {
+      try {
+        const res = await api.fetchOrgCampaigns(selectedOrgId);
+        if (cancelled) return;
+        setCampaigns(res.campaigns);
+
+        const subResults = await Promise.all(
+          res.campaigns.map((c) =>
+            api.fetchCampaignSubmissions(c.id).catch(() => ({
+              campaignId: c.id,
+              submissions: [] as CreativeSubmission[],
+            })),
+          ),
+        );
+        if (cancelled) return;
+        const map: Record<string, CreativeSubmission[]> = {};
+        for (const r of subResults) map[r.campaignId] = r.submissions;
+        setSubsByCamp(map);
+      } catch (e) {
         if (!cancelled)
-          setError(
-            e instanceof ApiError
-              ? e.message
-              : "Failed to load campaigns",
-          );
-      })
-      .finally(() => {
+          setError(e instanceof ApiError ? e.message : "Failed to load campaigns");
+      } finally {
         if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [selectedOrgId]);
+
+  const active = campaigns.filter((c) => c.status === "ACTIVE");
+  const other = campaigns.filter((c) => c.status !== "ACTIVE");
+
+  function renderCard(c: Campaign) {
+    const subs = subsBycamp[c.id] ?? [];
+    const approvedCount = subs.filter(
+      (s) => s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED",
+    ).length;
+    const pendingCount = subs.filter(
+      (s) =>
+        s.status === "UPLOADED" || s.status === "UNDER_REVIEW" ||
+        s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
+    ).length;
+
+    return (
+      <Link
+        key={c.id}
+        to={`/campaigns/${c.id}`}
+        state={{ campaign: c }}
+        className="dash-camp-card-link"
+      >
+        <div className="dash-camp-card">
+          <div className="dash-camp-header">
+            <span className="dash-camp-title">{c.title}</span>
+            <span className={STATUS_BADGE[c.status]}>{STATUS_LABEL[c.status]}</span>
+          </div>
+          {c.description && <p className="dash-camp-desc">{c.description}</p>}
+          <div className="camp-card-meta">
+            <span>{dateRange(c.startDate, c.endDate)}</span>
+            {c.budgetCents != null && <span>Budget: {formatCents(c.budgetCents)}</span>}
+          </div>
+          <div className="dash-camp-stats">
+            <span>{subs.length} creative{subs.length !== 1 ? "s" : ""}</span>
+            {approvedCount > 0 && <span className="dash-stat-good">{approvedCount} approved</span>}
+            {pendingCount > 0 && <span className="dash-stat-pending">{pendingCount} pending</span>}
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <>
@@ -86,12 +136,7 @@ export function CampaignsPage() {
 
         {memberships.length > 1 && (
           <div className="org-selector">
-            <label
-              className="org-selector-label"
-              htmlFor="camp-org-select"
-            >
-              Organization
-            </label>
+            <label className="org-selector-label" htmlFor="camp-org-select">Organization</label>
             <select
               id="camp-org-select"
               className="org-select"
@@ -108,61 +153,36 @@ export function CampaignsPage() {
         )}
       </section>
 
-      <section className="section-block">
-        <h2 className="section-heading">Campaign Overview</h2>
+      {loading && <p className="text-muted" style={{ padding: "0 1rem" }}>Loading campaigns…</p>}
+      {error && <p className="form-error" role="alert">{error}</p>}
 
-        {loading && (
-          <p className="text-muted">Loading campaigns…</p>
-        )}
+      {!loading && !error && campaigns.length === 0 && (
+        <section className="section-block">
+          <div className="dash-empty">
+            <p className="dash-empty-text">
+              No campaigns have been set up for your organization yet. Check back soon.
+            </p>
+          </div>
+        </section>
+      )}
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+      {!loading && active.length > 0 && (
+        <section className="section-block">
+          <h2 className="section-heading">Active Campaigns</h2>
+          <div className="dash-camp-grid">
+            {active.map(renderCard)}
+          </div>
+        </section>
+      )}
 
-        {!loading && !error && campaigns.length === 0 && (
-          <p className="text-muted">
-            No campaigns have been set up for your organization yet.
-            Check back soon.
-          </p>
-        )}
-
-        {!loading && campaigns.length > 0 && (
-          <ul className="report-list">
-            {campaigns.map((c) => (
-              <li key={c.id} className="report-item">
-                <Link
-                  to={`/campaigns/${c.id}`}
-                  state={{ campaign: c }}
-                  className="campaign-row-full-link"
-                >
-                  <div className="report-info">
-                    <span className="report-name">{c.title}</span>
-                    {c.description && (
-                      <span className="report-description">
-                        {c.description}
-                      </span>
-                    )}
-                    <div className="campaign-meta">
-                      <span>{dateRange(c.startDate, c.endDate)}</span>
-                      {c.budgetCents != null && (
-                        <>
-                          <span>·</span>
-                          <span>Budget: {formatCents(c.budgetCents)}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <span className={STATUS_BADGE[c.status]}>
-                    {STATUS_LABEL[c.status]}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {!loading && other.length > 0 && (
+        <section className="section-block">
+          <h2 className="section-heading">Past Campaigns</h2>
+          <div className="dash-camp-grid">
+            {other.map(renderCard)}
+          </div>
+        </section>
+      )}
     </>
   );
 }

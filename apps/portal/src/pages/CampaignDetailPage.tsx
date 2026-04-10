@@ -24,12 +24,12 @@ const STATUS_BADGE: Record<CampaignStatus, string> = {
 };
 
 const SUB_STATUS_LABEL: Record<SubmissionStatus, string> = {
-  UPLOADED: "Uploaded",
-  VALIDATION_FAILED: "Validation Failed",
+  UPLOADED: "Submitted",
+  VALIDATION_FAILED: "Needs Attention",
   UNDER_REVIEW: "Under Review",
-  NEEDS_RESIZING: "Needs Resizing",
-  READY_FOR_PUBLISHER: "Ready for Publisher",
-  PUSHED: "Pushed",
+  NEEDS_RESIZING: "Changes Requested",
+  READY_FOR_PUBLISHER: "Approved",
+  PUSHED: "Sent to Publisher",
 };
 
 const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
@@ -38,7 +38,7 @@ const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
   UNDER_REVIEW: "report-badge badge-pending",
   NEEDS_RESIZING: "report-badge badge-overdue",
   READY_FOR_PUBLISHER: "report-badge badge-paid",
-  PUSHED: "report-badge badge-paid",
+  PUSHED: "report-badge badge-completed",
 };
 
 function formatDate(iso: string): string {
@@ -334,7 +334,10 @@ export function CampaignDetailPage() {
 
       {/* ── Creative Submissions ── */}
       <section className="section-block">
-        <h2 className="section-heading">Creative Submissions</h2>
+        <div className="camp-section-header">
+          <h2 className="section-heading" style={{ margin: 0 }}>Creative Submissions</h2>
+          <Link to="/creatives" className="camp-upload-link">Upload creative &rarr;</Link>
+        </div>
 
         {subsLoading && (
           <p className="text-muted">Loading submissions…</p>

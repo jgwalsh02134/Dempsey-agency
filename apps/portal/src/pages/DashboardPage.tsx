@@ -1,91 +1,240 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import * as api from "../api/endpoints";
+import type {
+  Campaign,
+  CreativeSubmission,
+  CampaignStatus,
+  SubmissionStatus,
+} from "../types";
+
+const CAMP_STATUS_LABEL: Record<CampaignStatus, string> = {
+  ACTIVE: "Active",
+  PAUSED: "Paused",
+  COMPLETED: "Completed",
+};
+
+const CAMP_STATUS_BADGE: Record<CampaignStatus, string> = {
+  ACTIVE: "report-badge badge-active",
+  PAUSED: "report-badge badge-pending",
+  COMPLETED: "report-badge badge-completed",
+};
+
+const SUB_STATUS_LABEL: Record<SubmissionStatus, string> = {
+  UPLOADED: "Submitted",
+  VALIDATION_FAILED: "Needs Attention",
+  UNDER_REVIEW: "Under Review",
+  NEEDS_RESIZING: "Changes Requested",
+  READY_FOR_PUBLISHER: "Approved",
+  PUSHED: "Sent to Publisher",
+};
+
+const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
+  UPLOADED: "report-badge badge-pending",
+  VALIDATION_FAILED: "report-badge badge-overdue",
+  UNDER_REVIEW: "report-badge badge-pending",
+  NEEDS_RESIZING: "report-badge badge-overdue",
+  READY_FOR_PUBLISHER: "report-badge badge-paid",
+  PUSHED: "report-badge badge-completed",
+};
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+  });
+}
 
 export function DashboardPage() {
   const { session } = useAuth();
 
-  if (!session) {
-    return null;
-  }
+  const orgId = useMemo(
+    () => session?.memberships[0]?.organizationId ?? "",
+    [session],
+  );
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [allSubs, setAllSubs] = useState<CreativeSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!orgId) return;
+    let cancelled = false;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const campRes = await api.fetchOrgCampaigns(orgId);
+        if (cancelled) return;
+        setCampaigns(campRes.campaigns);
+
+        const subResults = await Promise.all(
+          campRes.campaigns.map((c) =>
+            api
+              .fetchCampaignSubmissions(c.id)
+              .catch(() => ({ campaignId: c.id, submissions: [] as CreativeSubmission[] })),
+          ),
+        );
+        if (cancelled) return;
+        setAllSubs(subResults.flatMap((r) => r.submissions));
+      } catch {
+        /* best effort */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [orgId]);
+
+  if (!session) return null;
 
   const displayName = session.name || session.email;
+  const activeCampaigns = campaigns.filter((c) => c.status === "ACTIVE");
+  const inReview = allSubs.filter(
+    (s) => s.status === "UPLOADED" || s.status === "UNDER_REVIEW",
+  );
+  const needsAttention = allSubs.filter(
+    (s) => s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
+  );
+  const approved = allSubs.filter(
+    (s) => s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED",
+  );
+
+  const recentSubs = [...allSubs]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
   return (
     <>
       <section className="section-welcome">
         <h1 className="welcome-heading">Welcome, {displayName}</h1>
         <p className="welcome-body">
-          Campaign reports, placement details, and account tools will appear
-          here as your portal is built out.
+          Here is a summary of your campaigns and creative activity.
         </p>
       </section>
 
-      <div className="section-grid">
-        <section className="section-block">
-          <h2 className="section-heading">Account</h2>
-          <dl className="detail-list">
-            <div className="detail-row">
-              <dt>Email</dt>
-              <dd>{session.email}</dd>
-            </div>
-            {session.name && (
-              <div className="detail-row">
-                <dt>Name</dt>
-                <dd>{session.name}</dd>
-              </div>
-            )}
-          </dl>
-        </section>
-
-        {session.memberships.length > 0 && (
-          <section className="section-block">
-            <h2 className="section-heading">Organizations</h2>
-            <ul className="org-list">
-              {session.memberships.map((m) => (
-                <li key={m.id} className="org-item">
-                  <span className="org-name">{m.organization.name}</span>
-                  <span className="org-role">
-                    {m.role.replace(/_/g, " ")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+      {/* ── KPI Cards ── */}
+      <div className="dash-kpi-grid">
+        <Link to="/campaigns" className="dash-kpi-link">
+          <div className="dash-kpi">
+            <span className="dash-kpi-value">{loading ? "–" : activeCampaigns.length}</span>
+            <span className="dash-kpi-label">Active campaigns</span>
+          </div>
+        </Link>
+        <Link to="/creatives" className="dash-kpi-link">
+          <div className="dash-kpi">
+            <span className="dash-kpi-value">{loading ? "–" : inReview.length}</span>
+            <span className="dash-kpi-label">In review</span>
+          </div>
+        </Link>
+        <Link to="/creatives" className="dash-kpi-link">
+          <div className="dash-kpi dash-kpi-warn">
+            <span className="dash-kpi-value">{loading ? "–" : needsAttention.length}</span>
+            <span className="dash-kpi-label">Need attention</span>
+          </div>
+        </Link>
+        <Link to="/creatives" className="dash-kpi-link">
+          <div className="dash-kpi dash-kpi-good">
+            <span className="dash-kpi-value">{loading ? "–" : approved.length}</span>
+            <span className="dash-kpi-label">Approved / sent</span>
+          </div>
+        </Link>
       </div>
 
-      <section className="section-status">
-        <h2 className="section-heading">Portal Status</h2>
-        <ul className="status-list">
-          <li className="status-item">
-            <span className="status-indicator status-active" />
-            <div className="status-content">
-              <span className="status-label">Portal access is active</span>
-              <span className="status-detail">
-                Your account is authenticated and connected.
-              </span>
-            </div>
-          </li>
-          <li className="status-item">
-            <span className="status-indicator status-pending" />
-            <div className="status-content">
-              <span className="status-label">Campaign reporting</span>
-              <span className="status-detail">
-                Placement data and performance reports are being connected.
-              </span>
-            </div>
-          </li>
-          <li className="status-item">
-            <span className="status-indicator status-pending" />
-            <div className="status-content">
-              <span className="status-label">Client tools</span>
-              <span className="status-detail">
-                Document sharing, invoicing, and media plan review are in
-                development.
-              </span>
-            </div>
-          </li>
-        </ul>
+      {/* ── Quick Actions ── */}
+      <section className="section-block">
+        <h2 className="section-heading">Quick Actions</h2>
+        <div className="dash-actions">
+          <Link to="/creatives" className="dash-action-btn">Upload creative</Link>
+          <Link to="/campaigns" className="dash-action-btn">View campaigns</Link>
+          <Link to="/documents" className="dash-action-btn">Documents</Link>
+          <Link to="/billing" className="dash-action-btn">Billing</Link>
+        </div>
       </section>
+
+      {/* ── Active Campaigns ── */}
+      {!loading && activeCampaigns.length > 0 && (
+        <section className="section-block">
+          <h2 className="section-heading">Active Campaigns</h2>
+          <div className="dash-camp-grid">
+            {activeCampaigns.map((c) => {
+              const campSubs = allSubs.filter((s) => s.campaignId === c.id);
+              const campApproved = campSubs.filter(
+                (s) => s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED",
+              ).length;
+              const campPending = campSubs.filter(
+                (s) =>
+                  s.status === "UPLOADED" || s.status === "UNDER_REVIEW" ||
+                  s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
+              ).length;
+
+              return (
+                <Link
+                  key={c.id}
+                  to={`/campaigns/${c.id}`}
+                  state={{ campaign: c }}
+                  className="dash-camp-card-link"
+                >
+                  <div className="dash-camp-card">
+                    <div className="dash-camp-header">
+                      <span className="dash-camp-title">{c.title}</span>
+                      <span className={CAMP_STATUS_BADGE[c.status]}>
+                        {CAMP_STATUS_LABEL[c.status]}
+                      </span>
+                    </div>
+                    {c.description && (
+                      <p className="dash-camp-desc">{c.description}</p>
+                    )}
+                    <div className="dash-camp-stats">
+                      <span>{campSubs.length} creative{campSubs.length !== 1 ? "s" : ""}</span>
+                      {campApproved > 0 && (
+                        <span className="dash-stat-good">{campApproved} approved</span>
+                      )}
+                      {campPending > 0 && (
+                        <span className="dash-stat-pending">{campPending} pending</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Recent Creative Activity ── */}
+      {!loading && recentSubs.length > 0 && (
+        <section className="section-block">
+          <h2 className="section-heading">Recent Creative Activity</h2>
+          <ul className="dash-activity">
+            {recentSubs.map((s) => (
+              <li key={s.id} className="dash-activity-row">
+                <div className="dash-activity-info">
+                  <span className="dash-activity-title">{s.title}</span>
+                  <span className="dash-activity-meta">{formatDate(s.createdAt)}</span>
+                </div>
+                <span className={SUB_STATUS_BADGE[s.status]}>
+                  {SUB_STATUS_LABEL[s.status]}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Link to="/creatives" className="dash-view-all">View all submissions &rarr;</Link>
+        </section>
+      )}
+
+      {/* ── Empty state ── */}
+      {!loading && campaigns.length === 0 && (
+        <section className="section-block">
+          <div className="dash-empty">
+            <p className="dash-empty-text">
+              No campaigns have been set up yet. Your Dempsey Agency team
+              will create campaigns and you will see them here.
+            </p>
+          </div>
+        </section>
+      )}
     </>
   );
 }
