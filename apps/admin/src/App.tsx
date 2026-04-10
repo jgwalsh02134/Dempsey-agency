@@ -9,6 +9,7 @@ import { ClientsPage } from "./pages/ClientsPage";
 import { CreativesQueuePage } from "./pages/CreativesQueuePage";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { PublisherDetailPage } from "./pages/PublisherDetailPage";
 import { PublishersPage } from "./pages/PublishersPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -46,6 +47,7 @@ export function App() {
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="campaigns/:id" element={<CampaignDetailPage />} />
         <Route path="publishers" element={<PublishersPage />} />
+        <Route path="publishers/:id" element={<PublisherDetailPage />} />
         <Route path="creatives" element={<CreativesQueuePage />} />
         <Route path="access" element={<AccessPage />} />
       </Route>

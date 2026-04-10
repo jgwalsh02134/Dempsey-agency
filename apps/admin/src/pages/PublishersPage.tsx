@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type { Publisher } from "../types";
@@ -191,7 +192,9 @@ export function PublishersPage() {
                 {publishers.map((p) => (
                   <tr key={p.id}>
                     <td>
-                      <div>{p.name}</div>
+                      <div>
+                        <Link to={`/publishers/${p.id}`}>{p.name}</Link>
+                      </div>
                       {p.websiteUrl && (
                         <a
                           className="small"

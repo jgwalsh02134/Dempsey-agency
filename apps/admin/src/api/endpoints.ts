@@ -359,6 +359,23 @@ export async function createInventory(
   );
 }
 
+export async function patchInventory(
+  inventoryId: string,
+  body: {
+    name?: string;
+    mediaType?: string;
+    pricingModel?: string;
+    rateCents?: number | null;
+    description?: string | null;
+    isActive?: boolean;
+  },
+): Promise<InventoryItem> {
+  return apiFetch<InventoryItem>(
+    `/api/v1/inventory/${encodeURIComponent(inventoryId)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
 // ── Placements ──────────────────────────────────────────────────
 
 export async function fetchCampaignPlacements(
