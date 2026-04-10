@@ -2,17 +2,6 @@ import { apiUrl } from "./config";
 
 const TOKEN_KEY = "dempsey_portal_jwt";
 
-const HASH_PREFIX = "#token=";
-(function consumeTokenFromHash() {
-  try {
-    const h = window.location.hash;
-    if (!h.startsWith(HASH_PREFIX)) return;
-    const t = decodeURIComponent(h.slice(HASH_PREFIX.length));
-    if (t) localStorage.setItem(TOKEN_KEY, t);
-    history.replaceState(null, "", window.location.pathname + window.location.search);
-  } catch { /* ignore */ }
-})();
-
 export function getStoredToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
