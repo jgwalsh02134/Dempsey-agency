@@ -1,15 +1,35 @@
+/* ══════════════════════════════════════════════════════
+   Atlantic Ledger — Dempsey Agency Client Portal Theme
+   ══════════════════════════════════════════════════════ */
+
 :root {
   color-scheme: light;
-  --color-midnight: #10233f;
-  --color-fir: #0f524a;
-  --color-ocean: #4b6b8a;
-  --color-ledger: #e2e8f0;
-  --color-canvas: #f8fafc;
-  --color-gold: #b18a53;
-  --color-white: #ffffff;
-  --color-error-bg: #fef2f2;
-  --color-error-border: #fecaca;
-  --color-error-text: #991b1b;
+
+  /* Core brand */
+  --color-midnight: #10233F;
+  --color-teal: #1A5C54;
+  --color-gold: #B18A53;
+  --color-steel: #4A6B8C;
+  --color-parchment: #E2E8F0;
+  --color-ivory: #F7F4ED;
+  --color-white: #FFFFFF;
+
+  /* Semantic: success */
+  --color-success-bg: #E6F2ED;
+  --color-success-text: #1F5C4B;
+
+  /* Semantic: warning */
+  --color-warn-bg: #FDF8ED;
+  --color-warn-text: #B18A53;
+
+  /* Semantic: error */
+  --color-error-bg: #FDE8E8;
+  --color-error-border: #E8AAAA;
+  --color-error-text: #9B2C2C;
+
+  /* Semantic: neutral */
+  --color-neutral-bg: #F1F5F9;
+  --color-neutral-text: #4A6B8C;
 }
 
 *,
@@ -22,7 +42,7 @@ body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--color-canvas);
+  background: var(--color-ivory);
   color: var(--color-midnight);
   font-family: "skolar-latin", serif;
   line-height: 1.5;
@@ -38,7 +58,7 @@ a {
 }
 
 .text-muted {
-  color: #3d5a75;
+  color: var(--color-steel);
 }
 
 /* ── Shared layout ── */
@@ -80,7 +100,7 @@ a {
 .auth-subheading {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .auth-page-heading {
@@ -96,7 +116,7 @@ a {
   margin: 0.5rem 0 0;
   font-size: 0.875rem;
   line-height: 1.6;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 /* ── Form ── */
@@ -125,7 +145,7 @@ a {
   width: 100%;
   height: 2.875rem;
   padding: 0 0.875rem;
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 0.5rem;
   background: var(--color-white);
   font-family: "skolar-latin", serif;
@@ -135,19 +155,19 @@ a {
 }
 
 .field input::placeholder {
-  color: var(--color-ocean);
-  opacity: 0.5;
+  color: var(--color-steel);
+  opacity: 0.55;
 }
 
 .field input:focus {
   outline: none;
-  border-color: var(--color-ocean);
+  border-color: var(--color-steel);
 }
 
 .field input:focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
-  border-color: var(--color-ocean);
+  border-color: var(--color-steel);
 }
 
 .form-utilities {
@@ -161,7 +181,7 @@ a {
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -191,11 +211,11 @@ a {
   margin: 0;
   padding: 0.625rem 0.75rem;
   border-radius: 0.5rem;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--color-success-bg);
+  border: 1px solid #b2d8c7;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 .validation-summary {
@@ -219,9 +239,9 @@ a {
   margin: 0;
   padding: 0.5rem 0.75rem 0.5rem 1.75rem;
   border-radius: 0.5rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
+  background: var(--color-warn-bg);
+  border: 1px solid #e8d5a8;
+  color: var(--color-warn-text);
   font-size: 0.8125rem;
   list-style: disc;
 }
@@ -229,7 +249,7 @@ a {
 .validation-meta {
   margin: 0.25rem 0 0;
   font-size: 0.8125rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .review-note {
@@ -238,9 +258,10 @@ a {
   border-left: 2px solid var(--color-gold);
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
+/* ── Primary submit button ── */
 .btn-submit {
   display: flex;
   align-items: center;
@@ -249,10 +270,10 @@ a {
   min-height: 2.875rem;
   padding: 0.75rem 1rem;
   margin-top: 0.25rem;
-  border: 1px solid var(--color-midnight);
+  border: 1px solid var(--color-teal);
   border-radius: 999px;
-  background: var(--color-midnight);
-  color: var(--color-canvas);
+  background: var(--color-teal);
+  color: var(--color-white);
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -262,15 +283,15 @@ a {
 }
 
 .btn-submit:hover {
-  background: var(--color-fir);
-  border-color: var(--color-fir);
+  background: #155249;
+  border-color: #155249;
 }
 
 .btn-submit:focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
-  background: var(--color-fir);
-  border-color: var(--color-fir);
+  background: #155249;
+  border-color: #155249;
 }
 
 .btn-submit:disabled {
@@ -282,11 +303,11 @@ a {
 .auth-access {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--color-ledger);
+  border-top: 1px solid var(--color-parchment);
   text-align: center;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .auth-access p {
@@ -297,7 +318,7 @@ a {
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -324,7 +345,7 @@ a {
 
 .help-link,
 .back-link {
-  color: var(--color-ocean);
+  color: var(--color-steel);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -347,7 +368,7 @@ a {
 }
 
 .inline-text-link {
-  color: var(--color-ocean);
+  color: var(--color-teal);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -361,7 +382,9 @@ a {
   outline-offset: 2px;
 }
 
-/* ── Portal shell (dashboard) ── */
+/* ══════════════════════════════════════
+   Portal Shell
+   ══════════════════════════════════════ */
 .portal {
   min-height: 100vh;
   min-height: 100dvh;
@@ -370,8 +393,8 @@ a {
 }
 
 .portal-header {
-  border-bottom: 1px solid var(--color-ledger);
-  background: rgba(248, 250, 252, 0.96);
+  border-bottom: 1px solid var(--color-parchment);
+  background: rgba(255, 255, 255, 0.97);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -428,7 +451,7 @@ a {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  border-top: 1px solid var(--color-ledger);
+  border-top: 1px solid var(--color-parchment);
 }
 
 .portal-nav::-webkit-scrollbar {
@@ -447,7 +470,7 @@ a {
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   text-decoration: none;
   padding: 0.625rem 0.625rem;
   border-bottom: 2px solid transparent;
@@ -467,28 +490,28 @@ a.portal-nav-link:focus-visible {
 }
 
 .portal-nav-link.active {
-  color: var(--color-midnight);
-  border-bottom-color: var(--color-midnight);
+  color: var(--color-teal);
+  border-bottom-color: var(--color-teal);
   font-weight: 600;
 }
 
 .btn-sign-out {
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 999px;
   background: transparent;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   cursor: pointer;
   flex-shrink: 0;
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-sign-out:hover {
-  border-color: var(--color-ocean);
+  border-color: var(--color-steel);
   color: var(--color-midnight);
 }
 
@@ -510,7 +533,7 @@ a.portal-nav-link:focus-visible {
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   text-decoration: none;
   white-space: nowrap;
   transition: color 0.2s ease;
@@ -549,10 +572,14 @@ a.portal-nav-link:focus-visible {
   }
 }
 
+/* ══════════════════════════════════════
+   Content Sections
+   ══════════════════════════════════════ */
+
 /* ── Welcome section ── */
 .section-welcome {
   padding-bottom: 2rem;
-  border-bottom: 1px solid var(--color-ledger);
+  border-bottom: 1px solid var(--color-parchment);
 }
 
 .welcome-heading {
@@ -569,7 +596,7 @@ a.portal-nav-link:focus-visible {
   max-width: 38rem;
   font-size: 0.9375rem;
   line-height: 1.65;
-  color: #3d5a75;
+  color: var(--color-steel);
 }
 
 /* ── Section grid ── */
@@ -598,10 +625,12 @@ a.portal-nav-link:focus-visible {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
-/* ── Dashboard ── */
+/* ══════════════════════════════════════
+   Dashboard
+   ══════════════════════════════════════ */
 .dash-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -615,17 +644,18 @@ a.portal-nav-link:focus-visible {
 
 .dash-kpi {
   background: var(--color-white);
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 0.5rem;
   padding: 1rem 1.125rem;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .dash-kpi-link:hover .dash-kpi {
-  border-color: var(--color-ocean);
+  border-color: var(--color-steel);
+  box-shadow: 0 1px 4px rgba(16, 35, 63, 0.06);
 }
 
 .dash-kpi-link:focus-visible {
@@ -646,15 +676,15 @@ a.portal-nav-link:focus-visible {
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .dash-kpi-warn .dash-kpi-value {
-  color: #92400e;
+  color: var(--color-error-text);
 }
 
 .dash-kpi-good .dash-kpi-value {
-  color: var(--color-fir);
+  color: var(--color-success-text);
 }
 
 /* Quick actions */
@@ -668,7 +698,7 @@ a.portal-nav-link:focus-visible {
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 999px;
   background: var(--color-white);
   font-family: "neue-haas-grotesk-display", sans-serif;
@@ -680,8 +710,8 @@ a.portal-nav-link:focus-visible {
 }
 
 .dash-action-btn:hover {
-  border-color: var(--color-ocean);
-  background: var(--color-canvas);
+  border-color: var(--color-steel);
+  background: var(--color-ivory);
 }
 
 .dash-action-btn:focus-visible {
@@ -703,17 +733,18 @@ a.portal-nav-link:focus-visible {
 
 .dash-camp-card {
   background: var(--color-white);
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 0.5rem;
   padding: 1rem 1.125rem;
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .dash-camp-card-link:hover .dash-camp-card {
-  border-color: var(--color-ocean);
+  border-color: var(--color-steel);
+  box-shadow: 0 1px 4px rgba(16, 35, 63, 0.06);
 }
 
 .dash-camp-card-link:focus-visible {
@@ -739,7 +770,7 @@ a.portal-nav-link:focus-visible {
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -752,7 +783,7 @@ a.portal-nav-link:focus-visible {
   gap: 0.25rem 0.625rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .dash-camp-stats {
@@ -761,19 +792,19 @@ a.portal-nav-link:focus-visible {
   gap: 0.25rem 0.625rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   padding-top: 0.25rem;
-  border-top: 1px solid var(--color-ledger);
+  border-top: 1px solid var(--color-parchment);
   margin-top: 0.125rem;
 }
 
 .dash-stat-good {
-  color: var(--color-fir);
+  color: var(--color-success-text);
   font-weight: 600;
 }
 
 .dash-stat-pending {
-  color: #92400e;
+  color: var(--color-warn-text);
   font-weight: 600;
 }
 
@@ -792,7 +823,7 @@ a.portal-nav-link:focus-visible {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.625rem 0;
-  border-bottom: 1px solid var(--color-ledger);
+  border-bottom: 1px solid var(--color-parchment);
 }
 
 .dash-activity-row:last-child {
@@ -817,7 +848,7 @@ a.portal-nav-link:focus-visible {
 
 .dash-activity-meta {
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .dash-view-all {
@@ -826,7 +857,7 @@ a.portal-nav-link:focus-visible {
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-ocean);
+  color: var(--color-teal);
   text-decoration: none;
   transition: color 0.15s;
 }
@@ -838,14 +869,15 @@ a.portal-nav-link:focus-visible {
 .dash-empty {
   padding: 2.5rem 1rem;
   text-align: center;
-  border: 1px dashed var(--color-ledger);
+  border: 1px dashed var(--color-parchment);
   border-radius: 0.5rem;
+  background: var(--color-white);
 }
 
 .dash-empty-text {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 /* Campaign detail section header */
@@ -861,7 +893,7 @@ a.portal-nav-link:focus-visible {
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-fir);
+  color: var(--color-teal);
   text-decoration: none;
   white-space: nowrap;
   transition: color 0.15s;
@@ -870,6 +902,10 @@ a.portal-nav-link:focus-visible {
 .camp-upload-link:hover {
   color: var(--color-midnight);
 }
+
+/* ══════════════════════════════════════
+   Data Display: Lists, Details, Badges
+   ══════════════════════════════════════ */
 
 /* ── Detail list ── */
 .detail-list {
@@ -888,7 +924,7 @@ a.portal-nav-link:focus-visible {
 
 .detail-row dt {
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .detail-row dd {
@@ -913,7 +949,7 @@ a.portal-nav-link:focus-visible {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.625rem 0;
-  border-bottom: 1px solid var(--color-ledger);
+  border-bottom: 1px solid var(--color-parchment);
   font-size: 0.875rem;
 }
 
@@ -932,14 +968,14 @@ a.portal-nav-link:focus-visible {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   opacity: 0.65;
 }
 
 /* ── Status section ── */
 .section-status {
   padding-top: 2rem;
-  border-top: 1px solid var(--color-ledger);
+  border-top: 1px solid var(--color-parchment);
 }
 
 .status-list {
@@ -956,7 +992,7 @@ a.portal-nav-link:focus-visible {
   align-items: flex-start;
   gap: 0.875rem;
   padding: 0.875rem 0;
-  border-bottom: 1px solid var(--color-ledger);
+  border-bottom: 1px solid var(--color-parchment);
 }
 
 .status-item:last-child {
@@ -972,11 +1008,11 @@ a.portal-nav-link:focus-visible {
 }
 
 .status-active {
-  background: var(--color-fir);
+  background: var(--color-success-text);
 }
 
 .status-pending {
-  background: var(--color-ledger);
+  background: var(--color-parchment);
 }
 
 .status-content {
@@ -995,7 +1031,7 @@ a.portal-nav-link:focus-visible {
 .status-detail {
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 /* ── Report list ── */
@@ -1013,7 +1049,7 @@ a.portal-nav-link:focus-visible {
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid var(--color-ledger);
+  border-bottom: 1px solid var(--color-parchment);
 }
 
 .report-item:last-child {
@@ -1036,9 +1072,10 @@ a.portal-nav-link:focus-visible {
 .report-description {
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
+/* ── Semantic status badges ── */
 .report-badge {
   flex-shrink: 0;
   font-family: "neue-haas-grotesk-display", sans-serif;
@@ -1046,40 +1083,37 @@ a.portal-nav-link:focus-visible {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--color-ocean);
-  opacity: 0.6;
+  color: var(--color-neutral-text);
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 999px;
   margin-top: 0.125rem;
+  background: var(--color-neutral-bg);
 }
 
-.badge-active {
-  color: var(--color-fir);
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  opacity: 1;
+.badge-active,
+.badge-paid {
+  color: var(--color-success-text);
+  border-color: #b2d8c7;
+  background: var(--color-success-bg);
 }
 
 .badge-completed {
-  color: var(--color-ocean);
-  border-color: var(--color-ledger);
-  background: var(--color-canvas);
-  opacity: 0.8;
-}
-
-.badge-paid {
-  color: var(--color-fir);
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  opacity: 1;
+  color: var(--color-neutral-text);
+  border-color: var(--color-parchment);
+  background: var(--color-neutral-bg);
 }
 
 .badge-pending {
-  color: #92400e;
-  border-color: #fde68a;
-  background: #fffbeb;
-  opacity: 1;
+  color: var(--color-warn-text);
+  border-color: #e8d5a8;
+  background: var(--color-warn-bg);
+}
+
+.badge-overdue {
+  color: var(--color-error-text);
+  border-color: var(--color-error-border);
+  background: var(--color-error-bg);
 }
 
 /* ── Organization selector ── */
@@ -1094,12 +1128,12 @@ a.portal-nav-link:focus-visible {
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .org-select {
   padding: 0.375rem 0.625rem;
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 0.375rem;
   background: var(--color-white);
   font-family: "neue-haas-grotesk-display", sans-serif;
@@ -1123,7 +1157,7 @@ a.portal-nav-link:focus-visible {
   margin-top: 0.25rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .doc-type-badge {
@@ -1134,8 +1168,8 @@ a.portal-nav-link:focus-visible {
   text-transform: uppercase;
   padding: 0.125rem 0.375rem;
   border-radius: 3px;
-  background: var(--color-ledger);
-  color: var(--color-ocean);
+  background: var(--color-neutral-bg);
+  color: var(--color-neutral-text);
 }
 
 /* ── Download button (styled as text link) ── */
@@ -1149,7 +1183,7 @@ a.portal-nav-link:focus-visible {
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: var(--color-ocean);
+  color: var(--color-teal);
   cursor: pointer;
   transition: color 0.2s ease;
 }
@@ -1169,13 +1203,6 @@ a.portal-nav-link:focus-visible {
   cursor: not-allowed;
 }
 
-.badge-overdue {
-  color: #991b1b;
-  border-color: #fecaca;
-  background: #fef2f2;
-  opacity: 1;
-}
-
 /* ── Invoice metadata row ── */
 .invoice-meta {
   display: flex;
@@ -1185,7 +1212,7 @@ a.portal-nav-link:focus-visible {
   margin-top: 0.25rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .invoice-amount {
@@ -1202,7 +1229,7 @@ a.portal-nav-link:focus-visible {
   margin-top: 0.25rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .submission-actions {
@@ -1213,6 +1240,160 @@ a.portal-nav-link:focus-visible {
   gap: 0.375rem;
 }
 
+/* ══════════════════════════════════════
+   Creatives Page
+   ══════════════════════════════════════ */
+
+/* ── Creative type selector ── */
+.cr-type-group {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+
+.cr-type-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-parchment);
+  border-radius: 0.375rem;
+  background: var(--color-white);
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-steel);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.cr-type-btn:hover {
+  border-color: var(--color-steel);
+  color: var(--color-midnight);
+}
+
+.cr-type-active {
+  border-color: var(--color-teal);
+  color: var(--color-teal);
+  background: var(--color-success-bg);
+  font-weight: 600;
+}
+
+.cr-type-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-steel);
+}
+
+/* ── Drop zone ── */
+.cr-dropzone {
+  border: 2px dashed var(--color-parchment);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--color-white);
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.cr-dropzone:hover {
+  background: var(--color-ivory);
+  border-color: var(--color-steel);
+}
+
+.cr-dropzone-active {
+  border-color: var(--color-success-text);
+  border-style: solid;
+  background: var(--color-success-bg);
+}
+
+.cr-dropzone-has-file {
+  border-style: solid;
+  border-color: var(--color-parchment);
+  background: var(--color-ivory);
+  cursor: default;
+}
+
+.cr-drop-prompt {
+  display: flex;
+  justify-content: center;
+}
+
+.cr-drop-text {
+  font-size: 0.875rem;
+  color: var(--color-steel);
+}
+
+.cr-drop-browse {
+  display: inline;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-teal);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cr-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cr-file-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-midnight);
+  word-break: break-all;
+}
+
+.cr-file-size {
+  font-size: 0.75rem;
+  color: var(--color-steel);
+}
+
+.cr-file-remove {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: "neue-haas-grotesk-display", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-steel);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.cr-file-remove:hover {
+  color: var(--color-error-text);
+}
+
+/* ── Validation feedback ── */
+.cr-val-error {
+  margin: 0.25rem 0;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--color-error-bg);
+  border-left: 3px solid var(--color-error-text);
+  font-size: 0.8125rem;
+  color: var(--color-error-text);
+}
+
+.cr-val-warn {
+  margin: 0.25rem 0;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--color-warn-bg);
+  border-left: 3px solid var(--color-warn-text);
+  font-size: 0.8125rem;
+  color: var(--color-warn-text);
+}
+
 /* ── Creative guidance panel ── */
 .creative-guidance {
   display: grid;
@@ -1221,7 +1402,7 @@ a.portal-nav-link:focus-visible {
   margin-bottom: 1.5rem;
   padding: 1rem 1.25rem;
   background: var(--color-white);
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 0.5rem;
 }
 
@@ -1250,7 +1431,7 @@ a.portal-nav-link:focus-visible {
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.55;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .guidance-sizes {
@@ -1261,7 +1442,7 @@ a.portal-nav-link:focus-visible {
   flex-direction: column;
   gap: 0.125rem;
   font-size: 0.8125rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .guidance-size {
@@ -1272,6 +1453,49 @@ a.portal-nav-link:focus-visible {
   font-size: 0.75rem;
   letter-spacing: 0.02em;
   color: var(--color-midnight);
+}
+
+/* ── Creative form ── */
+.creative-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.creative-form .field input,
+.creative-form .field select {
+  width: 100%;
+  height: 2.875rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--color-parchment);
+  border-radius: 0.5rem;
+  background: var(--color-white);
+  font-family: "skolar-latin", serif;
+  font-size: 0.9375rem;
+  color: var(--color-midnight);
+  transition: border-color 0.2s ease;
+}
+
+.creative-form .field input:focus,
+.creative-form .field select:focus {
+  outline: none;
+  border-color: var(--color-steel);
+}
+
+.creative-form .field input:focus-visible,
+.creative-form .field select:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-color: var(--color-steel);
+}
+
+.creative-form .field input[type="file"] {
+  height: auto;
+  padding: 0.5rem 0.875rem;
+}
+
+.creative-form .creative-form-row .field select {
+  width: 100%;
 }
 
 /* ── Creative form row (type + file side by side) ── */
@@ -1315,8 +1539,8 @@ a.portal-nav-link:focus-visible {
   margin-top: 0.75rem;
   border-radius: 0.375rem;
   overflow: hidden;
-  border: 1px solid var(--color-ledger);
-  background: #f1f5f9;
+  border: 1px solid var(--color-parchment);
+  background: var(--color-neutral-bg);
 }
 
 .sub-preview-img {
@@ -1349,193 +1573,7 @@ a.portal-nav-link:focus-visible {
   }
 }
 
-/* ── Creative upload form ── */
-.creative-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-}
-
-.creative-form .field input,
-.creative-form .field select {
-  width: 100%;
-  height: 2.875rem;
-  padding: 0 0.875rem;
-  border: 1px solid var(--color-ledger);
-  border-radius: 0.5rem;
-  background: var(--color-white);
-  font-family: "skolar-latin", serif;
-  font-size: 0.9375rem;
-  color: var(--color-midnight);
-  transition: border-color 0.2s ease;
-}
-
-.creative-form .field input:focus,
-.creative-form .field select:focus {
-  outline: none;
-  border-color: var(--color-ocean);
-}
-
-.creative-form .field input:focus-visible,
-.creative-form .field select:focus-visible {
-  outline: 2px solid var(--color-gold);
-  outline-offset: 2px;
-  border-color: var(--color-ocean);
-}
-
-.creative-form .field input[type="file"] {
-  height: auto;
-  padding: 0.5rem 0.875rem;
-}
-
-.creative-form .creative-form-row .field select {
-  width: 100%;
-}
-
-/* ── Creative type selector ── */
-.cr-type-group {
-  display: flex;
-  gap: 0.375rem;
-  margin-bottom: 0.25rem;
-}
-
-.cr-type-btn {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-ledger);
-  border-radius: 0.375rem;
-  background: var(--color-white);
-  font-family: "neue-haas-grotesk-display", sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-ocean);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.cr-type-btn:hover {
-  border-color: var(--color-ocean);
-  color: var(--color-midnight);
-}
-
-.cr-type-active {
-  border-color: var(--color-midnight);
-  color: var(--color-midnight);
-  background: #f1f5f9;
-  font-weight: 600;
-}
-
-.cr-type-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--color-ocean);
-}
-
-/* ── Drop zone ── */
-.cr-dropzone {
-  border: 2px dashed var(--color-ledger);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  text-align: center;
-  transition: border-color 0.15s, background 0.15s;
-  cursor: pointer;
-}
-
-.cr-dropzone-active {
-  border-color: var(--color-gold);
-  background: #fffbeb;
-}
-
-.cr-dropzone-has-file {
-  border-style: solid;
-  border-color: var(--color-ledger);
-  background: var(--color-canvas);
-  cursor: default;
-}
-
-.cr-drop-prompt {
-  display: flex;
-  justify-content: center;
-}
-
-.cr-drop-text {
-  font-size: 0.875rem;
-  color: var(--color-ocean);
-}
-
-.cr-drop-browse {
-  display: inline;
-  border: none;
-  background: none;
-  padding: 0;
-  color: var(--color-fir);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-.cr-file-selected {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.cr-file-name {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--color-midnight);
-  word-break: break-all;
-}
-
-.cr-file-size {
-  font-size: 0.75rem;
-  color: var(--color-ocean);
-}
-
-.cr-file-remove {
-  border: none;
-  background: none;
-  padding: 0;
-  font-family: "neue-haas-grotesk-display", sans-serif;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-ocean);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-.cr-file-remove:hover {
-  color: var(--color-error-text);
-}
-
-/* ── Validation feedback ── */
-.cr-val-error {
-  margin: 0.25rem 0;
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.375rem;
-  background: var(--color-error-bg);
-  border-left: 3px solid var(--color-error-border);
-  font-size: 0.8125rem;
-  color: var(--color-error-text);
-}
-
-.cr-val-warn {
-  margin: 0.25rem 0;
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.375rem;
-  background: #fffbeb;
-  border-left: 3px solid #fde68a;
-  font-size: 0.8125rem;
-  color: #92400e;
-}
-
-/* ── Submission list ── */
+/* ── Submission list (creatives page) ── */
 .cr-sub-list {
   list-style: none;
   padding: 0;
@@ -1546,7 +1584,7 @@ a.portal-nav-link:focus-visible {
 }
 
 .cr-sub-card {
-  border: 1px solid var(--color-ledger);
+  border: 1px solid var(--color-parchment);
   border-radius: 0.5rem;
   background: var(--color-white);
   overflow: hidden;
@@ -1565,11 +1603,11 @@ a.portal-nav-link:focus-visible {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.15s;
 }
 
 .cr-sub-header:hover {
-  background: var(--color-canvas);
+  background: var(--color-ivory);
 }
 
 .cr-sub-main {
@@ -1591,7 +1629,7 @@ a.portal-nav-link:focus-visible {
   gap: 0.25rem 0.5rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .cr-sub-status-area {
@@ -1603,7 +1641,7 @@ a.portal-nav-link:focus-visible {
 .cr-sub-detail {
   display: none;
   padding: 0 1rem 1rem;
-  border-top: 1px solid var(--color-ledger);
+  border-top: 1px solid var(--color-parchment);
 }
 
 .cr-sub-detail-open {
@@ -1614,14 +1652,14 @@ a.portal-nav-link:focus-visible {
   margin: 0.75rem 0 0;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 .cr-agency-note {
   margin-top: 0.625rem;
   padding: 0.5rem 0.75rem;
   border-left: 3px solid var(--color-gold);
-  background: #fffbf5;
+  background: var(--color-warn-bg);
   border-radius: 0 0.375rem 0.375rem 0;
 }
 
@@ -1654,7 +1692,7 @@ a.portal-nav-link:focus-visible {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-ocean);
+  color: var(--color-steel);
   margin-bottom: 0.25rem;
 }
 
@@ -1667,14 +1705,15 @@ a.portal-nav-link:focus-visible {
 .cr-empty {
   padding: 2rem 1rem;
   text-align: center;
-  border: 1px dashed var(--color-ledger);
+  border: 1px dashed var(--color-parchment);
   border-radius: 0.5rem;
+  background: var(--color-white);
 }
 
 .cr-empty-text {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
 @media (max-width: 639px) {
@@ -1688,7 +1727,10 @@ a.portal-nav-link:focus-visible {
   }
 }
 
-/* ── Campaign list row (entire row navigates to detail) ── */
+/* ══════════════════════════════════════
+   Campaign Pages
+   ══════════════════════════════════════ */
+
 .campaign-row-full-link {
   display: flex;
   align-items: flex-start;
@@ -1701,7 +1743,7 @@ a.portal-nav-link:focus-visible {
 }
 
 .campaign-row-full-link:hover .report-name {
-  color: var(--color-fir);
+  color: var(--color-teal);
 }
 
 .campaign-row-full-link:focus-visible {
@@ -1727,10 +1769,12 @@ a.portal-nav-link:focus-visible {
   margin-top: 0.25rem;
   font-family: "neue-haas-grotesk-display", sans-serif;
   font-size: 0.75rem;
-  color: var(--color-ocean);
+  color: var(--color-steel);
 }
 
-/* ── Mobile responsive ── */
+/* ══════════════════════════════════════
+   Mobile Responsive
+   ══════════════════════════════════════ */
 @media (max-width: 639px) {
   /* ── Header ── */
   .portal-logo {
