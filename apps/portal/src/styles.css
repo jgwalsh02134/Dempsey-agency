@@ -26,6 +26,11 @@
   --color-pending-bg: #EFF6FF;
   --color-pending-text: #1D4ED8;
 
+  /* Semantic: warning */
+  --color-warn-bg: #FDF8ED;
+  --color-warn-text: #B18A53;
+  --color-warn-border: #E8D5A8;
+
   /* Semantic: error / attention */
   --color-error-bg: #FEF2F2;
   --color-error-border: #FECACA;
@@ -252,9 +257,9 @@ a {
   margin: 0;
   padding: 0.5rem 0.75rem 0.5rem 1.75rem;
   border-radius: 0.5rem;
-  background: var(--color-pending-bg);
-  border: 1px solid #BFDBFE;
-  color: var(--color-pending-text);
+  background: var(--color-warn-bg);
+  border: 1px solid var(--color-warn-border);
+  color: var(--color-warn-text);
   font-size: 0.8125rem;
   list-style: disc;
 }
@@ -1397,10 +1402,10 @@ a.portal-nav-link:focus-visible {
   margin: 0.25rem 0;
   padding: 0.375rem 0.625rem;
   border-radius: 0.375rem;
-  background: var(--color-pending-bg);
-  border-left: 3px solid var(--color-pending-text);
+  background: var(--color-warn-bg);
+  border-left: 3px solid var(--color-warn-text);
   font-size: 0.8125rem;
-  color: var(--color-pending-text);
+  color: var(--color-warn-text);
 }
 
 /* ── Creative guidance panel ── */
