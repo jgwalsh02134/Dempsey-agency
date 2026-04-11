@@ -114,8 +114,13 @@ export function CampaignsPage() {
           {c.description && <p className="dash-camp-desc">{c.description}</p>}
           <div className="camp-card-meta">
             <span>{dateRange(c.startDate, c.endDate)}</span>
-            {c.budgetCents != null && <span>Budget: {formatCents(c.budgetCents)}</span>}
           </div>
+          {c.budgetCents != null && (
+            <div className="money-block">
+              <span className="money-label">Budget</span>
+              <span className="money-value">{formatCents(c.budgetCents)}</span>
+            </div>
+          )}
           <div className="dash-camp-stats">
             <span>{subs.length} creative{subs.length !== 1 ? "s" : ""}</span>
             {approvedCount > 0 && <span className="dash-stat-good">{approvedCount} approved</span>}

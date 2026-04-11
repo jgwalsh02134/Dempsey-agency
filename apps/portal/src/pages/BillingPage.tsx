@@ -137,10 +137,10 @@ export function BillingPage() {
                       {inv.description}
                     </span>
                   )}
+                  <div className="money-block" style={{ marginTop: "0.25rem" }}>
+                    <span className="money-value">{formatCurrency(inv.amountCents, inv.currency)}</span>
+                  </div>
                   <div className="invoice-meta">
-                    <span className="invoice-amount">
-                      {formatCurrency(inv.amountCents, inv.currency)}
-                    </span>
                     <span>
                       Issued {formatDate(inv.invoiceDate)}
                       {inv.dueDate && ` · Due ${formatDate(inv.dueDate)}`}

@@ -257,12 +257,13 @@ export function CampaignDetailPage() {
           <span className="text-muted">
             {dateRange(campaign.startDate, campaign.endDate)}
           </span>
-          {campaign.budgetCents != null && (
-            <span className="text-muted">
-              Budget: {formatCents(campaign.budgetCents)}
-            </span>
-          )}
         </div>
+        {campaign.budgetCents != null && (
+          <div className="money-block" style={{ marginTop: "0.75rem" }}>
+            <span className="money-label">Budget</span>
+            <span className="money-value">{formatCents(campaign.budgetCents)}</span>
+          </div>
+        )}
       </section>
 
       {/* ── Placements ── */}
@@ -301,7 +302,7 @@ export function CampaignDetailPage() {
                       <span className="doc-type-badge">
                         {p.inventory.mediaType}
                       </span>
-                      <span>{formatCents(p.grossCostCents)}</span>
+                      <span className="money-inline">{formatCents(p.grossCostCents)}</span>
                       {p.quantity != null && (
                         <>
                           <span>·</span>
