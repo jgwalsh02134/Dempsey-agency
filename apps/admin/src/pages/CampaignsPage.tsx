@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type {
@@ -59,6 +59,7 @@ interface CampaignWithOrg extends Campaign {
 
 export function CampaignsPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<CampaignWithOrg[]>([]);
   const [subs, setSubs] = useState<AdminSubmission[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -71,6 +72,18 @@ export function CampaignsPage() {
   const [filterOrg, setFilterOrg] = useState<string>(
     () => searchParams.get("organizationId") ?? "",
   );
+
+  // ── Create panel state ─────────────────────────────────────
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newOrgId, setNewOrgId] = useState("");
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newStatus, setNewStatus] = useState<CampaignStatus>("ACTIVE");
+  const [newBudget, setNewBudget] = useState("");
+  const [newStartDate, setNewStartDate] = useState("");
+  const [newEndDate, setNewEndDate] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -111,6 +124,55 @@ export function CampaignsPage() {
     void load();
   }, [load]);
 
+  // ── Create handlers ───────────────────────────────────────
+  function resetCreateForm() {
+    setNewTitle("");
+    setNewDescription("");
+    setNewStatus("ACTIVE");
+    setNewBudget("");
+    setNewStartDate("");
+    setNewEndDate("");
+    setCreateError(null);
+  }
+
+  function openCreatePanel() {
+    resetCreateForm();
+    setCreateOpen(true);
+  }
+
+  function closeCreatePanel() {
+    setCreateOpen(false);
+    resetCreateForm();
+  }
+
+  async function onCreate(e: FormEvent) {
+    e.preventDefault();
+    if (!newOrgId) {
+      setCreateError("Select a client for this campaign.");
+      return;
+    }
+    setCreateError(null);
+    setCreating(true);
+    try {
+      const body: Parameters<typeof api.createCampaign>[1] = {
+        title: newTitle.trim(),
+        status: newStatus,
+      };
+      if (newDescription.trim()) body.description = newDescription.trim();
+      if (newBudget.trim()) {
+        body.budgetCents = Math.round(parseFloat(newBudget) * 100);
+      }
+      if (newStartDate) body.startDate = newStartDate;
+      if (newEndDate) body.endDate = newEndDate;
+      const created = await api.createCampaign(newOrgId, body);
+      navigate(`/campaigns/${created.id}`);
+    } catch (err) {
+      setCreateError(errMsg(err));
+    } finally {
+      setCreating(false);
+    }
+  }
+
   const subCountsByCampaign = useMemo(() => {
     const map = new Map<
       string,
@@ -142,6 +204,13 @@ export function CampaignsPage() {
     () => orgs.filter((o) => o.type === "CLIENT"),
     [orgs],
   );
+
+  // Default the new-campaign client select once orgs are loaded.
+  useEffect(() => {
+    if (!newOrgId && clientOrgs.length > 0) {
+      setNewOrgId(filterOrg || clientOrgs[0].id);
+    }
+  }, [clientOrgs, newOrgId, filterOrg]);
 
   const filtered = useMemo(() => {
     const result = campaigns.filter((c) => {
@@ -183,15 +252,167 @@ export function CampaignsPage() {
             </p>
           )}
         </div>
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={load}
-          disabled={loading}
-        >
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={load}
+            disabled={loading}
+          >
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+          {!createOpen && (
+            <button
+              type="button"
+              className="btn primary"
+              onClick={openCreatePanel}
+              disabled={loading || clientOrgs.length === 0}
+              title={
+                clientOrgs.length === 0
+                  ? "Create a client organization first"
+                  : undefined
+              }
+            >
+              + New Campaign
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* ── Create panel ── */}
+      {createOpen && (
+        <section
+          className="card"
+          style={{ marginBottom: "1rem" }}
+          aria-label="New campaign"
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "0.75rem",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: "1.05rem" }}>New Campaign</h2>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={closeCreatePanel}
+              disabled={creating}
+            >
+              Cancel
+            </button>
+          </div>
+          <form onSubmit={onCreate} className="stack">
+            <label className="field">
+              <span>Client</span>
+              <select
+                value={newOrgId}
+                onChange={(e) => setNewOrgId(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select a client…
+                </option>
+                {clientOrgs.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Title</span>
+              <input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                required
+                maxLength={255}
+                placeholder="e.g. Q2 Print Campaign"
+                autoFocus
+              />
+            </label>
+            <label className="field">
+              <span>Description (optional)</span>
+              <input
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                maxLength={1000}
+                placeholder="Brief summary of campaign objectives"
+              />
+            </label>
+            <div className="two-col">
+              <label className="field">
+                <span>Status</span>
+                <select
+                  value={newStatus}
+                  onChange={(e) =>
+                    setNewStatus(e.target.value as CampaignStatus)
+                  }
+                >
+                  {ALL_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {STATUS_LABEL[s]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Budget (USD, optional)</span>
+                <input
+                  type="number"
+                  value={newBudget}
+                  onChange={(e) => setNewBudget(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 5000.00"
+                />
+              </label>
+            </div>
+            <div className="two-col">
+              <label className="field">
+                <span>Start date (optional)</span>
+                <input
+                  type="date"
+                  value={newStartDate}
+                  onChange={(e) => setNewStartDate(e.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span>End date (optional)</span>
+                <input
+                  type="date"
+                  value={newEndDate}
+                  onChange={(e) => setNewEndDate(e.target.value)}
+                />
+              </label>
+            </div>
+            {createError && (
+              <p className="error" role="alert">
+                {createError}
+              </p>
+            )}
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={creating}
+              >
+                {creating ? "Creating…" : "Create campaign"}
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={closeCreatePanel}
+                disabled={creating}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {/* ── Filters ── */}
       <div className="q-filters">
