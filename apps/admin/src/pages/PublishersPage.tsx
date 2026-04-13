@@ -38,6 +38,8 @@ const IMPORT_COLUMNS = [
   "zipCode",
   "county",
   "country",
+  "latitude",
+  "longitude",
   // Contacts
   "phone",
   "officeHours",
@@ -61,6 +63,7 @@ const IMPORT_COLUMNS = [
 ] as const;
 
 const NUMERIC_COLUMNS = new Set(["circulation", "yearEstablished"]);
+const FLOAT_COLUMNS = new Set(["latitude", "longitude"]);
 
 function csvTemplateString(): string {
   const header = IMPORT_COLUMNS.join(",");
@@ -80,6 +83,8 @@ function csvTemplateString(): string {
     "02109",
     "Suffolk",
     "USA",
+    "42.35699",
+    "-71.05331",
     // Contacts
     "617-555-1000",
     "Mon–Fri 9–5",
@@ -116,6 +121,9 @@ function rowToPayload(row: Record<string, string>): Record<string, unknown> {
     if (NUMERIC_COLUMNS.has(col)) {
       const n = Number(v);
       if (Number.isFinite(n)) out[col] = Math.trunc(n);
+    } else if (FLOAT_COLUMNS.has(col)) {
+      const n = Number(v);
+      if (Number.isFinite(n)) out[col] = n;
     } else {
       out[col] = v;
     }

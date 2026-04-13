@@ -59,6 +59,22 @@ const optInt = (min = 0, max = 2_147_483_647) =>
     )
     .optional() as z.ZodType<number | undefined>;
 
+/** Like optInt but preserves decimal precision — used for lat/long. */
+const optFloat = (min: number, max: number) =>
+  z
+    .union([z.number(), z.string()])
+    .transform((v) => (typeof v === "string" ? v.trim() : v))
+    .transform((v) => {
+      if (v === "" || v == null) return undefined;
+      const n = typeof v === "number" ? v : Number(v);
+      return Number.isFinite(n) ? n : NaN;
+    })
+    .refine(
+      (n) => n === undefined || (Number.isFinite(n) && n >= min && n <= max),
+      { message: "Invalid number" },
+    )
+    .optional() as z.ZodType<number | undefined>;
+
 export const publisherFields = {
   // Identity
   name: z.string().min(1).max(255),
@@ -76,6 +92,8 @@ export const publisherFields = {
   zipCode: optStr(20),
   county: optStr(100),
   country: optStr(100),
+  latitude: optFloat(-90, 90),
+  longitude: optFloat(-180, 180),
   // Contacts
   phone: optStr(50),
   officeHours: optStr(255),
