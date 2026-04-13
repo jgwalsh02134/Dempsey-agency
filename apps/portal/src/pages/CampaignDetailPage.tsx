@@ -85,6 +85,35 @@ const PLACEMENT_STATUS_BADGE: Record<PlacementStatus, string> = {
   CANCELLED: "report-badge badge-overdue",
 };
 
+/** Display order for the placement status distribution strip. */
+const PLACEMENT_STATUS_ORDER: PlacementStatus[] = [
+  "DRAFT",
+  "BOOKED",
+  "LIVE",
+  "COMPLETED",
+  "CANCELLED",
+];
+
+/** Short, human-readable "next step" for each submission status — rephrased
+ *  from the existing enum; no new statuses are invented. */
+const SUB_NEXT_STEP: Record<SubmissionStatus, string> = {
+  UPLOADED: "Awaiting agency review",
+  VALIDATION_FAILED: "Fix validation issues and re-upload",
+  UNDER_REVIEW: "Agency is reviewing your creative",
+  NEEDS_RESIZING: "Upload a corrected file",
+  READY_FOR_PUBLISHER: "Approved — scheduled to send to publisher",
+  PUSHED: "Sent to publisher",
+};
+
+/** Separator used in inline metadata strips. */
+function MetaSep() {
+  return (
+    <span className="text-muted" aria-hidden="true">
+      ·
+    </span>
+  );
+}
+
 export function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -272,6 +301,43 @@ export function CampaignDetailPage() {
     );
   }
 
+  /* ── derived stats (UI-only; computed from loaded state) ── */
+  const placementTotalCents = placements.reduce(
+    (sum, p) => sum + p.grossCostCents,
+    0,
+  );
+  const placementPublisherCount = new Set(
+    placements.map((p) => p.inventory.publisher.id),
+  ).size;
+  const placementStatusCounts = placements.reduce<
+    Partial<Record<PlacementStatus, number>>
+  >((acc, p) => {
+    acc[p.status] = (acc[p.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const pubsWithCoords = pubs.filter(
+    (p) => p.latitude != null && p.longitude != null,
+  ).length;
+
+  const subCounts = subs.reduce(
+    (acc, s) => {
+      if (s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED") {
+        acc.approved += 1;
+      } else if (
+        s.status === "VALIDATION_FAILED" ||
+        s.status === "NEEDS_RESIZING"
+      ) {
+        acc.actionNeeded += 1;
+      } else {
+        // UPLOADED + UNDER_REVIEW
+        acc.awaiting += 1;
+      }
+      return acc;
+    },
+    { approved: 0, awaiting: 0, actionNeeded: 0 },
+  );
+
   return (
     <>
       <section className="section-welcome">
@@ -286,25 +352,106 @@ export function CampaignDetailPage() {
         ) : (
           <p className="text-muted">No description provided.</p>
         )}
-        <div className="detail-header-meta">
+        <div
+          className="detail-header-meta"
+          style={{ flexWrap: "wrap", rowGap: "0.5rem" }}
+        >
           <span className={STATUS_BADGE[campaign.status]}>
             {STATUS_LABEL[campaign.status]}
           </span>
           <span className="text-muted">
             {dateRange(campaign.startDate, campaign.endDate)}
           </span>
+          {pubs.length > 0 && (
+            <>
+              <MetaSep />
+              <span className="text-muted">
+                {pubs.length} publisher{pubs.length === 1 ? "" : "s"}
+              </span>
+            </>
+          )}
+          {placements.length > 0 && (
+            <>
+              <MetaSep />
+              <span className="text-muted">
+                {placements.length} placement
+                {placements.length === 1 ? "" : "s"}
+              </span>
+            </>
+          )}
         </div>
-        {campaign.budgetCents != null && (
-          <div className="money-block" style={{ marginTop: "0.75rem" }}>
-            <span className="money-label">Budget</span>
-            <span className="money-value">{formatCents(campaign.budgetCents)}</span>
+        {(campaign.budgetCents != null || placements.length > 0) && (
+          <div style={{ marginTop: "0.75rem" }}>
+            {campaign.budgetCents != null && (
+              <div className="money-block">
+                <span className="money-label">Budget</span>
+                <span className="money-value">
+                  {formatCents(campaign.budgetCents)}
+                </span>
+              </div>
+            )}
+            {placements.length > 0 && (
+              <p
+                className="text-muted"
+                style={{ margin: "0.35rem 0 0", fontSize: "0.9rem" }}
+              >
+                Total planned:{" "}
+                <strong style={{ color: "inherit" }}>
+                  {formatCents(placementTotalCents)}
+                </strong>{" "}
+                across {placements.length} placement
+                {placements.length === 1 ? "" : "s"}
+              </p>
+            )}
           </div>
         )}
       </section>
 
       {/* ── Placements ── */}
       <section className="section-block">
-        <h2 className="section-heading">Placements</h2>
+        <div
+          className="camp-section-header"
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <h2 className="section-heading" style={{ margin: 0 }}>
+            Placements
+          </h2>
+          {placements.length > 0 && (
+            <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+              {placements.length} placement
+              {placements.length === 1 ? "" : "s"} · {placementPublisherCount}{" "}
+              publisher{placementPublisherCount === 1 ? "" : "s"} · Total{" "}
+              <strong style={{ color: "inherit" }}>
+                {formatCents(placementTotalCents)}
+              </strong>
+            </span>
+          )}
+        </div>
+
+        {placements.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.4rem",
+              margin: "0.65rem 0 0.9rem",
+            }}
+          >
+            {PLACEMENT_STATUS_ORDER.filter(
+              (s) => (placementStatusCounts[s] ?? 0) > 0,
+            ).map((s) => (
+              <span key={s} className={PLACEMENT_STATUS_BADGE[s]}>
+                {placementStatusCounts[s]} {PLACEMENT_STATUS_LABEL[s]}
+              </span>
+            ))}
+          </div>
+        )}
 
         {placementsLoading && (
           <p className="text-muted">Loading placements…</p>
@@ -359,7 +506,27 @@ export function CampaignDetailPage() {
 
       {/* ── Publisher map (only publishers attached to this campaign) ── */}
       <section className="section-block">
-        <h2 className="section-heading">Publisher Map</h2>
+        <div
+          className="camp-section-header"
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <h2 className="section-heading" style={{ margin: 0 }}>
+            Publisher Map
+          </h2>
+          {pubs.length > 0 && (
+            <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+              {pubs.length} publisher{pubs.length === 1 ? "" : "s"} attached
+              {pubsWithCoords < pubs.length &&
+                ` · ${pubsWithCoords} with location data`}
+            </span>
+          )}
+        </div>
 
         {pubsLoading && (
           <p className="text-muted">Loading publishers…</p>
@@ -401,6 +568,19 @@ export function CampaignDetailPage() {
           <Link to="/creatives" className="camp-upload-link">Upload creative &rarr;</Link>
         </div>
 
+        {subs.length > 0 && (
+          <p
+            className="text-muted"
+            style={{ margin: "0.4rem 0 0.75rem", fontSize: "0.9rem" }}
+          >
+            {subs.length} submission{subs.length === 1 ? "" : "s"}
+            {subCounts.approved > 0 && ` · ${subCounts.approved} approved`}
+            {subCounts.awaiting > 0 && ` · ${subCounts.awaiting} awaiting review`}
+            {subCounts.actionNeeded > 0 &&
+              ` · ${subCounts.actionNeeded} need your attention`}
+          </p>
+        )}
+
         {subsLoading && (
           <p className="text-muted">Loading submissions…</p>
         )}
@@ -439,6 +619,18 @@ export function CampaignDetailPage() {
                       {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
                       &middot; {formatDate(s.createdAt)}
                     </span>
+                  </div>
+                  <div
+                    className="text-muted"
+                    style={{
+                      fontSize: "0.85rem",
+                      marginTop: "0.35rem",
+                    }}
+                  >
+                    <strong style={{ color: "inherit", fontWeight: 600 }}>
+                      Next step:
+                    </strong>{" "}
+                    {SUB_NEXT_STEP[s.status]}
                   </div>
                 </div>
                 <div className="submission-actions">
