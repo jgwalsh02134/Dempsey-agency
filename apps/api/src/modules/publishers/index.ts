@@ -157,7 +157,24 @@ export async function publisherRoutes(app: FastifyInstance) {
         });
       }
 
-      await app.prisma.publisher.delete({ where: { id } });
+      try {
+        await app.prisma.publisher.delete({ where: { id } });
+      } catch (err) {
+        // P2003 = FK violation. Covers the narrow race where a dependency was
+        // created between the count check above and the delete below. Return
+        // the same 409 shape so clients render the dependency message.
+        if (
+          typeof err === "object" &&
+          err !== null &&
+          (err as { code?: unknown }).code === "P2003"
+        ) {
+          return reply.code(409).send({
+            error:
+              "Cannot delete: publisher is still referenced by other records. Detach or remove those first.",
+          });
+        }
+        throw err;
+      }
       return reply.code(204).send();
     },
   );

@@ -31,6 +31,40 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Fastify's stock error envelope is `{ statusCode, error: "<HTTP label>", message }`
+ * where `error` is a class label like "Not Found" / "Bad Request" / "Conflict"
+ * and the actionable text lives in `message`. Our own handlers instead return
+ * `{ error: "<human message>" }`. Prefer a concrete `error`, but fall back to
+ * `message` when `error` is only a generic HTTP status label.
+ */
+const GENERIC_STATUS_LABELS = new Set([
+  "Bad Request",
+  "Unauthorized",
+  "Forbidden",
+  "Not Found",
+  "Method Not Allowed",
+  "Conflict",
+  "Unprocessable Entity",
+  "Too Many Requests",
+  "Internal Server Error",
+  "Bad Gateway",
+  "Service Unavailable",
+  "Gateway Timeout",
+]);
+
+function extractErrorMessage(data: unknown, res: Response): string {
+  if (typeof data === "object" && data !== null) {
+    const obj = data as { error?: unknown; message?: unknown };
+    const err = typeof obj.error === "string" ? obj.error : undefined;
+    const msg = typeof obj.message === "string" ? obj.message : undefined;
+    if (err && !GENERIC_STATUS_LABELS.has(err)) return err;
+    if (msg) return msg;
+    if (err) return err;
+  }
+  return res.statusText;
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit & { token?: string | null } = {},
@@ -64,10 +98,7 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    const msg =
-      typeof data === "object" && data !== null && "error" in data
-        ? String((data as { error: unknown }).error)
-        : res.statusText;
+    const msg = extractErrorMessage(data, res);
     throw new ApiError(msg || `HTTP ${res.status}`, res.status, data);
   }
 
