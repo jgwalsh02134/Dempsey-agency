@@ -99,15 +99,6 @@ const PRICING_MODEL_LABEL: Record<PricingModel, string> = {
   OTHER: "Other",
 };
 
-/** Display order for the placement status distribution strip. */
-const PLACEMENT_STATUS_ORDER: PlacementStatus[] = [
-  "DRAFT",
-  "BOOKED",
-  "LIVE",
-  "COMPLETED",
-  "CANCELLED",
-];
-
 /** Short, human-readable "next step" for each submission status — rephrased
  *  from the existing enum; no new statuses are invented. */
 const SUB_NEXT_STEP: Record<SubmissionStatus, string> = {
@@ -323,12 +314,6 @@ export function CampaignDetailPage() {
   const placementPublisherCount = new Set(
     placements.map((p) => p.inventory.publisher.id),
   ).size;
-  const placementStatusCounts = placements.reduce<
-    Partial<Record<PlacementStatus, number>>
-  >((acc, p) => {
-    acc[p.status] = (acc[p.status] ?? 0) + 1;
-    return acc;
-  }, {});
 
   /** Group placements by publisher, sorted alphabetically by publisher name;
    *  placements within each group sorted by placement name. Subtotal is the
@@ -482,25 +467,6 @@ export function CampaignDetailPage() {
           )}
         </div>
 
-        {placements.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.4rem",
-              margin: "0.65rem 0 0.9rem",
-            }}
-          >
-            {PLACEMENT_STATUS_ORDER.filter(
-              (s) => (placementStatusCounts[s] ?? 0) > 0,
-            ).map((s) => (
-              <span key={s} className={PLACEMENT_STATUS_BADGE[s]}>
-                {placementStatusCounts[s]} {PLACEMENT_STATUS_LABEL[s]}
-              </span>
-            ))}
-          </div>
-        )}
-
         {placementsLoading && (
           <p className="text-muted">Loading placements…</p>
         )}
@@ -523,7 +489,8 @@ export function CampaignDetailPage() {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "0.9rem",
+              gap: "1.35rem",
+              marginTop: "0.75rem",
             }}
           >
             {placementGroups.map((group) => {
@@ -532,16 +499,8 @@ export function CampaignDetailPage() {
                 .join(", ");
               const count = group.placements.length;
               return (
-                <div
-                  key={group.publisher.id}
-                  style={{
-                    border: "1px solid var(--color-border, #e5e7eb)",
-                    borderRadius: "0.5rem",
-                    padding: "0.85rem 1rem",
-                    background: "var(--color-surface, #fff)",
-                  }}
-                >
-                  {/* Publisher group header */}
+                <div key={group.publisher.id}>
+                  {/* Publisher heading (not a card — anchors the cards below) */}
                   <div
                     style={{
                       display: "flex",
@@ -549,10 +508,11 @@ export function CampaignDetailPage() {
                       justifyContent: "space-between",
                       gap: "0.6rem",
                       flexWrap: "wrap",
+                      marginBottom: "0.6rem",
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600 }}>
+                      <div style={{ fontWeight: 600, fontSize: "1rem" }}>
                         {group.publisher.name}
                       </div>
                       <div
@@ -576,11 +536,11 @@ export function CampaignDetailPage() {
                     </div>
                   </div>
 
-                  {/* Placement rows under this publisher */}
+                  {/* Placement cards — each is its own bordered unit of spend */}
                   <ul
                     style={{
                       listStyle: "none",
-                      margin: "0.75rem 0 0",
+                      margin: 0,
                       padding: 0,
                       display: "flex",
                       flexDirection: "column",
@@ -594,25 +554,30 @@ export function CampaignDetailPage() {
                           display: "flex",
                           alignItems: "flex-start",
                           justifyContent: "space-between",
-                          gap: "0.85rem",
+                          gap: "1rem",
                           flexWrap: "wrap",
-                          padding: "0.7rem 0.85rem",
-                          borderRadius: "0.4rem",
-                          background:
-                            "var(--color-surface-muted, rgba(15, 23, 42, 0.035))",
+                          padding: "0.9rem 1rem",
+                          borderRadius: "0.5rem",
+                          border:
+                            "1px solid var(--color-border, #e5e7eb)",
+                          background: "var(--color-surface, #fff)",
                         }}
                       >
-                        <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
+                        <div style={{ flex: "1 1 16rem", minWidth: 0 }}>
                           <div
-                            style={{ fontWeight: 600, fontSize: "1.02rem" }}
+                            style={{
+                              fontWeight: 700,
+                              fontSize: "1.15rem",
+                              lineHeight: 1.25,
+                            }}
                           >
                             {p.name}
                           </div>
                           <div
                             className="text-muted"
                             style={{
-                              fontSize: "0.85rem",
-                              marginTop: "0.2rem",
+                              fontSize: "0.9rem",
+                              marginTop: "0.25rem",
                             }}
                           >
                             {p.inventory.name}
@@ -622,8 +587,8 @@ export function CampaignDetailPage() {
                               display: "flex",
                               flexWrap: "wrap",
                               alignItems: "center",
-                              gap: "0.5rem",
-                              marginTop: "0.4rem",
+                              gap: "0.55rem",
+                              marginTop: "0.55rem",
                             }}
                           >
                             <span className="doc-type-badge">
@@ -631,7 +596,7 @@ export function CampaignDetailPage() {
                             </span>
                             <span
                               className="text-muted"
-                              style={{ fontSize: "0.82rem" }}
+                              style={{ fontSize: "0.85rem" }}
                             >
                               {PRICING_MODEL_LABEL[p.inventory.pricingModel]}
                             </span>
@@ -645,7 +610,7 @@ export function CampaignDetailPage() {
                                 </span>
                                 <span
                                   className="text-muted"
-                                  style={{ fontSize: "0.82rem" }}
+                                  style={{ fontSize: "0.85rem" }}
                                 >
                                   Qty {p.quantity}
                                 </span>
@@ -658,16 +623,26 @@ export function CampaignDetailPage() {
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "flex-end",
-                            gap: "0.35rem",
+                            gap: "0.5rem",
                             whiteSpace: "nowrap",
                           }}
                         >
                           <span
-                            style={{ fontWeight: 700, fontSize: "1.05rem" }}
+                            style={{
+                              fontWeight: 800,
+                              fontSize: "1.35rem",
+                              lineHeight: 1,
+                            }}
                           >
                             {formatCents(p.grossCostCents)}
                           </span>
-                          <span className={PLACEMENT_STATUS_BADGE[p.status]}>
+                          <span
+                            className={PLACEMENT_STATUS_BADGE[p.status]}
+                            style={{
+                              fontSize: "0.78rem",
+                              padding: "0.22rem 0.6rem",
+                            }}
+                          >
                             {PLACEMENT_STATUS_LABEL[p.status]}
                           </span>
                         </div>
