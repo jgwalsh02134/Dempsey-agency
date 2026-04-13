@@ -580,36 +580,39 @@ export function CampaignDetailPage() {
                   <ul
                     style={{
                       listStyle: "none",
-                      margin: "0.7rem 0 0",
+                      margin: "0.75rem 0 0",
                       padding: 0,
                       display: "flex",
                       flexDirection: "column",
-                      gap: "0.55rem",
+                      gap: "0.65rem",
                     }}
                   >
-                    {group.placements.map((p, idx) => (
+                    {group.placements.map((p) => (
                       <li
                         key={p.id}
                         style={{
                           display: "flex",
                           alignItems: "flex-start",
                           justifyContent: "space-between",
-                          gap: "0.75rem",
+                          gap: "0.85rem",
                           flexWrap: "wrap",
-                          paddingTop: idx === 0 ? 0 : "0.55rem",
-                          borderTop:
-                            idx === 0
-                              ? undefined
-                              : "1px dashed var(--color-border, #e5e7eb)",
+                          padding: "0.7rem 0.85rem",
+                          borderRadius: "0.4rem",
+                          background:
+                            "var(--color-surface-muted, rgba(15, 23, 42, 0.035))",
                         }}
                       >
                         <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
-                          <div style={{ fontWeight: 600 }}>{p.name}</div>
+                          <div
+                            style={{ fontWeight: 600, fontSize: "1.02rem" }}
+                          >
+                            {p.name}
+                          </div>
                           <div
                             className="text-muted"
                             style={{
                               fontSize: "0.85rem",
-                              marginTop: "0.15rem",
+                              marginTop: "0.2rem",
                             }}
                           >
                             {p.inventory.name}
@@ -619,8 +622,8 @@ export function CampaignDetailPage() {
                               display: "flex",
                               flexWrap: "wrap",
                               alignItems: "center",
-                              gap: "0.4rem",
-                              marginTop: "0.3rem",
+                              gap: "0.5rem",
+                              marginTop: "0.4rem",
                             }}
                           >
                             <span className="doc-type-badge">
@@ -655,12 +658,12 @@ export function CampaignDetailPage() {
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "flex-end",
-                            gap: "0.3rem",
+                            gap: "0.35rem",
                             whiteSpace: "nowrap",
                           }}
                         >
                           <span
-                            style={{ fontWeight: 600, fontSize: "1rem" }}
+                            style={{ fontWeight: 700, fontSize: "1.05rem" }}
                           >
                             {formatCents(p.grossCostCents)}
                           </span>
