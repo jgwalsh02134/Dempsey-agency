@@ -10,6 +10,7 @@ import type {
   CreativeSubmission,
   Placement,
   PlacementStatus,
+  PricingModel,
   SubmissionStatus,
 } from "../types";
 
@@ -83,6 +84,19 @@ const PLACEMENT_STATUS_BADGE: Record<PlacementStatus, string> = {
   LIVE: "report-badge badge-active",
   COMPLETED: "report-badge badge-completed",
   CANCELLED: "report-badge badge-overdue",
+};
+
+/** Client-friendly pricing model labels. Keeps shouty enum values out of
+ *  the UI while leaving the raw enum available elsewhere. */
+const PRICING_MODEL_LABEL: Record<PricingModel, string> = {
+  CPM: "CPM",
+  VCPM: "vCPM",
+  CPC: "CPC",
+  CPCV: "CPCV",
+  FLAT: "Flat rate",
+  COLUMN_INCH: "Column inch",
+  PER_LINE: "Per line",
+  OTHER: "Other",
 };
 
 /** Display order for the placement status distribution strip. */
@@ -499,7 +513,8 @@ export function CampaignDetailPage() {
 
         {!placementsLoading && !placementsError && placements.length === 0 && (
           <p className="text-muted">
-            No placements have been set up for this campaign yet.
+            Your agency is still building out this campaign's media plan.
+            Placements will appear here as they're added.
           </p>
         )}
 
@@ -615,7 +630,7 @@ export function CampaignDetailPage() {
                               className="text-muted"
                               style={{ fontSize: "0.82rem" }}
                             >
-                              {p.inventory.pricingModel}
+                              {PRICING_MODEL_LABEL[p.inventory.pricingModel]}
                             </span>
                             {p.quantity != null && (
                               <>
@@ -752,7 +767,11 @@ export function CampaignDetailPage() {
 
         {!subsLoading && !subsError && subs.length === 0 && (
           <p className="text-muted">
-            No creatives have been submitted for this campaign yet.
+            No creatives have been uploaded for this campaign yet.{" "}
+            <Link to="/creatives" className="inline-text-link">
+              Upload your first creative
+            </Link>{" "}
+            to get started.
           </p>
         )}
 

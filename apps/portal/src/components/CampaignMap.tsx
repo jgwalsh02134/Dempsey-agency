@@ -131,9 +131,12 @@ export function CampaignMap({ publishers }: Props) {
   );
 
   if (mapped.length === 0) {
+    // `CampaignDetailPage` only renders this component when there are attached
+    // publishers, so reaching this branch means they exist but aren't geocoded.
     return (
       <p className="text-muted">
-        No publishers with location data are attached to this campaign yet.
+        The attached publishers don't have map coordinates yet. Your agency
+        will geocode them so they appear here.
       </p>
     );
   }
