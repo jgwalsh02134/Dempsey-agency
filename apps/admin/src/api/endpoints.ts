@@ -351,6 +351,12 @@ export async function patchPublisher(
   );
 }
 
+export async function deletePublisher(id: string): Promise<void> {
+  await apiFetch(`/api/v1/publishers/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function importPublishers(
   rows: Record<string, unknown>[],
 ): Promise<PublisherImportResult> {

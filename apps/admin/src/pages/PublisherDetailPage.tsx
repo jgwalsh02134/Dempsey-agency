@@ -1,5 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { PublisherForm } from "../components/PublisherForm";
@@ -152,6 +152,7 @@ function MailtoLink({ email }: { email: string | null }) {
 
 export function PublisherDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   /* ── publisher state ── */
   const [publisher, setPublisher] = useState<Publisher | null>(null);
@@ -192,6 +193,10 @@ export function PublisherDetailPage() {
   /* ── geocode state ── */
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeMsg, setGeocodeMsg] = useState<string | null>(null);
+
+  /* ── delete state ── */
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   /* ── load publisher ──
    * No GET /publishers/:id endpoint exists today; we fetch the catalog and
@@ -248,6 +253,24 @@ export function PublisherDetailPage() {
       setPubEditError(errorMessage(err));
     } finally {
       setPubSaving(false);
+    }
+  }
+
+  /* ── delete handler ── */
+  async function onDelete() {
+    if (!publisher) return;
+    const msg =
+      `Delete publisher "${publisher.name}"? This cannot be undone.\n\n` +
+      `If the publisher has inventory or is attached to campaigns, the deletion will be blocked.`;
+    if (!window.confirm(msg)) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.deletePublisher(publisher.id);
+      navigate("/publishers");
+    } catch (err) {
+      setDeleteError(errorMessage(err));
+      setDeleting(false);
     }
   }
 
@@ -427,9 +450,28 @@ export function PublisherDetailPage() {
               >
                 Edit
               </button>
+              <button
+                type="button"
+                className="btn-remove"
+                onClick={onDelete}
+                disabled={deleting}
+                title="Permanently delete this publisher"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
             </div>
           )}
         </div>
+
+        {deleteError && !pubEditOpen && (
+          <p
+            className="error"
+            role="alert"
+            style={{ marginTop: "0.5rem" }}
+          >
+            {deleteError}
+          </p>
+        )}
 
         {geocodeMsg && !pubEditOpen && (
           <p

@@ -141,6 +141,10 @@ export function PublishersPage() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<"" | "true" | "false">("");
 
+  /* ── per-row delete state ── */
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   /* ── import panel ── */
   const [importOpen, setImportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -254,6 +258,23 @@ export function PublishersPage() {
       setImportError(errorMessage(err));
     } finally {
       setImporting(false);
+    }
+  }
+
+  async function onDelete(p: Publisher) {
+    const msg =
+      `Delete publisher "${p.name}"? This cannot be undone.\n\n` +
+      `If the publisher has inventory or is attached to campaigns, the deletion will be blocked.`;
+    if (!window.confirm(msg)) return;
+    setDeletingId(p.id);
+    setDeleteError(null);
+    try {
+      await api.deletePublisher(p.id);
+      setPublishers((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (err) {
+      setDeleteError(errorMessage(err));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -517,6 +538,11 @@ export function PublishersPage() {
           {listError}
         </p>
       )}
+      {deleteError && (
+        <p className="error" role="alert">
+          {deleteError}
+        </p>
+      )}
 
       {loading && <p className="muted">Loading publishers…</p>}
 
@@ -601,12 +627,23 @@ export function PublishersPage() {
                       {p.isActive ? "Active" : "Inactive"}
                     </td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <Link
-                        to={`/publishers/${p.id}`}
-                        className="btn ghost"
-                      >
-                        View
-                      </Link>
+                      <div style={{ display: "flex", gap: "0.35rem" }}>
+                        <Link
+                          to={`/publishers/${p.id}`}
+                          className="btn ghost"
+                        >
+                          View
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn-remove"
+                          onClick={() => onDelete(p)}
+                          disabled={deletingId === p.id}
+                          aria-label={`Delete ${p.name}`}
+                        >
+                          {deletingId === p.id ? "Deleting…" : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

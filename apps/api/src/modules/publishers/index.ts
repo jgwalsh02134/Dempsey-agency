@@ -111,6 +111,57 @@ export async function publisherRoutes(app: FastifyInstance) {
     },
   );
 
+  // ── Delete publisher (agency admin+) ─────────────────────────
+  //
+  // Refuses to delete a publisher that is still referenced by any
+  // inventory item or campaign link. Callers must detach those first.
+  // Returns 404 if the publisher does not exist; 409 with counts if
+  // it is in use; 204 on successful delete.
+  app.delete(
+    "/publishers/:id",
+    {
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
+    },
+    async (request, reply) => {
+      const { id } = publisherIdParamsSchema.parse(request.params);
+
+      const existing = await app.prisma.publisher.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          _count: { select: { inventory: true, campaignLinks: true } },
+        },
+      });
+      if (!existing) {
+        return reply.code(404).send({ error: "Publisher not found" });
+      }
+
+      const inventoryCount = existing._count.inventory;
+      const campaignCount = existing._count.campaignLinks;
+      if (inventoryCount > 0 || campaignCount > 0) {
+        const parts: string[] = [];
+        if (inventoryCount > 0) {
+          parts.push(
+            `${inventoryCount} inventory item${inventoryCount === 1 ? "" : "s"}`,
+          );
+        }
+        if (campaignCount > 0) {
+          parts.push(
+            `${campaignCount} campaign${campaignCount === 1 ? "" : "s"}`,
+          );
+        }
+        return reply.code(409).send({
+          error: `Cannot delete: publisher is in use by ${parts.join(" and ")}. Detach or remove those first.`,
+          inventoryCount,
+          campaignCount,
+        });
+      }
+
+      await app.prisma.publisher.delete({ where: { id } });
+      return reply.code(204).send();
+    },
+  );
+
   // ── Bulk import publishers (agency admin+) ───────────────────
   //
   // Client parses CSV and POSTs { rows: [{...}, ...] }.
