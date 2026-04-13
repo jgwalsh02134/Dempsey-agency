@@ -174,6 +174,14 @@ export function PublisherDetailPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
+  /* ── inventory delete ── */
+  const [deletingInventoryId, setDeletingInventoryId] = useState<string | null>(
+    null,
+  );
+  const [inventoryDeleteError, setInventoryDeleteError] = useState<
+    string | null
+  >(null);
+
   /* ── inventory edit ── */
   const [editId, setEditId] = useState<string | null>(null);
   const [eName, setEName] = useState("");
@@ -323,6 +331,24 @@ export function PublisherDetailPage() {
       setCreateError(errorMessage(err));
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function onDeleteInventory(item: InventoryItem) {
+    const msg =
+      `Delete inventory unit "${item.name}"? This cannot be undone.\n\n` +
+      `If this unit is referenced by any placement, the deletion will be blocked.`;
+    if (!window.confirm(msg)) return;
+    setDeletingInventoryId(item.id);
+    setInventoryDeleteError(null);
+    try {
+      await api.deleteInventory(item.id);
+      setInventory((prev) => prev.filter((i) => i.id !== item.id));
+      if (editId === item.id) setEditId(null);
+    } catch (err) {
+      setInventoryDeleteError(errorMessage(err));
+    } finally {
+      setDeletingInventoryId(null);
     }
   }
 
@@ -734,6 +760,11 @@ export function PublisherDetailPage() {
             {invError}
           </p>
         )}
+        {inventoryDeleteError && (
+          <p className="error" role="alert">
+            {inventoryDeleteError}
+          </p>
+        )}
         {!invLoading && inventory.length === 0 && !invError && (
           <p className="muted">No inventory units yet.</p>
         )}
@@ -884,15 +915,53 @@ export function PublisherDetailPage() {
                       <td>{item.mediaType}</td>
                       <td>{item.pricingModel}</td>
                       <td>{formatCents(item.rateCents)}</td>
-                      <td>{item.isActive ? "Active" : "Inactive"}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="btn ghost"
-                          onClick={() => startEdit(item)}
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "0.15rem 0.55rem",
+                            borderRadius: "999px",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            background: item.isActive
+                              ? "rgba(16, 185, 129, 0.12)"
+                              : "rgba(107, 114, 128, 0.14)",
+                            color: item.isActive
+                              ? "rgb(6, 95, 70)"
+                              : "rgb(55, 65, 81)",
+                          }}
                         >
-                          Edit
-                        </button>
+                          {item.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", gap: "0.35rem" }}>
+                          <button
+                            type="button"
+                            className="btn ghost"
+                            onClick={() => startEdit(item)}
+                            disabled={
+                              deletingInventoryId === item.id ||
+                              editId !== null
+                            }
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-remove"
+                            onClick={() => onDeleteInventory(item)}
+                            disabled={
+                              deletingInventoryId === item.id ||
+                              editId !== null
+                            }
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            {deletingInventoryId === item.id
+                              ? "Deleting…"
+                              : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ),

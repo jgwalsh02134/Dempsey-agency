@@ -425,6 +425,13 @@ export async function createInventory(
   );
 }
 
+export async function deleteInventory(inventoryId: string): Promise<void> {
+  await apiFetch(
+    `/api/v1/inventory/${encodeURIComponent(inventoryId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function patchInventory(
   inventoryId: string,
   body: {

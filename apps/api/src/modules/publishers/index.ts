@@ -355,6 +355,58 @@ export async function publisherRoutes(app: FastifyInstance) {
     },
   );
 
+  // ── Delete inventory item (agency admin+) ────────────────────
+  //
+  // Refuses to delete an inventory unit that is still referenced by any
+  // placement. Returns 404 if missing, 409 with placementCount if in use,
+  // and 204 on successful delete.
+  app.delete(
+    "/inventory/:inventoryId",
+    {
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
+    },
+    async (request, reply) => {
+      const { inventoryId } = inventoryIdParamsSchema.parse(request.params);
+
+      const existing = await app.prisma.inventory.findUnique({
+        where: { id: inventoryId },
+        select: {
+          id: true,
+          _count: { select: { placements: true } },
+        },
+      });
+      if (!existing) {
+        return reply.code(404).send({ error: "Inventory item not found" });
+      }
+
+      const placementCount = existing._count.placements;
+      if (placementCount > 0) {
+        return reply.code(409).send({
+          error: `Cannot delete: inventory is in use by ${placementCount} placement${placementCount === 1 ? "" : "s"}. Remove those placements first.`,
+          placementCount,
+        });
+      }
+
+      try {
+        await app.prisma.inventory.delete({ where: { id: inventoryId } });
+      } catch (err) {
+        // Narrow race: a placement was created between the count and delete.
+        if (
+          typeof err === "object" &&
+          err !== null &&
+          (err as { code?: unknown }).code === "P2003"
+        ) {
+          return reply.code(409).send({
+            error:
+              "Cannot delete: inventory is still referenced by a placement. Remove that placement first.",
+          });
+        }
+        throw err;
+      }
+      return reply.code(204).send();
+    },
+  );
+
   // ── Geocode a publisher (agency admin+) ──────────────────────
   //
   // Re-computes and persists latitude/longitude via Nominatim.
