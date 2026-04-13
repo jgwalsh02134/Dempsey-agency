@@ -61,6 +61,9 @@ function errorMessage(e: unknown): string {
 
 interface Props {
   campaignId: string;
+  /** Bump to force a refetch of attached publishers (e.g., after the
+   *  Publishers section attaches or removes one). */
+  publishersVersion?: number;
 }
 
 interface EditDraft {
@@ -107,7 +110,10 @@ function emptyAddState(): AddFormState {
   };
 }
 
-export function PlacementsSection({ campaignId }: Props) {
+export function PlacementsSection({
+  campaignId,
+  publishersVersion = 0,
+}: Props) {
   const [publishers, setPublishers] = useState<CampaignPublisher[]>([]);
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +152,9 @@ export function PlacementsSection({ campaignId }: Props) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    // `publishersVersion` is intentionally included so attach/remove from the
+    // Publishers section above forces a refetch and the header counts stay fresh.
+  }, [load, publishersVersion]);
 
   /** Placements bucketed by publisher id (for quick render per publisher card). */
   const byPublisher = useMemo(() => {

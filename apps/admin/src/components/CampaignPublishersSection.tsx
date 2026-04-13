@@ -16,6 +16,9 @@ import { CampaignMapPreview } from "./CampaignMapPreview";
 
 interface Props {
   campaignId: string;
+  /** Fired after a successful attach/remove so the parent can refresh
+   *  dependents (e.g., the Placements section header count). */
+  onPublishersChanged?: () => void;
 }
 
 type Busy = { kind: "adding" | "removing"; publisherId: string } | null;
@@ -38,7 +41,10 @@ const CIRC_BUCKETS = [
 type CircKey = (typeof CIRC_BUCKETS)[number]["label"];
 const CIRC_ANY: CircKey = "Any circulation";
 
-export function CampaignPublishersSection({ campaignId }: Props) {
+export function CampaignPublishersSection({
+  campaignId,
+  onPublishersChanged,
+}: Props) {
   /* ── data state ── */
   const [catalog, setCatalog] = useState<Publisher[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -207,6 +213,7 @@ export function CampaignPublishersSection({ campaignId }: Props) {
       setFlashId(p.id);
       if (flashTimer.current) clearTimeout(flashTimer.current);
       flashTimer.current = setTimeout(() => setFlashId(null), 1200);
+      onPublishersChanged?.();
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -221,6 +228,7 @@ export function CampaignPublishersSection({ campaignId }: Props) {
     setAttached((curr) => curr.filter((p) => p.id !== publisherId));
     try {
       await api.removeCampaignPublisher(campaignId, publisherId);
+      onPublishersChanged?.();
     } catch (e) {
       setAttached(prev);
       setError(errorMessage(e));

@@ -27,6 +27,9 @@ export function CampaignDetailPage() {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Bumped by CampaignPublishersSection on attach/remove so PlacementsSection
+  // re-fetches its attached-publishers list instead of showing stale counts.
+  const [publishersVersion, setPublishersVersion] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -105,8 +108,14 @@ export function CampaignDetailPage() {
         </div>
       </section>
 
-      <CampaignPublishersSection campaignId={campaign.id} />
-      <PlacementsSection campaignId={campaign.id} />
+      <CampaignPublishersSection
+        campaignId={campaign.id}
+        onPublishersChanged={() => setPublishersVersion((v) => v + 1)}
+      />
+      <PlacementsSection
+        campaignId={campaign.id}
+        publishersVersion={publishersVersion}
+      />
     </>
   );
 }
