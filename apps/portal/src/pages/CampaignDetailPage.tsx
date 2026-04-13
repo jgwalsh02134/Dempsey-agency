@@ -558,26 +558,27 @@ export function CampaignDetailPage() {
                           flexWrap: "wrap",
                           padding: "0.9rem 1rem",
                           borderRadius: "0.5rem",
-                          border:
-                            "1px solid var(--color-border, #e5e7eb)",
+                          border: "1px solid rgba(15, 23, 42, 0.12)",
                           background: "var(--color-surface, #fff)",
+                          boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
                         }}
                       >
                         <div style={{ flex: "1 1 16rem", minWidth: 0 }}>
                           <div
                             style={{
                               fontWeight: 700,
-                              fontSize: "1.15rem",
+                              fontSize: "1.2rem",
                               lineHeight: 1.25,
+                              color: "var(--color-text, #111827)",
                             }}
                           >
                             {p.name}
                           </div>
                           <div
-                            className="text-muted"
                             style={{
                               fontSize: "0.9rem",
                               marginTop: "0.25rem",
+                              color: "rgb(55, 65, 81)",
                             }}
                           >
                             {p.inventory.name}
@@ -588,7 +589,7 @@ export function CampaignDetailPage() {
                               flexWrap: "wrap",
                               alignItems: "center",
                               gap: "0.55rem",
-                              marginTop: "0.55rem",
+                              marginTop: "0.6rem",
                             }}
                           >
                             <span className="doc-type-badge">
@@ -625,13 +626,16 @@ export function CampaignDetailPage() {
                             alignItems: "flex-end",
                             gap: "0.5rem",
                             whiteSpace: "nowrap",
+                            minWidth: "6rem",
                           }}
                         >
                           <span
                             style={{
                               fontWeight: 800,
-                              fontSize: "1.35rem",
+                              fontSize: "1.45rem",
                               lineHeight: 1,
+                              color: "#0f172a",
+                              letterSpacing: "-0.01em",
                             }}
                           >
                             {formatCents(p.grossCostCents)}
@@ -639,8 +643,8 @@ export function CampaignDetailPage() {
                           <span
                             className={PLACEMENT_STATUS_BADGE[p.status]}
                             style={{
-                              fontSize: "0.78rem",
-                              padding: "0.22rem 0.6rem",
+                              fontSize: "0.82rem",
+                              padding: "0.28rem 0.7rem",
                             }}
                           >
                             {PLACEMENT_STATUS_LABEL[p.status]}
