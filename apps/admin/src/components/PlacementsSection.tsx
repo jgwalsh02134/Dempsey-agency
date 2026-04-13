@@ -63,6 +63,19 @@ interface Props {
   campaignId: string;
 }
 
+interface EditDraft {
+  name: string;
+  grossDollars: string;
+  netDollars: string;
+  quantity: string;
+  notes: string;
+}
+
+function centsToDollarsInput(cents: number | null): string {
+  if (cents == null) return "";
+  return (cents / 100).toFixed(2);
+}
+
 /** State for one per-publisher add form (keyed by publisher id). */
 interface AddFormState {
   inventoryId: string;
@@ -107,6 +120,12 @@ export function PlacementsSection({ campaignId }: Props) {
   /** Per-placement in-flight state. */
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
+
+  /** Inline row edit state (one row at a time). */
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -275,6 +294,112 @@ export function PlacementsSection({ campaignId }: Props) {
     }
   }
 
+  /* ── row edit handlers ─────────────────────────────────────── */
+
+  function startEdit(p: Placement) {
+    setEditId(p.id);
+    setEditError(null);
+    setEditDraft({
+      name: p.name,
+      grossDollars: centsToDollarsInput(p.grossCostCents),
+      netDollars: centsToDollarsInput(p.netCostCents),
+      quantity: p.quantity != null ? String(p.quantity) : "",
+      notes: p.notes ?? "",
+    });
+  }
+
+  function cancelEdit() {
+    setEditId(null);
+    setEditDraft(null);
+    setEditError(null);
+  }
+
+  function patchDraft(patch: Partial<EditDraft>) {
+    setEditDraft((prev) => (prev ? { ...prev, ...patch } : prev));
+  }
+
+  async function onSaveEdit(p: Placement) {
+    if (!editDraft) return;
+    const name = editDraft.name.trim();
+    if (!name) {
+      setEditError("Placement name is required.");
+      return;
+    }
+    const gross = parseFloat(editDraft.grossDollars);
+    if (!Number.isFinite(gross) || gross < 0) {
+      setEditError("Gross cost is required.");
+      return;
+    }
+    const grossCostCents = Math.round(gross * 100);
+
+    let netCostCents: number | null = null;
+    const netTrim = editDraft.netDollars.trim();
+    if (netTrim !== "") {
+      const n = parseFloat(netTrim);
+      if (!Number.isFinite(n) || n < 0) {
+        setEditError("Net cost must be a non-negative number.");
+        return;
+      }
+      netCostCents = Math.round(n * 100);
+    }
+
+    let quantity: number | null = null;
+    const qTrim = editDraft.quantity.trim();
+    if (qTrim !== "") {
+      const q = parseInt(qTrim, 10);
+      if (!Number.isFinite(q) || q < 1) {
+        setEditError("Quantity must be a positive integer.");
+        return;
+      }
+      quantity = q;
+    }
+
+    const notes = editDraft.notes.trim() || null;
+
+    // Build a diff patch so we only send changed fields.
+    const body: Parameters<typeof api.patchPlacement>[1] = {};
+    if (name !== p.name) body.name = name;
+    if (grossCostCents !== p.grossCostCents) body.grossCostCents = grossCostCents;
+    if (netCostCents !== p.netCostCents) body.netCostCents = netCostCents;
+    if (quantity !== p.quantity) body.quantity = quantity;
+    if (notes !== p.notes) body.notes = notes;
+
+    if (Object.keys(body).length === 0) {
+      cancelEdit();
+      return;
+    }
+
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const updated = await api.patchPlacement(p.id, body);
+      setPlacements((prev) =>
+        prev.map((x) => (x.id === p.id ? updated : x)),
+      );
+      cancelEdit();
+    } catch (err) {
+      setEditError(errorMessage(err));
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  /* ── rollup totals (agency app, so net is always displayed) ── */
+
+  const totals = useMemo(() => {
+    let gross = 0;
+    let net = 0;
+    let netCount = 0;
+    for (const p of placements) {
+      gross += p.grossCostCents;
+      if (p.netCostCents != null) {
+        net += p.netCostCents;
+        netCount += 1;
+      }
+    }
+    return { gross, net, netCount };
+  }, [placements]);
+
   /* ── render ────────────────────────────────────────────────── */
 
   return (
@@ -297,6 +422,30 @@ export function PlacementsSection({ campaignId }: Props) {
             {placements.length !== 1 ? "s" : ""} planned
           </p>
         </div>
+        {placements.length > 0 && (
+          <div
+            className="small"
+            style={{ textAlign: "right", whiteSpace: "nowrap" }}
+            aria-label="Campaign placement totals"
+          >
+            <div>
+              <span className="muted">Gross total:</span>{" "}
+              <strong>{formatCents(totals.gross)}</strong>
+            </div>
+            <div className="muted">
+              Net total (agency only):{" "}
+              <strong style={{ color: "inherit" }}>
+                {totals.netCount > 0 ? formatCents(totals.net) : "—"}
+              </strong>
+              {totals.netCount > 0 && totals.netCount < placements.length && (
+                <span>
+                  {" "}
+                  · {totals.netCount}/{placements.length} priced
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {listError && (
@@ -393,6 +542,119 @@ export function PlacementsSection({ campaignId }: Props) {
                     <tbody>
                       {items.map((p) => {
                         const busy = busyId === p.id;
+                        const editing = editId === p.id && editDraft != null;
+                        if (editing) {
+                          return (
+                            <tr key={p.id}>
+                              <td>
+                                <input
+                                  value={editDraft.name}
+                                  onChange={(e) =>
+                                    patchDraft({ name: e.target.value })
+                                  }
+                                  maxLength={255}
+                                  aria-label="Placement name"
+                                  style={{ width: "100%" }}
+                                />
+                                <input
+                                  value={editDraft.notes}
+                                  onChange={(e) =>
+                                    patchDraft({ notes: e.target.value })
+                                  }
+                                  maxLength={2000}
+                                  placeholder="Notes (optional)"
+                                  aria-label="Notes"
+                                  className="small"
+                                  style={{ width: "100%", marginTop: "0.25rem" }}
+                                />
+                              </td>
+                              <td className="small">
+                                {p.inventory.mediaType}
+                                <div className="small muted">
+                                  {p.inventory.pricingModel}
+                                </div>
+                              </td>
+                              <td style={{ whiteSpace: "nowrap" }}>
+                                <span className="small muted">
+                                  {STATUS_LABEL[p.status]}
+                                </span>
+                              </td>
+                              <td style={{ whiteSpace: "nowrap" }}>
+                                <input
+                                  type="number"
+                                  value={editDraft.grossDollars}
+                                  onChange={(e) =>
+                                    patchDraft({
+                                      grossDollars: e.target.value,
+                                    })
+                                  }
+                                  min="0"
+                                  step="0.01"
+                                  aria-label="Gross cost"
+                                  style={{ width: "7rem" }}
+                                />
+                              </td>
+                              <td style={{ whiteSpace: "nowrap" }}>
+                                <input
+                                  type="number"
+                                  value={editDraft.netDollars}
+                                  onChange={(e) =>
+                                    patchDraft({ netDollars: e.target.value })
+                                  }
+                                  min="0"
+                                  step="0.01"
+                                  placeholder="—"
+                                  aria-label="Net cost"
+                                  style={{ width: "7rem" }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={editDraft.quantity}
+                                  onChange={(e) =>
+                                    patchDraft({ quantity: e.target.value })
+                                  }
+                                  min="1"
+                                  placeholder="—"
+                                  aria-label="Quantity"
+                                  style={{ width: "4.5rem" }}
+                                />
+                              </td>
+                              <td style={{ whiteSpace: "nowrap" }}>
+                                <div
+                                  style={{ display: "flex", gap: "0.35rem" }}
+                                >
+                                  <button
+                                    type="button"
+                                    className="btn primary"
+                                    disabled={editSaving}
+                                    onClick={() => onSaveEdit(p)}
+                                  >
+                                    {editSaving ? "Saving…" : "Save"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn ghost"
+                                    disabled={editSaving}
+                                    onClick={cancelEdit}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                                {editError && (
+                                  <div
+                                    className="error small"
+                                    role="alert"
+                                    style={{ marginTop: "0.25rem" }}
+                                  >
+                                    {editError}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        }
                         return (
                           <tr key={p.id}>
                             <td>
@@ -410,7 +672,7 @@ export function PlacementsSection({ campaignId }: Props) {
                             <td style={{ whiteSpace: "nowrap" }}>
                               <select
                                 value={p.status}
-                                disabled={busy}
+                                disabled={busy || editId !== null}
                                 onChange={(e) =>
                                   onStatusChange(
                                     p,
@@ -435,14 +697,26 @@ export function PlacementsSection({ campaignId }: Props) {
                             </td>
                             <td>{p.quantity ?? "—"}</td>
                             <td style={{ whiteSpace: "nowrap" }}>
-                              <button
-                                type="button"
-                                className="btn-remove"
-                                disabled={busy}
-                                onClick={() => onDelete(p)}
+                              <div
+                                style={{ display: "flex", gap: "0.35rem" }}
                               >
-                                {busy ? "…" : "Delete"}
-                              </button>
+                                <button
+                                  type="button"
+                                  className="btn ghost"
+                                  disabled={busy || editId !== null}
+                                  onClick={() => startEdit(p)}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-remove"
+                                  disabled={busy || editId !== null}
+                                  onClick={() => onDelete(p)}
+                                >
+                                  {busy ? "…" : "Delete"}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
