@@ -316,6 +316,40 @@ export function CampaignDetailPage() {
     return acc;
   }, {});
 
+  /** Group placements by publisher, sorted alphabetically by publisher name;
+   *  placements within each group sorted by placement name. Subtotal is the
+   *  sum of `grossCostCents` across the group. */
+  interface PlacementGroup {
+    publisher: Placement["inventory"]["publisher"];
+    placements: Placement[];
+    subtotalCents: number;
+  }
+  const placementGroups: PlacementGroup[] = (() => {
+    const map = new Map<string, PlacementGroup>();
+    for (const p of placements) {
+      const pubId = p.inventory.publisher.id;
+      const g = map.get(pubId);
+      if (g) {
+        g.placements.push(p);
+        g.subtotalCents += p.grossCostCents;
+      } else {
+        map.set(pubId, {
+          publisher: p.inventory.publisher,
+          placements: [p],
+          subtotalCents: p.grossCostCents,
+        });
+      }
+    }
+    return Array.from(map.values())
+      .map((g) => ({
+        ...g,
+        placements: [...g.placements].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      }))
+      .sort((a, b) => a.publisher.name.localeCompare(b.publisher.name));
+  })();
+
   const pubsWithCoords = pubs.filter(
     (p) => p.latitude != null && p.longitude != null,
   ).length;
@@ -470,37 +504,162 @@ export function CampaignDetailPage() {
         )}
 
         {!placementsLoading && !placementsError && placements.length > 0 && (
-          <ul className="report-list">
-            {placements.map((p) => {
-              const pub = p.inventory.publisher;
-              const loc = [pub.city, pub.state].filter(Boolean).join(", ");
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.9rem",
+            }}
+          >
+            {placementGroups.map((group) => {
+              const loc = [group.publisher.city, group.publisher.state]
+                .filter(Boolean)
+                .join(", ");
+              const count = group.placements.length;
               return (
-                <li key={p.id} className="report-item">
-                  <div className="report-info">
-                    <span className="report-name">{p.name}</span>
-                    <span className="report-description">
-                      {pub.name}{loc ? ` — ${loc}` : ""}
-                    </span>
-                    <div className="campaign-meta">
-                      <span className="doc-type-badge">
-                        {p.inventory.mediaType}
-                      </span>
-                      <span className="money-inline">{formatCents(p.grossCostCents)}</span>
-                      {p.quantity != null && (
-                        <>
-                          <span>·</span>
-                          <span>Qty: {p.quantity}</span>
-                        </>
-                      )}
+                <div
+                  key={group.publisher.id}
+                  style={{
+                    border: "1px solid var(--color-border, #e5e7eb)",
+                    borderRadius: "0.5rem",
+                    padding: "0.85rem 1rem",
+                    background: "var(--color-surface, #fff)",
+                  }}
+                >
+                  {/* Publisher group header */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      gap: "0.6rem",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600 }}>
+                        {group.publisher.name}
+                      </div>
+                      <div
+                        className="text-muted"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        {loc || "Location unknown"} · {count} placement
+                        {count === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                    <div
+                      style={{ textAlign: "right", whiteSpace: "nowrap" }}
+                    >
+                      <span
+                        className="text-muted"
+                        style={{ fontSize: "0.8rem" }}
+                      >
+                        Subtotal
+                      </span>{" "}
+                      <strong>{formatCents(group.subtotalCents)}</strong>
                     </div>
                   </div>
-                  <span className={PLACEMENT_STATUS_BADGE[p.status]}>
-                    {PLACEMENT_STATUS_LABEL[p.status]}
-                  </span>
-                </li>
+
+                  {/* Placement rows under this publisher */}
+                  <ul
+                    style={{
+                      listStyle: "none",
+                      margin: "0.7rem 0 0",
+                      padding: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.55rem",
+                    }}
+                  >
+                    {group.placements.map((p, idx) => (
+                      <li
+                        key={p.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: "0.75rem",
+                          flexWrap: "wrap",
+                          paddingTop: idx === 0 ? 0 : "0.55rem",
+                          borderTop:
+                            idx === 0
+                              ? undefined
+                              : "1px dashed var(--color-border, #e5e7eb)",
+                        }}
+                      >
+                        <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
+                          <div style={{ fontWeight: 600 }}>{p.name}</div>
+                          <div
+                            className="text-muted"
+                            style={{
+                              fontSize: "0.85rem",
+                              marginTop: "0.15rem",
+                            }}
+                          >
+                            {p.inventory.name}
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              alignItems: "center",
+                              gap: "0.4rem",
+                              marginTop: "0.3rem",
+                            }}
+                          >
+                            <span className="doc-type-badge">
+                              {p.inventory.mediaType}
+                            </span>
+                            <span
+                              className="text-muted"
+                              style={{ fontSize: "0.82rem" }}
+                            >
+                              {p.inventory.pricingModel}
+                            </span>
+                            {p.quantity != null && (
+                              <>
+                                <span
+                                  className="text-muted"
+                                  aria-hidden="true"
+                                >
+                                  ·
+                                </span>
+                                <span
+                                  className="text-muted"
+                                  style={{ fontSize: "0.82rem" }}
+                                >
+                                  Qty {p.quantity}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-end",
+                            gap: "0.3rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <span
+                            style={{ fontWeight: 600, fontSize: "1rem" }}
+                          >
+                            {formatCents(p.grossCostCents)}
+                          </span>
+                          <span className={PLACEMENT_STATUS_BADGE[p.status]}>
+                            {PLACEMENT_STATUS_LABEL[p.status]}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </section>
 
