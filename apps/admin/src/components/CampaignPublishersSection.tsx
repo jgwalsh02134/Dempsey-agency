@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type { CampaignPublisher, Publisher } from "../types";
@@ -7,19 +7,11 @@ import { CampaignMapPreview } from "./CampaignMapPreview";
 /**
  * Media-planner–style publisher selection for a single campaign.
  *
- * Layout:
- *   ┌ Map preview (selected publishers) ────────────────────────┐
+ * Polished layout:
+ *   ┌ Map preview with count badge overlay ─────────────────────┐
  *   ├────────────────────────────────────────────────────────────┤
- *   │ Catalog (search + filters + Add)  │  Selected (Remove)     │
+ *   │  Selected (primary, tinted)      │   Catalog + filters     │
  *   └────────────────────────────────────────────────────────────┘
- *
- * - Full publisher catalog is fetched once (admin-only endpoint); all
- *   filtering is done client-side for instant feedback.
- * - Add/Remove persist immediately via the existing campaign-publishers
- *   endpoints; local state updates in place, no page reload.
- * - Duplicates are prevented both in the filtered-catalog pass (already-
- *   attached IDs are excluded) and by the server's unique(campaignId,
- *   publisherId) constraint.
  */
 
 interface Props {
@@ -36,7 +28,7 @@ function errorMessage(e: unknown): string {
 
 /** Bucket circulations into coarse ranges for the filter. */
 const CIRC_BUCKETS = [
-  { label: "Any", min: null, max: null },
+  { label: "Any circulation", min: null, max: null },
   { label: "< 10k", min: 0, max: 9_999 },
   { label: "10k – 50k", min: 10_000, max: 50_000 },
   { label: "50k – 250k", min: 50_001, max: 250_000 },
@@ -44,6 +36,7 @@ const CIRC_BUCKETS = [
 ] as const;
 
 type CircKey = (typeof CIRC_BUCKETS)[number]["label"];
+const CIRC_ANY: CircKey = "Any circulation";
 
 export function CampaignPublishersSection({ campaignId }: Props) {
   /* ── data state ── */
@@ -56,12 +49,16 @@ export function CampaignPublishersSection({ campaignId }: Props) {
   /* ── in-flight row ── */
   const [busy, setBusy] = useState<Busy>(null);
 
+  /* ── transient highlight for newly-added Selected rows ── */
+  const [flashId, setFlashId] = useState<string | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   /* ── filters ── */
   const [search, setSearch] = useState("");
   const [fState, setFState] = useState<string>("");
   const [fFrequency, setFFrequency] = useState<string>("");
   const [fFormat, setFFormat] = useState<string>("");
-  const [fCirc, setFCirc] = useState<CircKey>("Any");
+  const [fCirc, setFCirc] = useState<CircKey>(CIRC_ANY);
 
   /* ── initial load (catalog + attached in parallel) ── */
   const loadAll = useCallback(async () => {
@@ -86,6 +83,12 @@ export function CampaignPublishersSection({ campaignId }: Props) {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+    };
+  }, []);
 
   /* ── derived filter option lists (unique, sorted) ── */
   const stateOptions = useMemo(
@@ -127,9 +130,24 @@ export function CampaignPublishersSection({ campaignId }: Props) {
     [attached],
   );
 
+  const activeFilters = useMemo(() => {
+    const list: { label: string; clear: () => void }[] = [];
+    if (search.trim()) {
+      list.push({ label: `“${search.trim()}”`, clear: () => setSearch("") });
+    }
+    if (fState) list.push({ label: fState, clear: () => setFState("") });
+    if (fFrequency)
+      list.push({ label: fFrequency, clear: () => setFFrequency("") });
+    if (fFormat) list.push({ label: fFormat, clear: () => setFFormat("") });
+    if (fCirc !== CIRC_ANY)
+      list.push({ label: fCirc, clear: () => setFCirc(CIRC_ANY) });
+    return list;
+  }, [search, fState, fFrequency, fFormat, fCirc]);
+
   const filteredCatalog = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const bucket = CIRC_BUCKETS.find((b) => b.label === fCirc) ?? CIRC_BUCKETS[0];
+    const bucket =
+      CIRC_BUCKETS.find((b) => b.label === fCirc) ?? CIRC_BUCKETS[0];
     return catalog.filter((p) => {
       if (!p.isActive) return false;
       if (attachedIds.has(p.id)) return false;
@@ -153,12 +171,12 @@ export function CampaignPublishersSection({ campaignId }: Props) {
     });
   }, [catalog, attachedIds, search, fState, fFrequency, fFormat, fCirc]);
 
-  function clearFilters() {
+  function clearAllFilters() {
     setSearch("");
     setFState("");
     setFFrequency("");
     setFFormat("");
-    setFCirc("Any");
+    setFCirc(CIRC_ANY);
   }
 
   /* ── add / remove handlers (persist immediately; optimistic local update) ── */
@@ -167,7 +185,6 @@ export function CampaignPublishersSection({ campaignId }: Props) {
     setError(null);
     try {
       await api.addCampaignPublishers(campaignId, [p.id]);
-      // Reflect locally without a full refetch — shape matches CampaignPublisher.
       setAttached((prev) => [
         ...prev,
         {
@@ -186,6 +203,10 @@ export function CampaignPublishersSection({ campaignId }: Props) {
           geocodeStatus: p.geocodeStatus,
         },
       ]);
+      // Brief highlight on the just-added Selected row.
+      setFlashId(p.id);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlashId(null), 1200);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -197,7 +218,6 @@ export function CampaignPublishersSection({ campaignId }: Props) {
     const prev = attached;
     setBusy({ kind: "removing", publisherId });
     setError(null);
-    // Optimistic remove; revert on failure.
     setAttached((curr) => curr.filter((p) => p.id !== publisherId));
     try {
       await api.removeCampaignPublisher(campaignId, publisherId);
@@ -213,22 +233,26 @@ export function CampaignPublishersSection({ campaignId }: Props) {
     (p) => p.latitude != null && p.longitude != null,
   ).length;
 
+  /* ── chip helpers ── */
+  function chipsFor(p: { frequency: string | null; format: string | null }) {
+    return (
+      <>
+        {p.frequency && <span className="pub-chip">{p.frequency}</span>}
+        {p.format && (
+          <span className="pub-chip pub-chip-alt">{p.format}</span>
+        )}
+      </>
+    );
+  }
+
   /* ── render ── */
   return (
     <section className="card" style={{ marginTop: "1.5rem" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "1rem",
-          marginBottom: "0.75rem",
-        }}
-      >
+      <div className="pub-planner-header">
         <div>
           <h2 style={{ margin: 0 }}>Publishers</h2>
           <p className="muted small" style={{ margin: "0.25rem 0 0" }}>
-            {attached.length} attached · {mappable} on map
+            {attached.length} selected · {mappable} on map
             {attached.length > mappable &&
               ` (${attached.length - mappable} not geocoded)`}
           </p>
@@ -241,169 +265,15 @@ export function CampaignPublishersSection({ campaignId }: Props) {
         </p>
       )}
 
-      {/* ── Map preview ── */}
       <CampaignMapPreview publishers={attached} />
 
-      {/* ── Two-column planner body ── */}
-      <div className="pub-planner" style={{ marginTop: "1rem" }}>
-        {/* ── Catalog (left) ── */}
-        <div className="pub-planner-pane">
+      <div className="pub-planner pub-planner-flipped" style={{ marginTop: "1rem" }}>
+        {/* ── Selected (left, primary) ── */}
+        <div className="pub-planner-pane pub-planner-pane-primary">
           <div className="pub-planner-pane-header">
-            <h3 style={{ margin: 0, fontSize: "0.95rem" }}>Catalog</h3>
-            <span className="muted small">
-              {filteredCatalog.length} of {catalog.length}
-            </span>
-          </div>
-
-          <div className="pub-planner-filters">
-            <label className="q-filter-field">
-              <span className="small">Search</span>
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Name, city, state…"
-              />
-            </label>
-            <label className="q-filter-field">
-              <span className="small">State</span>
-              <select
-                value={fState}
-                onChange={(e) => setFState(e.target.value)}
-              >
-                <option value="">Any</option>
-                {stateOptions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="q-filter-field">
-              <span className="small">Frequency</span>
-              <select
-                value={fFrequency}
-                onChange={(e) => setFFrequency(e.target.value)}
-              >
-                <option value="">Any</option>
-                {frequencyOptions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="q-filter-field">
-              <span className="small">Type</span>
-              <select
-                value={fFormat}
-                onChange={(e) => setFFormat(e.target.value)}
-              >
-                <option value="">Any</option>
-                {formatOptions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="q-filter-field">
-              <span className="small">Circulation</span>
-              <select
-                value={fCirc}
-                onChange={(e) => setFCirc(e.target.value as CircKey)}
-              >
-                {CIRC_BUCKETS.map((b) => (
-                  <option key={b.label} value={b.label}>
-                    {b.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={clearFilters}
-              style={{ alignSelf: "end" }}
-            >
-              Clear
-            </button>
-          </div>
-
-          {catalogLoading && (
-            <p className="muted small">Loading publisher catalog…</p>
-          )}
-
-          {!catalogLoading && filteredCatalog.length === 0 && (
-            <p className="muted small" style={{ marginTop: "0.5rem" }}>
-              {catalog.length === 0
-                ? "No publishers in the catalog yet."
-                : "No publishers match the current filters."}
-            </p>
-          )}
-
-          {!catalogLoading && filteredCatalog.length > 0 && (
-            <div
-              className="table-wrap"
-              style={{ maxHeight: "22rem", overflowY: "auto" }}
-            >
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Location</th>
-                    <th>Freq.</th>
-                    <th>Circ.</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCatalog.map((p) => {
-                    const loc = [p.city, p.state].filter(Boolean).join(", ");
-                    const adding =
-                      busy?.kind === "adding" && busy.publisherId === p.id;
-                    return (
-                      <tr key={p.id}>
-                        <td>
-                          <div style={{ fontWeight: 500 }}>{p.name}</div>
-                          {p.parentCompany && (
-                            <span className="small muted">
-                              {p.parentCompany}
-                            </span>
-                          )}
-                        </td>
-                        <td className="small">{loc || "—"}</td>
-                        <td className="small">{p.frequency ?? "—"}</td>
-                        <td className="small" style={{ whiteSpace: "nowrap" }}>
-                          {p.circulation != null
-                            ? p.circulation.toLocaleString()
-                            : "—"}
-                        </td>
-                        <td style={{ whiteSpace: "nowrap" }}>
-                          <button
-                            type="button"
-                            className="btn primary"
-                            onClick={() => onAdd(p)}
-                            disabled={adding}
-                          >
-                            {adding ? "Adding…" : "Add"}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* ── Selected (right) ── */}
-        <div className="pub-planner-pane">
-          <div className="pub-planner-pane-header">
-            <h3 style={{ margin: 0, fontSize: "0.95rem" }}>Selected</h3>
-            <span className="muted small">
-              {attached.length} publisher{attached.length !== 1 ? "s" : ""}
+            <h3>Selected publishers</h3>
+            <span className="pub-count-pill">
+              {attached.length} selected
             </span>
           </div>
 
@@ -412,9 +282,13 @@ export function CampaignPublishersSection({ campaignId }: Props) {
           )}
 
           {!attachedLoading && attached.length === 0 && (
-            <p className="muted small" style={{ marginTop: "0.5rem" }}>
-              No publishers selected. Use the catalog to add some.
-            </p>
+            <div className="pub-empty">
+              <div className="pub-empty-title">Nothing selected yet</div>
+              <p className="muted small" style={{ margin: 0 }}>
+                Use the catalog on the right to add publishers to this
+                campaign. Added publishers appear here and on the map above.
+              </p>
+            </div>
           )}
 
           {!attachedLoading && attached.length > 0 && (
@@ -423,22 +297,36 @@ export function CampaignPublishersSection({ campaignId }: Props) {
                 const loc = [p.city, p.state].filter(Boolean).join(", ");
                 const removing =
                   busy?.kind === "removing" && busy.publisherId === p.id;
+                const geo = p.latitude != null && p.longitude != null;
+                const flashed = flashId === p.id;
                 return (
-                  <li key={p.id} className="pub-planner-selected-row">
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 500 }}>{p.name}</div>
-                      <div className="small muted">
+                  <li
+                    key={p.id}
+                    className={`pub-planner-selected-row${flashed ? " is-flashed" : ""}`}
+                  >
+                    <div className="pub-planner-selected-main">
+                      <div className="pub-planner-selected-name">
+                        <span
+                          className={`pub-geo-dot${geo ? " is-on" : ""}`}
+                          title={
+                            geo
+                              ? "Geocoded — shown on map"
+                              : "Not geocoded — will not appear on map"
+                          }
+                          aria-hidden="true"
+                        />
+                        <span>{p.name}</span>
+                      </div>
+                      <div className="pub-planner-selected-meta small muted">
                         {loc || "Location unknown"}
-                        {p.latitude == null || p.longitude == null
-                          ? " · not geocoded"
-                          : ""}
                       </div>
                     </div>
                     <button
                       type="button"
-                      className="btn ghost"
+                      className="btn btn-remove"
                       onClick={() => onRemove(p.id)}
                       disabled={removing}
+                      aria-label={`Remove ${p.name} from campaign`}
                     >
                       {removing ? "Removing…" : "Remove"}
                     </button>
@@ -446,6 +334,175 @@ export function CampaignPublishersSection({ campaignId }: Props) {
                 );
               })}
             </ul>
+          )}
+        </div>
+
+        {/* ── Catalog (right) ── */}
+        <div className="pub-planner-pane">
+          <div className="pub-planner-pane-header">
+            <h3>Publisher catalog</h3>
+            <span className="muted small">
+              {filteredCatalog.length} of{" "}
+              {catalog.filter((p) => p.isActive).length} available
+            </span>
+          </div>
+
+          <div className="pub-planner-search">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, city, or state…"
+              aria-label="Search publisher catalog"
+            />
+          </div>
+
+          <div className="pub-planner-filter-bar">
+            <select
+              value={fState}
+              onChange={(e) => setFState(e.target.value)}
+              aria-label="Filter by state"
+            >
+              <option value="">All states</option>
+              {stateOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select
+              value={fFrequency}
+              onChange={(e) => setFFrequency(e.target.value)}
+              aria-label="Filter by frequency"
+            >
+              <option value="">All frequencies</option>
+              {frequencyOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select
+              value={fFormat}
+              onChange={(e) => setFFormat(e.target.value)}
+              aria-label="Filter by publication type"
+            >
+              <option value="">All types</option>
+              {formatOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select
+              value={fCirc}
+              onChange={(e) => setFCirc(e.target.value as CircKey)}
+              aria-label="Filter by circulation"
+            >
+              {CIRC_BUCKETS.map((b) => (
+                <option key={b.label} value={b.label}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {activeFilters.length > 0 && (
+            <div className="pub-active-filters">
+              <span className="small muted">
+                {activeFilters.length} filter
+                {activeFilters.length !== 1 ? "s" : ""} applied:
+              </span>
+              {activeFilters.map((f, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="pub-filter-chip"
+                  onClick={f.clear}
+                  aria-label={`Remove filter ${f.label}`}
+                >
+                  {f.label}
+                  <span aria-hidden="true"> ×</span>
+                </button>
+              ))}
+              <button
+                type="button"
+                className="pub-clear-link"
+                onClick={clearAllFilters}
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+
+          {catalogLoading && (
+            <p className="muted small">Loading publisher catalog…</p>
+          )}
+
+          {!catalogLoading && filteredCatalog.length === 0 && (
+            <div className="pub-empty">
+              <div className="pub-empty-title">
+                {catalog.length === 0
+                  ? "No publishers in the catalog"
+                  : "No matches"}
+              </div>
+              <p className="muted small" style={{ margin: 0 }}>
+                {catalog.length === 0
+                  ? "Add publishers to the catalog to start planning campaigns."
+                  : activeFilters.length > 0
+                    ? "Try clearing some filters."
+                    : "Every active publisher is already attached."}
+              </p>
+            </div>
+          )}
+
+          {!catalogLoading && filteredCatalog.length > 0 && (
+            <div className="pub-catalog-list">
+              {filteredCatalog.map((p) => {
+                const loc = [p.city, p.state].filter(Boolean).join(", ");
+                const adding =
+                  busy?.kind === "adding" && busy.publisherId === p.id;
+                const geo = p.latitude != null && p.longitude != null;
+                return (
+                  <div key={p.id} className="pub-catalog-row">
+                    <div className="pub-catalog-main">
+                      <div className="pub-catalog-name">
+                        <span
+                          className={`pub-geo-dot${geo ? " is-on" : ""}`}
+                          title={
+                            geo
+                              ? "Geocoded"
+                              : "Not geocoded — won't appear on map"
+                          }
+                          aria-hidden="true"
+                        />
+                        <span>{p.name}</span>
+                      </div>
+                      <div className="pub-catalog-meta small muted">
+                        {loc || "Location unknown"}
+                        {p.circulation != null && (
+                          <>
+                            {" "}
+                            · {p.circulation.toLocaleString()} circ.
+                          </>
+                        )}
+                      </div>
+                      <div className="pub-catalog-chips">{chipsFor(p)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-add"
+                      onClick={() => onAdd(p)}
+                      disabled={adding}
+                      aria-label={`Add ${p.name} to campaign`}
+                      title={`Add ${p.name}`}
+                    >
+                      {adding ? "…" : "+"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

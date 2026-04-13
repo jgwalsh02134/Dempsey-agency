@@ -57,6 +57,43 @@ function AutoFit({ points }: { points: [number, number][] }) {
   return null;
 }
 
+function EmptyState({
+  title,
+  body,
+  height,
+}: {
+  title: string;
+  body: string;
+  height: string;
+}) {
+  return (
+    <div
+      className="pub-map-empty"
+      style={{ height }}
+      role="status"
+      aria-live="polite"
+    >
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        style={{ color: "var(--color-secondary, #64748b)" }}
+      >
+        <path d="M12 21s-7-7.58-7-12a7 7 0 1 1 14 0c0 4.42-7 12-7 12z" />
+        <circle cx="12" cy="9" r="2.5" />
+      </svg>
+      <div className="pub-map-empty-title">{title}</div>
+      <div className="pub-map-empty-body">{body}</div>
+    </div>
+  );
+}
+
 export function CampaignMapPreview({
   publishers,
   height = "22rem",
@@ -76,38 +113,39 @@ export function CampaignMapPreview({
   );
 
   if (mapped.length === 0) {
+    if (publishers.length === 0) {
+      return (
+        <EmptyState
+          title="No publishers selected"
+          body="Add publishers from the catalog to see them on the map."
+          height={height}
+        />
+      );
+    }
     return (
-      <div
-        style={{
-          height,
-          width: "100%",
-          borderRadius: "0.5rem",
-          border: "1px dashed var(--color-border, #e5e7eb)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--color-secondary, #64748b)",
-          background: "var(--color-surface, #f8fafc)",
-          fontSize: "0.9rem",
-        }}
-      >
-        {publishers.length === 0
-          ? "No publishers selected — add publishers from the catalog to see them on the map."
-          : "Selected publishers have no coordinates yet. Use Geocode on each publisher to place them on the map."}
-      </div>
+      <EmptyState
+        title="Selected publishers aren't on the map yet"
+        body={`${publishers.length} selected but missing coordinates — open each publisher and click Geocode to place them.`}
+        height={height}
+      />
     );
   }
 
+  const missing = publishers.length - mapped.length;
+
   return (
-    <div
-      style={{
-        height,
-        width: "100%",
-        borderRadius: "0.5rem",
-        overflow: "hidden",
-        border: "1px solid var(--color-border, #e5e7eb)",
-      }}
-    >
+    <div className="pub-map-wrap" style={{ height }}>
+      <div className="pub-map-count-badge" aria-hidden="true">
+        <strong>{mapped.length}</strong>
+        <span>
+          {mapped.length === 1 ? "publisher" : "publishers"} on map
+        </span>
+        {missing > 0 && (
+          <span className="pub-map-count-missing">
+            · {missing} not geocoded
+          </span>
+        )}
+      </div>
       <MapContainer
         center={points[0]}
         zoom={5}
