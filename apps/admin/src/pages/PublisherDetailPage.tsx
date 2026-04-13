@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { PublisherForm } from "../components/PublisherForm";
 import type {
   InventoryItem,
   MediaType,
@@ -36,6 +37,119 @@ function formatCents(cents: number | null): string {
   })}`;
 }
 
+/** Produce a diff-patched PublisherInput body by comparing form values
+ *  against the current publisher. Empty strings clear to null. */
+function buildPatchBody(
+  values: PublisherInput,
+  publisher: Publisher,
+): PublisherInput {
+  const stringFields: (keyof PublisherInput)[] = [
+    "name",
+    "parentCompany",
+    "publicationType",
+    "frequency",
+    "streetAddress",
+    "streetAddress2",
+    "city",
+    "state",
+    "zipCode",
+    "county",
+    "country",
+    "phone",
+    "officeHours",
+    "contactName",
+    "contactTitle",
+    "websiteUrl",
+    "logoUrl",
+    "rateCardUrl",
+    "mediaKitUrl",
+    "adSpecsUrl",
+    "generalEmail",
+    "transactionEmail",
+    "corporateEmail",
+    "editorialEmail",
+    "advertisingEmail",
+    "billingEmail",
+    "notes",
+  ];
+  const body: PublisherInput = {};
+  for (const key of stringFields) {
+    const raw = values[key];
+    if (raw === undefined) continue;
+    const trimmed = typeof raw === "string" ? raw.trim() : raw;
+    const normalized = trimmed === "" ? null : trimmed;
+    const current = (publisher as unknown as Record<string, unknown>)[key];
+    if (normalized !== current) {
+      (body as Record<string, unknown>)[key] = normalized;
+    }
+  }
+  if (values.circulation !== publisher.circulation) {
+    body.circulation =
+      values.circulation === undefined ? null : values.circulation;
+  }
+  if (values.yearEstablished !== publisher.yearEstablished) {
+    body.yearEstablished =
+      values.yearEstablished === undefined ? null : values.yearEstablished;
+  }
+  if (
+    values.isActive !== undefined &&
+    values.isActive !== publisher.isActive
+  ) {
+    body.isActive = values.isActive;
+  }
+  return body;
+}
+
+function publisherToFormValues(p: Publisher): PublisherInput {
+  return {
+    name: p.name,
+    parentCompany: p.parentCompany ?? "",
+    publicationType: p.publicationType ?? "",
+    frequency: p.frequency ?? "",
+    circulation: p.circulation,
+    yearEstablished: p.yearEstablished,
+    isActive: p.isActive,
+    streetAddress: p.streetAddress ?? "",
+    streetAddress2: p.streetAddress2 ?? "",
+    city: p.city ?? "",
+    state: p.state ?? "",
+    zipCode: p.zipCode ?? "",
+    county: p.county ?? "",
+    country: p.country ?? "",
+    phone: p.phone ?? "",
+    officeHours: p.officeHours ?? "",
+    contactName: p.contactName ?? "",
+    contactTitle: p.contactTitle ?? "",
+    websiteUrl: p.websiteUrl ?? "",
+    logoUrl: p.logoUrl ?? "",
+    rateCardUrl: p.rateCardUrl ?? "",
+    mediaKitUrl: p.mediaKitUrl ?? "",
+    adSpecsUrl: p.adSpecsUrl ?? "",
+    generalEmail: p.generalEmail ?? "",
+    transactionEmail: p.transactionEmail ?? "",
+    corporateEmail: p.corporateEmail ?? "",
+    editorialEmail: p.editorialEmail ?? "",
+    advertisingEmail: p.advertisingEmail ?? "",
+    billingEmail: p.billingEmail ?? "",
+    notes: p.notes ?? "",
+  };
+}
+
+/** Small helper to render an external link or an em-dash. */
+function ExternalLink({ url }: { url: string | null }) {
+  if (!url) return <>—</>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      {url.replace(/^https?:\/\//, "")}
+    </a>
+  );
+}
+
+function MailtoLink({ email }: { email: string | null }) {
+  if (!email) return <>—</>;
+  return <a href={`mailto:${email}`}>{email}</a>;
+}
+
 export function PublisherDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -49,7 +163,7 @@ export function PublisherDetailPage() {
   const [invLoading, setInvLoading] = useState(true);
   const [invError, setInvError] = useState<string | null>(null);
 
-  /* ── create state ── */
+  /* ── inventory create ── */
   const [cName, setCName] = useState("");
   const [cMediaType, setCMediaType] = useState<MediaType>("PRINT");
   const [cPricingModel, setCPricingModel] = useState<PricingModel>("FLAT");
@@ -59,17 +173,7 @@ export function PublisherDetailPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
-  /* ── publisher edit state ── */
-  const [pubEditOpen, setPubEditOpen] = useState(false);
-  const [pubForm, setPubForm] = useState<PublisherInput>({});
-  const [pubSaving, setPubSaving] = useState(false);
-  const [pubEditError, setPubEditError] = useState<string | null>(null);
-
-  /* ── geocode state ── */
-  const [geocoding, setGeocoding] = useState(false);
-  const [geocodeMsg, setGeocodeMsg] = useState<string | null>(null);
-
-  /* ── inventory edit state ── */
+  /* ── inventory edit ── */
   const [editId, setEditId] = useState<string | null>(null);
   const [eName, setEName] = useState("");
   const [eMediaType, setEMediaType] = useState<MediaType>("PRINT");
@@ -80,7 +184,16 @@ export function PublisherDetailPage() {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
-  /* ── load publisher ── */
+  /* ── publisher edit ── */
+  const [pubEditOpen, setPubEditOpen] = useState(false);
+  const [pubSaving, setPubSaving] = useState(false);
+  const [pubEditError, setPubEditError] = useState<string | null>(null);
+
+  /* ── geocode state ── */
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeMsg, setGeocodeMsg] = useState<string | null>(null);
+
+  /* ── load publisher (from list since there's no single-publisher GET) ── */
   useEffect(() => {
     if (!id) return;
     setPubLoading(true);
@@ -114,7 +227,48 @@ export function PublisherDetailPage() {
     void loadInventory();
   }, [loadInventory]);
 
-  /* ── create handler ── */
+  /* ── publisher edit handlers ── */
+  async function onSavePublisher(values: PublisherInput) {
+    if (!publisher) return;
+    setPubSaving(true);
+    setPubEditError(null);
+    try {
+      const body = buildPatchBody(values, publisher);
+      if (Object.keys(body).length === 0) {
+        setPubEditOpen(false);
+        return;
+      }
+      const updated = await api.patchPublisher(publisher.id, body);
+      setPublisher(updated);
+      setPubEditOpen(false);
+    } catch (err) {
+      setPubEditError(errorMessage(err));
+    } finally {
+      setPubSaving(false);
+    }
+  }
+
+  /* ── geocode handler ── */
+  async function onGeocode() {
+    if (!publisher) return;
+    setGeocoding(true);
+    setGeocodeMsg(null);
+    try {
+      const updated = await api.geocodePublisher(publisher.id);
+      setPublisher(updated);
+      setGeocodeMsg(
+        updated.latitude != null && updated.longitude != null
+          ? "Geocoded successfully."
+          : `Geocode status: ${updated.geocodeStatus ?? "unknown"}.`,
+      );
+    } catch (err) {
+      setGeocodeMsg(errorMessage(err));
+    } finally {
+      setGeocoding(false);
+    }
+  }
+
+  /* ── inventory CRUD handlers (unchanged behavior) ── */
   async function onCreate(e: FormEvent) {
     e.preventDefault();
     if (!id) return;
@@ -146,140 +300,6 @@ export function PublisherDetailPage() {
     }
   }
 
-  /* ── publisher edit handlers ── */
-  function openPubEdit() {
-    if (!publisher) return;
-    setPubForm({
-      name: publisher.name,
-      streetAddress: publisher.streetAddress ?? "",
-      city: publisher.city ?? "",
-      state: publisher.state ?? "",
-      zipCode: publisher.zipCode ?? "",
-      county: publisher.county ?? "",
-      country: publisher.country ?? "",
-      phone: publisher.phone ?? "",
-      frequency: publisher.frequency ?? "",
-      format: publisher.format ?? "",
-      circulation: publisher.circulation,
-      yearEstablished: publisher.yearEstablished,
-      officeHours: publisher.officeHours ?? "",
-      websiteUrl: publisher.websiteUrl ?? "",
-      generalEmail: publisher.generalEmail ?? "",
-      transactionEmail: publisher.transactionEmail ?? "",
-      corporateEmail: publisher.corporateEmail ?? "",
-      contactName: publisher.contactName ?? "",
-      parentCompany: publisher.parentCompany ?? "",
-      notes: publisher.notes ?? "",
-      isActive: publisher.isActive,
-    });
-    setPubEditError(null);
-    setPubEditOpen(true);
-  }
-
-  function cancelPubEdit() {
-    setPubEditOpen(false);
-    setPubEditError(null);
-  }
-
-  function updatePub<K extends keyof PublisherInput>(
-    key: K,
-    value: PublisherInput[K],
-  ) {
-    setPubForm((f) => ({ ...f, [key]: value }));
-  }
-
-  async function onSavePublisher(e: FormEvent) {
-    e.preventDefault();
-    if (!publisher) return;
-    setPubSaving(true);
-    setPubEditError(null);
-    try {
-      // Build a diff vs. the current publisher. Strings: trim; empty → null.
-      // Numbers: pass through; undefined means "unchanged".
-      const body: PublisherInput = {};
-      const stringFields: (keyof PublisherInput)[] = [
-        "name",
-        "streetAddress",
-        "city",
-        "state",
-        "zipCode",
-        "county",
-        "country",
-        "phone",
-        "frequency",
-        "format",
-        "officeHours",
-        "websiteUrl",
-        "generalEmail",
-        "transactionEmail",
-        "corporateEmail",
-        "contactName",
-        "parentCompany",
-        "notes",
-      ];
-      for (const key of stringFields) {
-        const raw = pubForm[key];
-        if (raw === undefined) continue;
-        const trimmed = typeof raw === "string" ? raw.trim() : raw;
-        const normalized = trimmed === "" ? null : trimmed;
-        const current = (publisher as unknown as Record<string, unknown>)[key];
-        if (normalized !== current) {
-          (body as Record<string, unknown>)[key] = normalized;
-        }
-      }
-      if (pubForm.circulation !== publisher.circulation) {
-        body.circulation =
-          pubForm.circulation === undefined ? null : pubForm.circulation;
-      }
-      if (pubForm.yearEstablished !== publisher.yearEstablished) {
-        body.yearEstablished =
-          pubForm.yearEstablished === undefined
-            ? null
-            : pubForm.yearEstablished;
-      }
-      if (
-        pubForm.isActive !== undefined &&
-        pubForm.isActive !== publisher.isActive
-      ) {
-        body.isActive = pubForm.isActive;
-      }
-
-      if (Object.keys(body).length === 0) {
-        setPubEditOpen(false);
-        return;
-      }
-
-      const updated = await api.patchPublisher(publisher.id, body);
-      setPublisher(updated);
-      setPubEditOpen(false);
-    } catch (err) {
-      setPubEditError(errorMessage(err));
-    } finally {
-      setPubSaving(false);
-    }
-  }
-
-  /* ── geocode handler ── */
-  async function onGeocode() {
-    if (!publisher) return;
-    setGeocoding(true);
-    setGeocodeMsg(null);
-    try {
-      const updated = await api.geocodePublisher(publisher.id);
-      setPublisher(updated);
-      setGeocodeMsg(
-        updated.latitude != null && updated.longitude != null
-          ? "Geocoded successfully."
-          : `Geocode status: ${updated.geocodeStatus ?? "unknown"}.`,
-      );
-    } catch (err) {
-      setGeocodeMsg(errorMessage(err));
-    } finally {
-      setGeocoding(false);
-    }
-  }
-
-  /* ── start inventory editing ── */
   function startEdit(item: InventoryItem) {
     setEditId(item.id);
     setEName(item.name);
@@ -298,7 +318,6 @@ export function PublisherDetailPage() {
     setEditError(null);
   }
 
-  /* ── save edit handler ── */
   async function onSaveEdit(e: FormEvent) {
     e.preventDefault();
     if (!editId) return;
@@ -366,7 +385,7 @@ export function PublisherDetailPage() {
         &larr; Back to publishers
       </Link>
 
-      {/* ── Publisher header ── */}
+      {/* ── Publisher header + categorized display / edit ── */}
       <section className="card">
         <div
           style={{
@@ -398,7 +417,10 @@ export function PublisherDetailPage() {
               <button
                 type="button"
                 className="btn ghost"
-                onClick={openPubEdit}
+                onClick={() => {
+                  setPubEditOpen(true);
+                  setPubEditError(null);
+                }}
               >
                 Edit
               </button>
@@ -426,6 +448,16 @@ export function PublisherDetailPage() {
                 <dd>{publisher.name}</dd>
                 <dt>Parent company</dt>
                 <dd>{publisher.parentCompany ?? "—"}</dd>
+                <dt>Publication type</dt>
+                <dd>{publisher.publicationType ?? "—"}</dd>
+                <dt>Frequency</dt>
+                <dd>{publisher.frequency ?? "—"}</dd>
+                <dt>Circulation</dt>
+                <dd>
+                  {publisher.circulation != null
+                    ? publisher.circulation.toLocaleString()
+                    : "—"}
+                </dd>
                 <dt>Year established</dt>
                 <dd>{publisher.yearEstablished ?? "—"}</dd>
                 <dt>Status</dt>
@@ -437,13 +469,15 @@ export function PublisherDetailPage() {
             <div className="pub-section">
               <h3>Location</h3>
               <dl className="pub-dl">
-                <dt>Street</dt>
+                <dt>Street 1</dt>
                 <dd>{publisher.streetAddress ?? "—"}</dd>
+                <dt>Street 2</dt>
+                <dd>{publisher.streetAddress2 ?? "—"}</dd>
                 <dt>City</dt>
                 <dd>{publisher.city ?? "—"}</dd>
-                <dt>State / Region</dt>
+                <dt>State</dt>
                 <dd>{publisher.state ?? "—"}</dd>
-                <dt>ZIP / Postal</dt>
+                <dt>ZIP</dt>
                 <dd>{publisher.zipCode ?? "—"}</dd>
                 <dt>County</dt>
                 <dd>{publisher.county ?? "—"}</dd>
@@ -458,91 +492,79 @@ export function PublisherDetailPage() {
               </dl>
             </div>
 
-            {/* Contact */}
+            {/* Contacts */}
             <div className="pub-section">
-              <h3>Contact</h3>
+              <h3>Contacts</h3>
               <dl className="pub-dl">
-                <dt>Phone</dt>
+                <dt>Main phone</dt>
                 <dd>{publisher.phone ?? "—"}</dd>
-                <dt>General email</dt>
-                <dd>
-                  {publisher.generalEmail ? (
-                    <a href={`mailto:${publisher.generalEmail}`}>
-                      {publisher.generalEmail}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
-                <dt>Corporate email</dt>
-                <dd>
-                  {publisher.corporateEmail ? (
-                    <a href={`mailto:${publisher.corporateEmail}`}>
-                      {publisher.corporateEmail}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
-                <dt>Transaction email</dt>
-                <dd>
-                  {publisher.transactionEmail ? (
-                    <a href={`mailto:${publisher.transactionEmail}`}>
-                      {publisher.transactionEmail}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
-              </dl>
-            </div>
-
-            {/* Digital */}
-            <div className="pub-section">
-              <h3>Digital</h3>
-              <dl className="pub-dl">
-                <dt>Website</dt>
-                <dd>
-                  {publisher.websiteUrl ? (
-                    <a
-                      href={publisher.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {publisher.websiteUrl}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
-              </dl>
-            </div>
-
-            {/* Publication */}
-            <div className="pub-section">
-              <h3>Publication</h3>
-              <dl className="pub-dl">
-                <dt>Frequency</dt>
-                <dd>{publisher.frequency ?? "—"}</dd>
-                <dt>Format</dt>
-                <dd>{publisher.format ?? "—"}</dd>
-                <dt>Circulation</dt>
-                <dd>
-                  {publisher.circulation != null
-                    ? publisher.circulation.toLocaleString()
-                    : "—"}
-                </dd>
-              </dl>
-            </div>
-
-            {/* Operations */}
-            <div className="pub-section">
-              <h3>Operations</h3>
-              <dl className="pub-dl">
                 <dt>Office hours</dt>
                 <dd>{publisher.officeHours ?? "—"}</dd>
                 <dt>Contact name</dt>
                 <dd>{publisher.contactName ?? "—"}</dd>
+                <dt>Contact title</dt>
+                <dd>{publisher.contactTitle ?? "—"}</dd>
+              </dl>
+            </div>
+
+            {/* Website & reference links */}
+            <div className="pub-section">
+              <h3>Website &amp; reference links</h3>
+              <dl className="pub-dl">
+                <dt>Website</dt>
+                <dd>
+                  <ExternalLink url={publisher.websiteUrl} />
+                </dd>
+                <dt>Rate card</dt>
+                <dd>
+                  <ExternalLink url={publisher.rateCardUrl} />
+                </dd>
+                <dt>Media kit</dt>
+                <dd>
+                  <ExternalLink url={publisher.mediaKitUrl} />
+                </dd>
+                <dt>Ad specs</dt>
+                <dd>
+                  <ExternalLink url={publisher.adSpecsUrl} />
+                </dd>
+              </dl>
+            </div>
+
+            {/* Emails */}
+            <div className="pub-section">
+              <h3>Emails</h3>
+              <dl className="pub-dl">
+                <dt>General</dt>
+                <dd>
+                  <MailtoLink email={publisher.generalEmail} />
+                </dd>
+                <dt>Advertising</dt>
+                <dd>
+                  <MailtoLink email={publisher.advertisingEmail} />
+                </dd>
+                <dt>Editorial</dt>
+                <dd>
+                  <MailtoLink email={publisher.editorialEmail} />
+                </dd>
+                <dt>Billing</dt>
+                <dd>
+                  <MailtoLink email={publisher.billingEmail} />
+                </dd>
+                <dt>Transactions</dt>
+                <dd>
+                  <MailtoLink email={publisher.transactionEmail} />
+                </dd>
+                <dt>Corporate</dt>
+                <dd>
+                  <MailtoLink email={publisher.corporateEmail} />
+                </dd>
+              </dl>
+            </div>
+
+            {/* Other */}
+            <div className="pub-section">
+              <h3>Other</h3>
+              <dl className="pub-dl">
                 <dt>Notes</dt>
                 <dd style={{ whiteSpace: "pre-wrap" }}>
                   {publisher.notes ?? "—"}
@@ -553,290 +575,19 @@ export function PublisherDetailPage() {
         )}
 
         {pubEditOpen && (
-          <form
-            onSubmit={onSavePublisher}
-            className="stack"
-            style={{ marginTop: "1rem" }}
-          >
-            {/* ── Identity ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Identity</legend>
-              <label className="field">
-                <span>Publisher name</span>
-                <input
-                  value={pubForm.name ?? ""}
-                  onChange={(e) => updatePub("name", e.target.value)}
-                  required
-                  maxLength={255}
-                />
-              </label>
-              <div className="two-col">
-                <label className="field">
-                  <span>Parent company (optional)</span>
-                  <input
-                    value={pubForm.parentCompany ?? ""}
-                    onChange={(e) =>
-                      updatePub("parentCompany", e.target.value)
-                    }
-                    maxLength={255}
-                  />
-                </label>
-                <label className="field">
-                  <span>Year established</span>
-                  <input
-                    type="number"
-                    value={
-                      pubForm.yearEstablished == null
-                        ? ""
-                        : String(pubForm.yearEstablished)
-                    }
-                    onChange={(e) =>
-                      updatePub(
-                        "yearEstablished",
-                        e.target.value === ""
-                          ? null
-                          : parseInt(e.target.value, 10),
-                      )
-                    }
-                    min="1500"
-                    max="2100"
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Status</span>
-                <select
-                  value={pubForm.isActive ? "true" : "false"}
-                  onChange={(e) =>
-                    updatePub("isActive", e.target.value === "true")
-                  }
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-              </label>
-            </fieldset>
-
-            {/* ── Location ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Location</legend>
-              <label className="field">
-                <span>Street address</span>
-                <input
-                  value={pubForm.streetAddress ?? ""}
-                  onChange={(e) => updatePub("streetAddress", e.target.value)}
-                  maxLength={255}
-                />
-              </label>
-              <div className="two-col">
-                <label className="field">
-                  <span>City</span>
-                  <input
-                    value={pubForm.city ?? ""}
-                    onChange={(e) => updatePub("city", e.target.value)}
-                    maxLength={100}
-                  />
-                </label>
-                <label className="field">
-                  <span>State / Region</span>
-                  <input
-                    value={pubForm.state ?? ""}
-                    onChange={(e) => updatePub("state", e.target.value)}
-                    maxLength={100}
-                  />
-                </label>
-              </div>
-              <div className="two-col">
-                <label className="field">
-                  <span>ZIP / Postal</span>
-                  <input
-                    value={pubForm.zipCode ?? ""}
-                    onChange={(e) => updatePub("zipCode", e.target.value)}
-                    maxLength={20}
-                  />
-                </label>
-                <label className="field">
-                  <span>County</span>
-                  <input
-                    value={pubForm.county ?? ""}
-                    onChange={(e) => updatePub("county", e.target.value)}
-                    maxLength={100}
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Country</span>
-                <input
-                  value={pubForm.country ?? ""}
-                  onChange={(e) => updatePub("country", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-            </fieldset>
-
-            {/* ── Contact ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Contact</legend>
-              <label className="field">
-                <span>Phone</span>
-                <input
-                  type="tel"
-                  value={pubForm.phone ?? ""}
-                  onChange={(e) => updatePub("phone", e.target.value)}
-                  maxLength={50}
-                />
-              </label>
-              <label className="field">
-                <span>General email</span>
-                <input
-                  type="email"
-                  value={pubForm.generalEmail ?? ""}
-                  onChange={(e) => updatePub("generalEmail", e.target.value)}
-                  placeholder="info@publisher.com"
-                />
-              </label>
-              <div className="two-col">
-                <label className="field">
-                  <span>Corporate email</span>
-                  <input
-                    type="email"
-                    value={pubForm.corporateEmail ?? ""}
-                    onChange={(e) =>
-                      updatePub("corporateEmail", e.target.value)
-                    }
-                    placeholder="corporate@publisher.com"
-                  />
-                </label>
-                <label className="field">
-                  <span>Transaction email</span>
-                  <input
-                    type="email"
-                    value={pubForm.transactionEmail ?? ""}
-                    onChange={(e) =>
-                      updatePub("transactionEmail", e.target.value)
-                    }
-                    placeholder="billing@publisher.com"
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            {/* ── Digital ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Digital</legend>
-              <label className="field">
-                <span>Website URL</span>
-                <input
-                  type="url"
-                  value={pubForm.websiteUrl ?? ""}
-                  onChange={(e) => updatePub("websiteUrl", e.target.value)}
-                  placeholder="https://www.publisher.com"
-                />
-              </label>
-            </fieldset>
-
-            {/* ── Publication ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Publication</legend>
-              <div className="two-col">
-                <label className="field">
-                  <span>Frequency</span>
-                  <input
-                    value={pubForm.frequency ?? ""}
-                    onChange={(e) => updatePub("frequency", e.target.value)}
-                    maxLength={100}
-                    placeholder="Daily / Weekly / Monthly"
-                  />
-                </label>
-                <label className="field">
-                  <span>Format (optional)</span>
-                  <input
-                    value={pubForm.format ?? ""}
-                    onChange={(e) => updatePub("format", e.target.value)}
-                    maxLength={100}
-                    placeholder="Broadsheet / Tabloid / Magazine / Digital"
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Circulation</span>
-                <input
-                  type="number"
-                  value={
-                    pubForm.circulation == null
-                      ? ""
-                      : String(pubForm.circulation)
-                  }
-                  onChange={(e) =>
-                    updatePub(
-                      "circulation",
-                      e.target.value === ""
-                        ? null
-                        : parseInt(e.target.value, 10),
-                    )
-                  }
-                  min="0"
-                />
-              </label>
-            </fieldset>
-
-            {/* ── Operations ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Operations</legend>
-              <div className="two-col">
-                <label className="field">
-                  <span>Office hours</span>
-                  <input
-                    value={pubForm.officeHours ?? ""}
-                    onChange={(e) => updatePub("officeHours", e.target.value)}
-                    maxLength={255}
-                    placeholder="Mon–Fri 9am–5pm"
-                  />
-                </label>
-                <label className="field">
-                  <span>Contact name (optional)</span>
-                  <input
-                    value={pubForm.contactName ?? ""}
-                    onChange={(e) => updatePub("contactName", e.target.value)}
-                    maxLength={255}
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Notes (optional)</span>
-                <textarea
-                  value={pubForm.notes ?? ""}
-                  onChange={(e) => updatePub("notes", e.target.value)}
-                  maxLength={2000}
-                  rows={3}
-                />
-              </label>
-            </fieldset>
-
-            {pubEditError && (
-              <p className="error" role="alert">
-                {pubEditError}
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button
-                type="submit"
-                className="btn primary"
-                disabled={pubSaving}
-              >
-                {pubSaving ? "Saving…" : "Save publisher"}
-              </button>
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={cancelPubEdit}
-                disabled={pubSaving}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+          <div style={{ marginTop: "1rem" }}>
+            <PublisherForm
+              initial={publisherToFormValues(publisher)}
+              submitLabel="Save publisher"
+              onSubmit={onSavePublisher}
+              onCancel={() => {
+                setPubEditOpen(false);
+                setPubEditError(null);
+              }}
+              submitting={pubSaving}
+              error={pubEditError}
+            />
+          </div>
         )}
       </section>
 
@@ -987,9 +738,7 @@ export function PublisherDetailPage() {
                               <select
                                 value={eMediaType}
                                 onChange={(e) =>
-                                  setEMediaType(
-                                    e.target.value as MediaType,
-                                  )
+                                  setEMediaType(e.target.value as MediaType)
                                 }
                               >
                                 {MEDIA_TYPES.map((t) => (
@@ -1086,9 +835,7 @@ export function PublisherDetailPage() {
                       <td>{item.mediaType}</td>
                       <td>{item.pricingModel}</td>
                       <td>{formatCents(item.rateCents)}</td>
-                      <td>
-                        {item.isActive ? "Active" : "Inactive"}
-                      </td>
+                      <td>{item.isActive ? "Active" : "Inactive"}</td>
                       <td>
                         <button
                           type="button"

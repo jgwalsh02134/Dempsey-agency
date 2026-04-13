@@ -132,32 +132,47 @@ export type PlacementStatus =
 
 export interface Publisher {
   id: string;
+  // Identity
   name: string;
+  parentCompany: string | null;
+  publicationType: string | null;
+  frequency: string | null;
+  circulation: number | null;
+  yearEstablished: number | null;
+  isActive: boolean;
+  // Location
   streetAddress: string | null;
+  streetAddress2: string | null;
   city: string | null;
   state: string | null;
   zipCode: string | null;
   county: string | null;
   country: string | null;
-  phone: string | null;
-  frequency: string | null;
-  format: string | null;
-  circulation: number | null;
-  yearEstablished: number | null;
-  officeHours: string | null;
-  websiteUrl: string | null;
-  logoUrl: string | null;
-  generalEmail: string | null;
-  transactionEmail: string | null;
-  corporateEmail: string | null;
-  contactName: string | null;
-  parentCompany: string | null;
-  notes: string | null;
   latitude: number | null;
   longitude: number | null;
   geocodeStatus: string | null;
   geocodedAt: string | null;
-  isActive: boolean;
+  // Contacts
+  phone: string | null;
+  officeHours: string | null;
+  contactName: string | null;
+  contactTitle: string | null;
+  // Website / reference links
+  websiteUrl: string | null;
+  logoUrl: string | null;
+  rateCardUrl: string | null;
+  mediaKitUrl: string | null;
+  adSpecsUrl: string | null;
+  // Emails
+  generalEmail: string | null;
+  transactionEmail: string | null;
+  corporateEmail: string | null;
+  editorialEmail: string | null;
+  advertisingEmail: string | null;
+  billingEmail: string | null;
+  // Other
+  notes: string | null;
+
   createdAt: string;
   updatedAt: string;
   _count?: { inventory: number };
@@ -187,28 +202,42 @@ export interface CampaignPublishersResponse {
 
 /** Writeable publisher fields — shared shape for create and update bodies. */
 export interface PublisherInput {
+  // Identity
   name?: string;
+  parentCompany?: string | null;
+  publicationType?: string | null;
+  frequency?: string | null;
+  circulation?: number | null;
+  yearEstablished?: number | null;
+  isActive?: boolean;
+  // Location
   streetAddress?: string | null;
+  streetAddress2?: string | null;
   city?: string | null;
   state?: string | null;
   zipCode?: string | null;
   county?: string | null;
   country?: string | null;
+  // Contacts
   phone?: string | null;
-  frequency?: string | null;
-  format?: string | null;
-  circulation?: number | null;
-  yearEstablished?: number | null;
   officeHours?: string | null;
+  contactName?: string | null;
+  contactTitle?: string | null;
+  // Website / reference links
   websiteUrl?: string | null;
   logoUrl?: string | null;
+  rateCardUrl?: string | null;
+  mediaKitUrl?: string | null;
+  adSpecsUrl?: string | null;
+  // Emails
   generalEmail?: string | null;
   transactionEmail?: string | null;
   corporateEmail?: string | null;
-  contactName?: string | null;
-  parentCompany?: string | null;
+  editorialEmail?: string | null;
+  advertisingEmail?: string | null;
+  billingEmail?: string | null;
+  // Other
   notes?: string | null;
-  isActive?: boolean;
 }
 
 export interface PublishersResponse {

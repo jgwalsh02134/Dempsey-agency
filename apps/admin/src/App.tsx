@@ -12,6 +12,7 @@ import { AgencyPage } from "./pages/AgencyPage";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PublisherDetailPage } from "./pages/PublisherDetailPage";
+import { PublisherNewPage } from "./pages/PublisherNewPage";
 import { PublishersPage } from "./pages/PublishersPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -51,6 +52,7 @@ export function App() {
         <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="campaigns/:id" element={<CampaignDetailPage />} />
         <Route path="publishers" element={<PublishersPage />} />
+        <Route path="publishers/new" element={<PublisherNewPage />} />
         <Route path="publishers/:id" element={<PublisherDetailPage />} />
         <Route path="creatives" element={<CreativesQueuePage />} />
         <Route path="access" element={<AccessPage />} />

@@ -306,6 +306,7 @@ export async function publisherRoutes(app: FastifyInstance) {
 
       const result = await geocodeAddress({
         streetAddress: publisher.streetAddress,
+        streetAddress2: publisher.streetAddress2,
         city: publisher.city,
         state: publisher.state,
         zipCode: publisher.zipCode,

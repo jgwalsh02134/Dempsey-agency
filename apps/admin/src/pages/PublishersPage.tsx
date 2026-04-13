@@ -1,6 +1,5 @@
 import {
   type ChangeEvent,
-  type FormEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -11,11 +10,7 @@ import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { parseCsvToObjects } from "../lib/csv";
-import type {
-  Publisher,
-  PublisherImportResult,
-  PublisherInput,
-} from "../types";
+import type { Publisher, PublisherImportResult } from "../types";
 
 function errorMessage(e: unknown): string {
   if (e instanceof ApiError) return e.message;
@@ -23,32 +18,44 @@ function errorMessage(e: unknown): string {
   return "Something went wrong";
 }
 
+/**
+ * Canonical CSV column set — grouped by the six publisher categories and
+ * strictly separated: URL fields and email fields never share a column.
+ */
 const IMPORT_COLUMNS = [
   // Identity
   "name",
   "parentCompany",
+  "publicationType",
+  "frequency",
+  "circulation",
   "yearEstablished",
   // Location
   "streetAddress",
+  "streetAddress2",
   "city",
   "state",
   "zipCode",
   "county",
   "country",
-  // Contact
+  // Contacts
   "phone",
-  "generalEmail",
-  "corporateEmail",
-  "transactionEmail",
-  // Digital
-  "websiteUrl",
-  // Publication
-  "frequency",
-  "format",
-  "circulation",
-  // Operations
   "officeHours",
   "contactName",
+  "contactTitle",
+  // Website / reference links (URLs)
+  "websiteUrl",
+  "rateCardUrl",
+  "mediaKitUrl",
+  "adSpecsUrl",
+  // Emails
+  "generalEmail",
+  "advertisingEmail",
+  "editorialEmail",
+  "billingEmail",
+  "transactionEmail",
+  "corporateEmail",
+  // Other
   "notes",
 ] as const;
 
@@ -60,28 +67,36 @@ function csvTemplateString(): string {
     // Identity
     "Boston Globe",
     "Boston Globe Media",
+    "Broadsheet",
+    "Daily",
+    "250000",
     "1872",
     // Location
     "1 Exchange Pl",
+    "Suite 100",
     "Boston",
     "MA",
     "02109",
     "Suffolk",
     "USA",
-    // Contact
+    // Contacts
     "617-555-1000",
-    "info@bostonglobe.com",
-    "corporate@bostonglobe.com",
-    "billing@bostonglobe.com",
-    // Digital
-    "https://www.bostonglobe.com",
-    // Publication
-    "Daily",
-    "Broadsheet",
-    "250000",
-    // Operations
     "Mon–Fri 9–5",
     "Ada Lovelace",
+    "Advertising Director",
+    // URLs
+    "https://www.bostonglobe.com",
+    "https://www.bostonglobe.com/rate-card.pdf",
+    "https://www.bostonglobe.com/media-kit.pdf",
+    "https://www.bostonglobe.com/ad-specs.pdf",
+    // Emails
+    "info@bostonglobe.com",
+    "ads@bostonglobe.com",
+    "editor@bostonglobe.com",
+    "billing@bostonglobe.com",
+    "transactions@bostonglobe.com",
+    "corporate@bostonglobe.com",
+    // Other
     "",
   ]
     .map((v) => (v.includes(",") ? `"${v}"` : v))
@@ -89,13 +104,6 @@ function csvTemplateString(): string {
   return `${header}\n${example}\n`;
 }
 
-/**
- * Convert a CSV row object into a payload the import endpoint accepts.
- * - Trims all strings.
- * - Drops empty strings (so the server treats them as "not provided").
- * - Coerces numeric columns.
- * - Ignores unknown columns.
- */
 function rowToPayload(row: Record<string, string>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const col of IMPORT_COLUMNS) {
@@ -123,12 +131,6 @@ export function PublishersPage() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<"" | "true" | "false">("");
 
-  /* ── create panel ── */
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<PublisherInput>({});
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-
   /* ── import panel ── */
   const [importOpen, setImportOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -143,7 +145,6 @@ export function PublishersPage() {
     PublisherImportResult | null
   >(null);
 
-  /* ── load publishers ── */
   const loadPublishers = useCallback(async () => {
     setLoading(true);
     setListError(null);
@@ -161,7 +162,6 @@ export function PublishersPage() {
     void loadPublishers();
   }, [loadPublishers]);
 
-  /* ── client-side filter (server already sorts by name) ── */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return publishers.filter((p) => {
@@ -175,6 +175,7 @@ export function PublishersPage() {
         p.county,
         p.country,
         p.parentCompany,
+        p.publicationType,
         p.generalEmail,
       ]
         .filter(Boolean)
@@ -186,63 +187,7 @@ export function PublishersPage() {
 
   const activeCount = publishers.filter((p) => p.isActive).length;
 
-  /* ── create handler ── */
-  function updateCreate<K extends keyof PublisherInput>(
-    key: K,
-    value: PublisherInput[K],
-  ) {
-    setCreateForm((f) => ({ ...f, [key]: value }));
-  }
-
-  function resetCreate() {
-    setCreateForm({});
-    setCreateError(null);
-  }
-
-  function openCreate() {
-    resetCreate();
-    setCreateOpen(true);
-  }
-
-  function closeCreate() {
-    setCreateOpen(false);
-    resetCreate();
-  }
-
-  async function onCreate(e: FormEvent) {
-    e.preventDefault();
-    const name = (createForm.name ?? "").trim();
-    if (!name) {
-      setCreateError("Name is required.");
-      return;
-    }
-    setCreateError(null);
-    setCreating(true);
-    try {
-      // Build payload: drop empty strings, pass through everything else.
-      const body: PublisherInput & { name: string } = { name };
-      for (const [k, v] of Object.entries(createForm)) {
-        if (k === "name") continue;
-        if (v === undefined || v === null) continue;
-        if (typeof v === "string") {
-          const trimmed = v.trim();
-          if (trimmed.length === 0) continue;
-          (body as unknown as Record<string, unknown>)[k] = trimmed;
-        } else {
-          (body as unknown as Record<string, unknown>)[k] = v;
-        }
-      }
-      await api.createPublisher(body);
-      closeCreate();
-      void loadPublishers();
-    } catch (err) {
-      setCreateError(errorMessage(err));
-    } finally {
-      setCreating(false);
-    }
-  }
-
-  /* ── import handlers ── */
+  /* ── CSV import handlers ── */
   function openImport() {
     setImportOpen(true);
     setImportHeaders([]);
@@ -318,7 +263,6 @@ export function PublishersPage() {
     URL.revokeObjectURL(url);
   }
 
-  /* ── render ── */
   return (
     <div>
       <div className="page-header">
@@ -350,337 +294,11 @@ export function PublishersPage() {
               Import CSV
             </button>
           )}
-          {!createOpen && (
-            <button
-              type="button"
-              className="btn primary"
-              onClick={openCreate}
-              disabled={loading}
-            >
-              + New Publisher
-            </button>
-          )}
+          <Link to="/publishers/new" className="btn primary">
+            + New Publisher
+          </Link>
         </div>
       </div>
-
-      {/* ── Create panel ── */}
-      {createOpen && (
-        <section
-          className="card"
-          style={{ marginBottom: "1rem" }}
-          aria-label="New publisher"
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "0.75rem",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: "1.05rem" }}>New Publisher</h2>
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={closeCreate}
-              disabled={creating}
-            >
-              Cancel
-            </button>
-          </div>
-          <form onSubmit={onCreate} className="stack">
-            {/* ── Identity ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Identity</legend>
-              <label className="field">
-                <span>Publisher name</span>
-                <input
-                  value={createForm.name ?? ""}
-                  onChange={(e) => updateCreate("name", e.target.value)}
-                  required
-                  maxLength={255}
-                  placeholder="e.g. Boston Globe"
-                  autoFocus
-                />
-              </label>
-              <div className="two-col">
-                <label className="field">
-                  <span>Parent company (optional)</span>
-                  <input
-                    value={createForm.parentCompany ?? ""}
-                    onChange={(e) =>
-                      updateCreate("parentCompany", e.target.value)
-                    }
-                    maxLength={255}
-                    placeholder="e.g. Boston Globe Media"
-                  />
-                </label>
-                <label className="field">
-                  <span>Year established</span>
-                  <input
-                    type="number"
-                    value={
-                      createForm.yearEstablished == null
-                        ? ""
-                        : String(createForm.yearEstablished)
-                    }
-                    onChange={(e) =>
-                      updateCreate(
-                        "yearEstablished",
-                        e.target.value === ""
-                          ? null
-                          : parseInt(e.target.value, 10),
-                      )
-                    }
-                    min="1500"
-                    max="2100"
-                    placeholder="e.g. 1872"
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            {/* ── Location ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Location</legend>
-              <label className="field">
-                <span>Street address</span>
-                <input
-                  value={createForm.streetAddress ?? ""}
-                  onChange={(e) =>
-                    updateCreate("streetAddress", e.target.value)
-                  }
-                  maxLength={255}
-                  placeholder="123 Main St"
-                />
-              </label>
-              <div className="two-col">
-                <label className="field">
-                  <span>City</span>
-                  <input
-                    value={createForm.city ?? ""}
-                    onChange={(e) => updateCreate("city", e.target.value)}
-                    maxLength={100}
-                    placeholder="Boston"
-                  />
-                </label>
-                <label className="field">
-                  <span>State / Region</span>
-                  <input
-                    value={createForm.state ?? ""}
-                    onChange={(e) => updateCreate("state", e.target.value)}
-                    maxLength={100}
-                    placeholder="MA"
-                  />
-                </label>
-              </div>
-              <div className="two-col">
-                <label className="field">
-                  <span>ZIP / Postal code</span>
-                  <input
-                    value={createForm.zipCode ?? ""}
-                    onChange={(e) => updateCreate("zipCode", e.target.value)}
-                    maxLength={20}
-                    placeholder="02109"
-                  />
-                </label>
-                <label className="field">
-                  <span>County</span>
-                  <input
-                    value={createForm.county ?? ""}
-                    onChange={(e) => updateCreate("county", e.target.value)}
-                    maxLength={100}
-                    placeholder="Suffolk"
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Country</span>
-                <input
-                  value={createForm.country ?? ""}
-                  onChange={(e) => updateCreate("country", e.target.value)}
-                  maxLength={100}
-                  placeholder="USA"
-                />
-              </label>
-            </fieldset>
-
-            {/* ── Contact ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Contact</legend>
-              <label className="field">
-                <span>Phone</span>
-                <input
-                  type="tel"
-                  value={createForm.phone ?? ""}
-                  onChange={(e) => updateCreate("phone", e.target.value)}
-                  maxLength={50}
-                  placeholder="617-555-1000"
-                />
-              </label>
-              <label className="field">
-                <span>General email</span>
-                <input
-                  type="email"
-                  value={createForm.generalEmail ?? ""}
-                  onChange={(e) =>
-                    updateCreate("generalEmail", e.target.value)
-                  }
-                  placeholder="info@publisher.com"
-                />
-              </label>
-              <div className="two-col">
-                <label className="field">
-                  <span>Corporate email</span>
-                  <input
-                    type="email"
-                    value={createForm.corporateEmail ?? ""}
-                    onChange={(e) =>
-                      updateCreate("corporateEmail", e.target.value)
-                    }
-                    placeholder="corporate@publisher.com"
-                  />
-                </label>
-                <label className="field">
-                  <span>Transaction email</span>
-                  <input
-                    type="email"
-                    value={createForm.transactionEmail ?? ""}
-                    onChange={(e) =>
-                      updateCreate("transactionEmail", e.target.value)
-                    }
-                    placeholder="billing@publisher.com"
-                  />
-                </label>
-              </div>
-            </fieldset>
-
-            {/* ── Digital ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Digital</legend>
-              <label className="field">
-                <span>Website URL</span>
-                <input
-                  type="url"
-                  value={createForm.websiteUrl ?? ""}
-                  onChange={(e) => updateCreate("websiteUrl", e.target.value)}
-                  placeholder="https://www.publisher.com"
-                />
-              </label>
-            </fieldset>
-
-            {/* ── Publication ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Publication</legend>
-              <div className="two-col">
-                <label className="field">
-                  <span>Frequency</span>
-                  <input
-                    value={createForm.frequency ?? ""}
-                    onChange={(e) =>
-                      updateCreate("frequency", e.target.value)
-                    }
-                    maxLength={100}
-                    placeholder="Daily / Weekly / Monthly"
-                  />
-                </label>
-                <label className="field">
-                  <span>Format (optional)</span>
-                  <input
-                    value={createForm.format ?? ""}
-                    onChange={(e) => updateCreate("format", e.target.value)}
-                    maxLength={100}
-                    placeholder="Broadsheet / Tabloid / Magazine / Digital"
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Circulation</span>
-                <input
-                  type="number"
-                  value={
-                    createForm.circulation == null
-                      ? ""
-                      : String(createForm.circulation)
-                  }
-                  onChange={(e) =>
-                    updateCreate(
-                      "circulation",
-                      e.target.value === ""
-                        ? null
-                        : parseInt(e.target.value, 10),
-                    )
-                  }
-                  min="0"
-                  placeholder="e.g. 250000"
-                />
-              </label>
-            </fieldset>
-
-            {/* ── Operations ── */}
-            <fieldset className="pub-fieldset">
-              <legend>Operations</legend>
-              <div className="two-col">
-                <label className="field">
-                  <span>Office hours</span>
-                  <input
-                    value={createForm.officeHours ?? ""}
-                    onChange={(e) =>
-                      updateCreate("officeHours", e.target.value)
-                    }
-                    maxLength={255}
-                    placeholder="Mon–Fri 9am–5pm"
-                  />
-                </label>
-                <label className="field">
-                  <span>Contact name (optional)</span>
-                  <input
-                    value={createForm.contactName ?? ""}
-                    onChange={(e) =>
-                      updateCreate("contactName", e.target.value)
-                    }
-                    maxLength={255}
-                    placeholder="Primary contact"
-                  />
-                </label>
-              </div>
-              <label className="field">
-                <span>Notes (optional)</span>
-                <textarea
-                  value={createForm.notes ?? ""}
-                  onChange={(e) => updateCreate("notes", e.target.value)}
-                  maxLength={2000}
-                  rows={3}
-                  placeholder="Internal notes, special instructions, relationships…"
-                />
-              </label>
-            </fieldset>
-
-            {createError && (
-              <p className="error" role="alert">
-                {createError}
-              </p>
-            )}
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <button
-                type="submit"
-                className="btn primary"
-                disabled={creating}
-              >
-                {creating ? "Creating…" : "Create publisher"}
-              </button>
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={closeCreate}
-                disabled={creating}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
 
       {/* ── Import panel ── */}
       {importOpen && (
@@ -713,7 +331,8 @@ export function PublishersPage() {
           <p className="muted small" style={{ marginTop: 0 }}>
             CSV must include a <code>name</code> column. Supported columns:{" "}
             {IMPORT_COLUMNS.join(", ")}. Duplicates are matched on
-            case-insensitive name + city + state and updated in place.
+            case-insensitive name + city + state and updated in place. URL
+            fields and email fields are kept strictly separate.
           </p>
 
           <div
@@ -789,7 +408,9 @@ export function PublishersPage() {
                   </tbody>
                 </table>
               </div>
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+              <div
+                style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}
+              >
                 <button
                   type="button"
                   className="btn primary"
@@ -867,7 +488,7 @@ export function PublishersPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name, city, state, parent…"
+            placeholder="Name, city, state, parent, type…"
           />
         </label>
         <label className="q-filter-field">
@@ -908,8 +529,8 @@ export function PublishersPage() {
               <tr>
                 <th>Name</th>
                 <th>Location</th>
+                <th>Type</th>
                 <th>Frequency</th>
-                <th>Format</th>
                 <th>Circulation</th>
                 <th>Email</th>
                 <th>Website</th>
@@ -940,8 +561,8 @@ export function PublishersPage() {
                       )}
                     </td>
                     <td className="small">{location || "—"}</td>
+                    <td className="small">{p.publicationType ?? "—"}</td>
                     <td className="small">{p.frequency ?? "—"}</td>
-                    <td className="small">{p.format ?? "—"}</td>
                     <td className="small" style={{ whiteSpace: "nowrap" }}>
                       {p.circulation != null
                         ? p.circulation.toLocaleString()

@@ -21,6 +21,7 @@ export interface GeocodeResult {
 
 interface AddressInput {
   streetAddress?: string | null;
+  streetAddress2?: string | null;
   city?: string | null;
   state?: string | null;
   zipCode?: string | null;
@@ -29,8 +30,12 @@ interface AddressInput {
 
 /** Build a single search query string from the publisher's address parts. */
 function buildQuery(addr: AddressInput): string | null {
+  const line1 = [addr.streetAddress, addr.streetAddress2]
+    .map((p) => (p ?? "").trim())
+    .filter((p) => p.length > 0)
+    .join(" ");
   const parts = [
-    addr.streetAddress,
+    line1,
     addr.city,
     addr.state,
     addr.zipCode,

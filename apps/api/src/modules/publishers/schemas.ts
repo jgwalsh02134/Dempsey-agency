@@ -60,28 +60,42 @@ const optInt = (min = 0, max = 2_147_483_647) =>
     .optional() as z.ZodType<number | undefined>;
 
 export const publisherFields = {
+  // Identity
   name: z.string().min(1).max(255),
+  parentCompany: optStr(255),
+  publicationType: optStr(100),
+  frequency: optStr(100),
+  circulation: optInt(0),
+  yearEstablished: optInt(1500, 2100),
+  isActive: z.boolean().default(true),
+  // Location
   streetAddress: optStr(255),
+  streetAddress2: optStr(255),
   city: optStr(100),
   state: optStr(100),
   zipCode: optStr(20),
   county: optStr(100),
   country: optStr(100),
+  // Contacts
   phone: optStr(50),
-  frequency: optStr(100),
-  format: optStr(100),
-  circulation: optInt(0),
-  yearEstablished: optInt(1500, 2100),
   officeHours: optStr(255),
+  contactName: optStr(255),
+  contactTitle: optStr(255),
+  // Website / reference links
   websiteUrl: optUrl(500),
   logoUrl: optUrl(500),
+  rateCardUrl: optUrl(500),
+  mediaKitUrl: optUrl(500),
+  adSpecsUrl: optUrl(500),
+  // Emails
   generalEmail: optEmail(255),
   transactionEmail: optEmail(255),
   corporateEmail: optEmail(255),
-  contactName: optStr(255),
-  parentCompany: optStr(255),
+  editorialEmail: optEmail(255),
+  advertisingEmail: optEmail(255),
+  billingEmail: optEmail(255),
+  // Other
   notes: optStr(2000),
-  isActive: z.boolean().default(true),
 };
 
 export const createPublisherSchema = z.object(publisherFields);
@@ -97,44 +111,55 @@ const nullableOptStr = (max: number) =>
     })
     .optional();
 
+const nullableOptUrl = (max: number) =>
+  z
+    .union([z.string().url().max(max), z.literal(""), z.null()])
+    .transform((v) => (v === "" ? null : v))
+    .optional();
+
+const nullableOptEmail = (max: number) =>
+  z
+    .union([z.string().email().max(max), z.literal(""), z.null()])
+    .transform((v) => (v === "" ? null : v))
+    .optional();
+
 export const updatePublisherSchema = z.object({
+  // Identity
   name: z.string().min(1).max(255).optional(),
+  parentCompany: nullableOptStr(255),
+  publicationType: nullableOptStr(100),
+  frequency: nullableOptStr(100),
+  circulation: z.number().int().min(0).nullable().optional(),
+  yearEstablished: z.number().int().min(1500).max(2100).nullable().optional(),
+  isActive: z.boolean().optional(),
+  // Location
   streetAddress: nullableOptStr(255),
+  streetAddress2: nullableOptStr(255),
   city: nullableOptStr(100),
   state: nullableOptStr(100),
   zipCode: nullableOptStr(20),
   county: nullableOptStr(100),
   country: nullableOptStr(100),
+  // Contacts
   phone: nullableOptStr(50),
-  frequency: nullableOptStr(100),
-  format: nullableOptStr(100),
-  circulation: z.number().int().min(0).nullable().optional(),
-  yearEstablished: z.number().int().min(1500).max(2100).nullable().optional(),
   officeHours: nullableOptStr(255),
-  websiteUrl: z
-    .union([z.string().url().max(500), z.literal(""), z.null()])
-    .transform((v) => (v === "" ? null : v))
-    .optional(),
-  logoUrl: z
-    .union([z.string().url().max(500), z.literal(""), z.null()])
-    .transform((v) => (v === "" ? null : v))
-    .optional(),
-  generalEmail: z
-    .union([z.string().email().max(255), z.literal(""), z.null()])
-    .transform((v) => (v === "" ? null : v))
-    .optional(),
-  transactionEmail: z
-    .union([z.string().email().max(255), z.literal(""), z.null()])
-    .transform((v) => (v === "" ? null : v))
-    .optional(),
-  corporateEmail: z
-    .union([z.string().email().max(255), z.literal(""), z.null()])
-    .transform((v) => (v === "" ? null : v))
-    .optional(),
   contactName: nullableOptStr(255),
-  parentCompany: nullableOptStr(255),
+  contactTitle: nullableOptStr(255),
+  // Website / reference links
+  websiteUrl: nullableOptUrl(500),
+  logoUrl: nullableOptUrl(500),
+  rateCardUrl: nullableOptUrl(500),
+  mediaKitUrl: nullableOptUrl(500),
+  adSpecsUrl: nullableOptUrl(500),
+  // Emails
+  generalEmail: nullableOptEmail(255),
+  transactionEmail: nullableOptEmail(255),
+  corporateEmail: nullableOptEmail(255),
+  editorialEmail: nullableOptEmail(255),
+  advertisingEmail: nullableOptEmail(255),
+  billingEmail: nullableOptEmail(255),
+  // Other
   notes: nullableOptStr(2000),
-  isActive: z.boolean().optional(),
 });
 
 /** Bulk import: array of row objects, same shape as create, all validated per-row by the route. */

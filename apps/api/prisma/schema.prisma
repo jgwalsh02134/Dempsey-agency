@@ -298,34 +298,49 @@ model PasswordReset {
 
 model Publisher {
   id               String   @id @default(cuid())
+  // Identity
   name             String
+  parentCompany    String?
+  publicationType  String?
+  frequency        String?
+  circulation      Int?
+  yearEstablished  Int?
+  isActive         Boolean  @default(true)
+  // Location
   streetAddress    String?
+  streetAddress2   String?
   city             String?
   state            String?
   zipCode          String?
   county           String?
   country          String?
+  latitude         Float?
+  longitude        Float?
+  geocodeStatus    String?   // OK | FAILED | NO_ADDRESS
+  geocodedAt       DateTime?
+  // Contacts
   phone            String?
-  frequency        String?
-  format           String?
-  circulation      Int?
-  yearEstablished  Int?
   officeHours      String?
+  contactName      String?
+  contactTitle     String?
+  // Website / reference links
   websiteUrl       String?
   logoUrl          String?
+  rateCardUrl      String?
+  mediaKitUrl      String?
+  adSpecsUrl       String?
+  // Emails
   generalEmail     String?
   transactionEmail String?
   corporateEmail   String?
-  contactName      String?
-  parentCompany    String?
+  editorialEmail   String?
+  advertisingEmail String?
+  billingEmail     String?
+  // Other
   notes            String?
-  latitude         Float?
-  longitude        Float?
-  geocodeStatus    String?   // PENDING | OK | FAILED | NO_ADDRESS
-  geocodedAt       DateTime?
-  isActive         Boolean   @default(true)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   inventory     Inventory[]
   campaignLinks CampaignPublisher[]
