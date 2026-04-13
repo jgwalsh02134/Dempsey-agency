@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -68,8 +68,18 @@ interface Props {
   publishers: CampaignMapPublisher[];
 }
 
-/** Subcomponent: fits the map to the marker bounds whenever the set changes. */
-function AutoFit({ points }: { points: [number, number][] }) {
+/**
+ * Fits the map to the marker bounds whenever the set changes, OR whenever
+ * `version` bumps (user tapped Recenter). Re-uses the same fit logic either
+ * way so manual recenter and automatic fit behave identically.
+ */
+function AutoFit({
+  points,
+  version,
+}: {
+  points: [number, number][];
+  version: number;
+}) {
   const map = useMap();
   useEffect(() => {
     if (points.length === 0) return;
@@ -79,7 +89,7 @@ function AutoFit({ points }: { points: [number, number][] }) {
     }
     const bounds = L.latLngBounds(points);
     map.fitBounds(bounds, { padding: [32, 32] });
-  }, [map, points]);
+  }, [map, points, version]);
   return null;
 }
 
@@ -96,6 +106,7 @@ function formatAddress(p: CampaignMapPublisher): string | null {
 export function CampaignMap({ publishers }: Props) {
   const isMobile = useIsMobile();
   const [mobileActive, setMobileActive] = useState(false);
+  const [fitVersion, setFitVersion] = useState(0);
 
   // When the viewport leaves the mobile breakpoint, reset the activation so
   // a later rotation back to portrait starts passive again.
@@ -148,11 +159,11 @@ export function CampaignMap({ publishers }: Props) {
         style={{ height: "100%", width: "100%" }}
       >
         <InteractionGate interactive={interactive} />
+        <AutoFit points={points} version={fitVersion} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <AutoFit points={points} />
         {mapped.map((p) => {
           const addr = formatAddress(p);
           const loc = [p.city, p.state].filter(Boolean).join(", ");
@@ -233,31 +244,51 @@ export function CampaignMap({ publishers }: Props) {
         </button>
       )}
 
-      {/* Mobile-only: release back to passive so the user can keep scrolling. */}
-      {isMobile && mobileActive && (
+      {/* Top-right control stack: Recenter (always) + Release (mobile+active).
+       *  z-index sits above the passive overlay so Recenter remains reachable. */}
+      <div
+        style={{
+          position: "absolute",
+          top: "0.5rem",
+          right: "0.5rem",
+          zIndex: 600,
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.35rem",
+          alignItems: "flex-end",
+        }}
+      >
         <button
           type="button"
-          onClick={() => setMobileActive(false)}
-          aria-label="Release map so the page can scroll"
-          style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.5rem",
-            zIndex: 500,
-            background: "rgba(17, 24, 39, 0.82)",
-            color: "white",
-            border: "none",
-            padding: "0.35rem 0.7rem",
-            borderRadius: "0.5rem",
-            fontSize: "0.8rem",
-            fontWeight: 500,
-            cursor: "pointer",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
-          }}
+          onClick={() => setFitVersion((v) => v + 1)}
+          aria-label="Recenter map on all publishers"
+          style={mapControlStyle}
         >
-          Release
+          Recenter
         </button>
-      )}
+        {isMobile && mobileActive && (
+          <button
+            type="button"
+            onClick={() => setMobileActive(false)}
+            aria-label="Release map so the page can scroll"
+            style={mapControlStyle}
+          >
+            Release
+          </button>
+        )}
+      </div>
     </div>
   );
 }
+
+const mapControlStyle: CSSProperties = {
+  background: "rgba(17, 24, 39, 0.82)",
+  color: "white",
+  border: "none",
+  padding: "0.35rem 0.7rem",
+  borderRadius: "0.5rem",
+  fontSize: "0.8rem",
+  fontWeight: 500,
+  cursor: "pointer",
+  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+};
