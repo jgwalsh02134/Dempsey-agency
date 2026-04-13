@@ -23,6 +23,8 @@ import type {
   OrgUsersResponse,
   Placement,
   Publisher,
+  PublisherImportResult,
+  PublisherInput,
   PublisherInventoryResponse,
   PublishersResponse,
   SessionUser,
@@ -315,19 +317,23 @@ export async function reviewCreative(
 
 // ── Publishers ──────────────────────────────────────────────────
 
-export async function fetchPublishers(): Promise<PublishersResponse> {
-  return apiFetch<PublishersResponse>("/api/v1/publishers");
+export async function fetchPublishers(filters?: {
+  q?: string;
+  isActive?: boolean;
+}): Promise<PublishersResponse> {
+  const params = new URLSearchParams();
+  if (filters?.q) params.set("q", filters.q);
+  if (filters?.isActive !== undefined)
+    params.set("isActive", String(filters.isActive));
+  const qs = params.toString();
+  return apiFetch<PublishersResponse>(
+    `/api/v1/publishers${qs ? `?${qs}` : ""}`,
+  );
 }
 
-export async function createPublisher(body: {
-  name: string;
-  city?: string;
-  state?: string;
-  websiteUrl?: string;
-  logoUrl?: string;
-  contactEmail?: string;
-  circulation?: number;
-}): Promise<Publisher> {
+export async function createPublisher(
+  body: PublisherInput & { name: string },
+): Promise<Publisher> {
   return apiFetch<Publisher>("/api/v1/publishers", {
     method: "POST",
     body: JSON.stringify(body),
@@ -336,12 +342,21 @@ export async function createPublisher(body: {
 
 export async function patchPublisher(
   id: string,
-  body: Record<string, unknown>,
+  body: PublisherInput,
 ): Promise<Publisher> {
   return apiFetch<Publisher>(
     `/api/v1/publishers/${encodeURIComponent(id)}`,
     { method: "PATCH", body: JSON.stringify(body) },
   );
+}
+
+export async function importPublishers(
+  rows: Record<string, unknown>[],
+): Promise<PublisherImportResult> {
+  return apiFetch<PublisherImportResult>("/api/v1/publishers/import", {
+    method: "POST",
+    body: JSON.stringify({ rows }),
+  });
 }
 
 export async function fetchPublisherInventory(

@@ -1,14 +1,24 @@
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { requireAuth } from "../../plugins/auth.js";
 import { requireRole } from "../../lib/rbac.js";
 import {
   publisherIdParamsSchema,
   createPublisherSchema,
   updatePublisherSchema,
+  importPublishersSchema,
   createInventorySchema,
   updateInventorySchema,
   inventoryIdParamsSchema,
 } from "./schemas.js";
+
+const listQuerySchema = z.object({
+  q: z.string().trim().max(200).optional(),
+  isActive: z
+    .union([z.literal("true"), z.literal("false")])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
+});
 
 export async function publisherRoutes(app: FastifyInstance) {
   // ── List publishers (agency staff+) ──────────────────────────
@@ -20,8 +30,22 @@ export async function publisherRoutes(app: FastifyInstance) {
         requireRole("AGENCY_OWNER", "AGENCY_ADMIN", "STAFF"),
       ],
     },
-    async () => {
+    async (request) => {
+      const { q, isActive } = listQuerySchema.parse(request.query);
+
+      const where: Record<string, unknown> = {};
+      if (isActive !== undefined) where.isActive = isActive;
+      if (q && q.length > 0) {
+        where.OR = [
+          { name: { contains: q, mode: "insensitive" } },
+          { city: { contains: q, mode: "insensitive" } },
+          { state: { contains: q, mode: "insensitive" } },
+          { parentCompany: { contains: q, mode: "insensitive" } },
+        ];
+      }
+
       const publishers = await app.prisma.publisher.findMany({
+        where,
         orderBy: { name: "asc" },
         include: { _count: { select: { inventory: true } } },
       });
@@ -33,10 +57,7 @@ export async function publisherRoutes(app: FastifyInstance) {
   app.post(
     "/publishers",
     {
-      preHandler: [
-        requireAuth,
-        requireRole("AGENCY_OWNER", "AGENCY_ADMIN"),
-      ],
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
     },
     async (request, reply) => {
       const parsed = createPublisherSchema.parse(request.body);
@@ -49,17 +70,12 @@ export async function publisherRoutes(app: FastifyInstance) {
   app.patch(
     "/publishers/:id",
     {
-      preHandler: [
-        requireAuth,
-        requireRole("AGENCY_OWNER", "AGENCY_ADMIN"),
-      ],
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
     },
     async (request, reply) => {
       const { id } = publisherIdParamsSchema.parse(request.params);
 
-      const existing = await app.prisma.publisher.findUnique({
-        where: { id },
-      });
+      const existing = await app.prisma.publisher.findUnique({ where: { id } });
       if (!existing) {
         return reply.code(404).send({ error: "Publisher not found" });
       }
@@ -79,6 +95,95 @@ export async function publisherRoutes(app: FastifyInstance) {
         data,
       });
       return updated;
+    },
+  );
+
+  // ── Bulk import publishers (agency admin+) ───────────────────
+  //
+  // Client parses CSV and POSTs { rows: [{...}, ...] }.
+  // Duplicate rule (v1): case-insensitive match on (name, city, state).
+  //   match → UPDATE existing (fills in nulls; does not overwrite isActive)
+  //   no match → CREATE
+  // Rows failing validation are skipped with row-level errors returned.
+  app.post(
+    "/publishers/import",
+    {
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
+    },
+    async (request, reply) => {
+      const { rows } = importPublishersSchema.parse(request.body);
+
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+      const errors: { row: number; message: string }[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const raw = rows[i];
+        const parsed = createPublisherSchema.safeParse(raw);
+        if (!parsed.success) {
+          skipped += 1;
+          const first = parsed.error.issues[0];
+          errors.push({
+            row: i + 1,
+            message: first
+              ? `${first.path.join(".") || "row"}: ${first.message}`
+              : "Invalid row",
+          });
+          continue;
+        }
+
+        const data = parsed.data;
+
+        // Duplicate match: case-insensitive (name, city, state).
+        const match = await app.prisma.publisher.findFirst({
+          where: {
+            name: { equals: data.name, mode: "insensitive" },
+            city: data.city
+              ? { equals: data.city, mode: "insensitive" }
+              : null,
+            state: data.state
+              ? { equals: data.state, mode: "insensitive" }
+              : null,
+          },
+          select: { id: true },
+        });
+
+        try {
+          if (match) {
+            // Merge-fill only: set fields that are provided; skip isActive
+            // to avoid accidentally reactivating disabled publishers.
+            const mergeData: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(data)) {
+              if (key === "isActive") continue;
+              if (value !== undefined) mergeData[key] = value;
+            }
+            await app.prisma.publisher.update({
+              where: { id: match.id },
+              data: mergeData,
+            });
+            updated += 1;
+          } else {
+            await app.prisma.publisher.create({ data });
+            created += 1;
+          }
+        } catch (err) {
+          skipped += 1;
+          errors.push({
+            row: i + 1,
+            message:
+              err instanceof Error ? err.message : "Failed to save row",
+          });
+        }
+      }
+
+      return reply.code(200).send({
+        total: rows.length,
+        created,
+        updated,
+        skipped,
+        errors,
+      });
     },
   );
 
@@ -114,10 +219,7 @@ export async function publisherRoutes(app: FastifyInstance) {
   app.post(
     "/publishers/:id/inventory",
     {
-      preHandler: [
-        requireAuth,
-        requireRole("AGENCY_OWNER", "AGENCY_ADMIN"),
-      ],
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
     },
     async (request, reply) => {
       const { id } = publisherIdParamsSchema.parse(request.params);
@@ -142,10 +244,7 @@ export async function publisherRoutes(app: FastifyInstance) {
   app.patch(
     "/inventory/:inventoryId",
     {
-      preHandler: [
-        requireAuth,
-        requireRole("AGENCY_OWNER", "AGENCY_ADMIN"),
-      ],
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
     },
     async (request, reply) => {
       const { inventoryId } = inventoryIdParamsSchema.parse(request.params);

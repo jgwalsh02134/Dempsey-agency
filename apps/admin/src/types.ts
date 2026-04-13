@@ -133,20 +133,66 @@ export type PlacementStatus =
 export interface Publisher {
   id: string;
   name: string;
+  streetAddress: string | null;
   city: string | null;
   state: string | null;
+  zipCode: string | null;
+  county: string | null;
+  country: string | null;
+  phone: string | null;
+  frequency: string | null;
+  circulation: number | null;
+  yearEstablished: number | null;
+  officeHours: string | null;
   websiteUrl: string | null;
   logoUrl: string | null;
-  contactEmail: string | null;
-  circulation: number | null;
+  generalEmail: string | null;
+  transactionEmail: string | null;
+  corporateEmail: string | null;
+  contactName: string | null;
+  parentCompany: string | null;
+  notes: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: { inventory: number };
 }
 
+/** Writeable publisher fields — shared shape for create and update bodies. */
+export interface PublisherInput {
+  name?: string;
+  streetAddress?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  county?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  frequency?: string | null;
+  circulation?: number | null;
+  yearEstablished?: number | null;
+  officeHours?: string | null;
+  websiteUrl?: string | null;
+  logoUrl?: string | null;
+  generalEmail?: string | null;
+  transactionEmail?: string | null;
+  corporateEmail?: string | null;
+  contactName?: string | null;
+  parentCompany?: string | null;
+  notes?: string | null;
+  isActive?: boolean;
+}
+
 export interface PublishersResponse {
   publishers: Publisher[];
+}
+
+export interface PublisherImportResult {
+  total: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: { row: number; message: string }[];
 }
 
 export interface InventoryItem {

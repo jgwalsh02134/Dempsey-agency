@@ -296,19 +296,35 @@ model PasswordReset {
 }
 
 model Publisher {
-  id           String   @id @default(cuid())
-  name         String
-  city         String?
-  state        String?
-  websiteUrl   String?
-  logoUrl      String?
-  contactEmail String?
-  circulation  Int?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String
+  streetAddress    String?
+  city             String?
+  state            String?
+  zipCode          String?
+  county           String?
+  country          String?
+  phone            String?
+  frequency        String?
+  circulation      Int?
+  yearEstablished  Int?
+  officeHours      String?
+  websiteUrl       String?
+  logoUrl          String?
+  generalEmail     String?
+  transactionEmail String?
+  corporateEmail   String?
+  contactName      String?
+  parentCompany    String?
+  notes            String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   inventory Inventory[]
+
+  @@index([name])
+  @@index([state, city])
 }
 
 model Inventory {

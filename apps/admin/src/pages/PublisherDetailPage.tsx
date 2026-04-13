@@ -2,7 +2,13 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import type { InventoryItem, MediaType, PricingModel, Publisher } from "../types";
+import type {
+  InventoryItem,
+  MediaType,
+  PricingModel,
+  Publisher,
+  PublisherInput,
+} from "../types";
 
 const MEDIA_TYPES: MediaType[] = ["PRINT", "DIGITAL", "EMAIL", "OTHER"];
 const PRICING_MODELS: PricingModel[] = [
@@ -53,7 +59,13 @@ export function PublisherDetailPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
-  /* ── edit state ── */
+  /* ── publisher edit state ── */
+  const [pubEditOpen, setPubEditOpen] = useState(false);
+  const [pubForm, setPubForm] = useState<PublisherInput>({});
+  const [pubSaving, setPubSaving] = useState(false);
+  const [pubEditError, setPubEditError] = useState<string | null>(null);
+
+  /* ── inventory edit state ── */
   const [editId, setEditId] = useState<string | null>(null);
   const [eName, setEName] = useState("");
   const [eMediaType, setEMediaType] = useState<MediaType>("PRINT");
@@ -130,7 +142,118 @@ export function PublisherDetailPage() {
     }
   }
 
-  /* ── start editing ── */
+  /* ── publisher edit handlers ── */
+  function openPubEdit() {
+    if (!publisher) return;
+    setPubForm({
+      name: publisher.name,
+      streetAddress: publisher.streetAddress ?? "",
+      city: publisher.city ?? "",
+      state: publisher.state ?? "",
+      zipCode: publisher.zipCode ?? "",
+      county: publisher.county ?? "",
+      country: publisher.country ?? "",
+      phone: publisher.phone ?? "",
+      frequency: publisher.frequency ?? "",
+      circulation: publisher.circulation,
+      yearEstablished: publisher.yearEstablished,
+      officeHours: publisher.officeHours ?? "",
+      websiteUrl: publisher.websiteUrl ?? "",
+      generalEmail: publisher.generalEmail ?? "",
+      transactionEmail: publisher.transactionEmail ?? "",
+      corporateEmail: publisher.corporateEmail ?? "",
+      contactName: publisher.contactName ?? "",
+      parentCompany: publisher.parentCompany ?? "",
+      notes: publisher.notes ?? "",
+      isActive: publisher.isActive,
+    });
+    setPubEditError(null);
+    setPubEditOpen(true);
+  }
+
+  function cancelPubEdit() {
+    setPubEditOpen(false);
+    setPubEditError(null);
+  }
+
+  function updatePub<K extends keyof PublisherInput>(
+    key: K,
+    value: PublisherInput[K],
+  ) {
+    setPubForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function onSavePublisher(e: FormEvent) {
+    e.preventDefault();
+    if (!publisher) return;
+    setPubSaving(true);
+    setPubEditError(null);
+    try {
+      // Build a diff vs. the current publisher. Strings: trim; empty → null.
+      // Numbers: pass through; undefined means "unchanged".
+      const body: PublisherInput = {};
+      const stringFields: (keyof PublisherInput)[] = [
+        "name",
+        "streetAddress",
+        "city",
+        "state",
+        "zipCode",
+        "county",
+        "country",
+        "phone",
+        "frequency",
+        "officeHours",
+        "websiteUrl",
+        "generalEmail",
+        "transactionEmail",
+        "corporateEmail",
+        "contactName",
+        "parentCompany",
+        "notes",
+      ];
+      for (const key of stringFields) {
+        const raw = pubForm[key];
+        if (raw === undefined) continue;
+        const trimmed = typeof raw === "string" ? raw.trim() : raw;
+        const normalized = trimmed === "" ? null : trimmed;
+        const current = (publisher as unknown as Record<string, unknown>)[key];
+        if (normalized !== current) {
+          (body as Record<string, unknown>)[key] = normalized;
+        }
+      }
+      if (pubForm.circulation !== publisher.circulation) {
+        body.circulation =
+          pubForm.circulation === undefined ? null : pubForm.circulation;
+      }
+      if (pubForm.yearEstablished !== publisher.yearEstablished) {
+        body.yearEstablished =
+          pubForm.yearEstablished === undefined
+            ? null
+            : pubForm.yearEstablished;
+      }
+      if (
+        pubForm.isActive !== undefined &&
+        pubForm.isActive !== publisher.isActive
+      ) {
+        body.isActive = pubForm.isActive;
+      }
+
+      if (Object.keys(body).length === 0) {
+        setPubEditOpen(false);
+        return;
+      }
+
+      const updated = await api.patchPublisher(publisher.id, body);
+      setPublisher(updated);
+      setPubEditOpen(false);
+    } catch (err) {
+      setPubEditError(errorMessage(err));
+    } finally {
+      setPubSaving(false);
+    }
+  }
+
+  /* ── start inventory editing ── */
   function startEdit(item: InventoryItem) {
     setEditId(item.id);
     setEName(item.name);
@@ -219,54 +342,417 @@ export function PublisherDetailPage() {
 
       {/* ── Publisher header ── */}
       <section className="card">
-        <h1>{publisher.name}</h1>
         <div
           style={{
             display: "flex",
-            flexWrap: "wrap",
-            gap: "1.5rem",
-            marginTop: "0.75rem",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "1rem",
           }}
         >
           <div>
-            <span className="small muted">Location</span>
+            <h1 style={{ margin: 0 }}>{publisher.name}</h1>
+            {publisher.parentCompany && (
+              <p className="muted small" style={{ margin: "0.25rem 0 0" }}>
+                {publisher.parentCompany}
+              </p>
+            )}
+          </div>
+          {!pubEditOpen && (
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={openPubEdit}
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {!pubEditOpen && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "1rem 1.5rem",
+              marginTop: "1rem",
+            }}
+          >
             <div>
-              {publisher.city || publisher.state
-                ? `${publisher.city ?? ""}${publisher.city && publisher.state ? ", " : ""}${publisher.state ?? ""}`
-                : "—"}
+              <span className="small muted">Address</span>
+              <div className="small">
+                {publisher.streetAddress ?? "—"}
+                {(publisher.city || publisher.state || publisher.zipCode) && (
+                  <>
+                    <br />
+                    {[publisher.city, publisher.state]
+                      .filter(Boolean)
+                      .join(", ")}
+                    {publisher.zipCode ? ` ${publisher.zipCode}` : ""}
+                  </>
+                )}
+                {publisher.country && (
+                  <>
+                    <br />
+                    {publisher.country}
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-          <div>
-            <span className="small muted">Contact</span>
-            <div>{publisher.contactEmail ?? "—"}</div>
-          </div>
-          <div>
-            <span className="small muted">Circulation</span>
             <div>
-              {publisher.circulation != null
-                ? publisher.circulation.toLocaleString()
-                : "—"}
+              <span className="small muted">County</span>
+              <div>{publisher.county ?? "—"}</div>
             </div>
-          </div>
-          <div>
-            <span className="small muted">Status</span>
-            <div>{publisher.isActive ? "Active" : "Inactive"}</div>
-          </div>
-          {publisher.websiteUrl && (
+            <div>
+              <span className="small muted">Phone</span>
+              <div>{publisher.phone ?? "—"}</div>
+            </div>
+            <div>
+              <span className="small muted">Office hours</span>
+              <div>{publisher.officeHours ?? "—"}</div>
+            </div>
+            <div>
+              <span className="small muted">Frequency</span>
+              <div>{publisher.frequency ?? "—"}</div>
+            </div>
+            <div>
+              <span className="small muted">Circulation</span>
+              <div>
+                {publisher.circulation != null
+                  ? publisher.circulation.toLocaleString()
+                  : "—"}
+              </div>
+            </div>
+            <div>
+              <span className="small muted">Year established</span>
+              <div>{publisher.yearEstablished ?? "—"}</div>
+            </div>
+            <div>
+              <span className="small muted">Contact</span>
+              <div>{publisher.contactName ?? "—"}</div>
+            </div>
+            <div>
+              <span className="small muted">General email</span>
+              <div>
+                {publisher.generalEmail ? (
+                  <a href={`mailto:${publisher.generalEmail}`}>
+                    {publisher.generalEmail}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="small muted">Transaction email</span>
+              <div>
+                {publisher.transactionEmail ? (
+                  <a href={`mailto:${publisher.transactionEmail}`}>
+                    {publisher.transactionEmail}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="small muted">Corporate email</span>
+              <div>
+                {publisher.corporateEmail ? (
+                  <a href={`mailto:${publisher.corporateEmail}`}>
+                    {publisher.corporateEmail}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
             <div>
               <span className="small muted">Website</span>
               <div>
-                <a
-                  href={publisher.websiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {publisher.websiteUrl}
-                </a>
+                {publisher.websiteUrl ? (
+                  <a
+                    href={publisher.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {publisher.websiteUrl}
+                  </a>
+                ) : (
+                  "—"
+                )}
               </div>
             </div>
-          )}
-        </div>
+            <div>
+              <span className="small muted">Status</span>
+              <div>{publisher.isActive ? "Active" : "Inactive"}</div>
+            </div>
+          </div>
+        )}
+
+        {!pubEditOpen && publisher.notes && (
+          <div style={{ marginTop: "1rem" }}>
+            <span className="small muted">Notes</span>
+            <p style={{ margin: "0.25rem 0 0", whiteSpace: "pre-wrap" }}>
+              {publisher.notes}
+            </p>
+          </div>
+        )}
+
+        {pubEditOpen && (
+          <form
+            onSubmit={onSavePublisher}
+            className="stack"
+            style={{ marginTop: "1rem" }}
+          >
+            <label className="field">
+              <span>Name</span>
+              <input
+                value={pubForm.name ?? ""}
+                onChange={(e) => updatePub("name", e.target.value)}
+                required
+                maxLength={255}
+              />
+            </label>
+
+            <div className="two-col">
+              <label className="field">
+                <span>Parent company</span>
+                <input
+                  value={pubForm.parentCompany ?? ""}
+                  onChange={(e) => updatePub("parentCompany", e.target.value)}
+                  maxLength={255}
+                />
+              </label>
+              <label className="field">
+                <span>Contact name</span>
+                <input
+                  value={pubForm.contactName ?? ""}
+                  onChange={(e) => updatePub("contactName", e.target.value)}
+                  maxLength={255}
+                />
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Street address</span>
+              <input
+                value={pubForm.streetAddress ?? ""}
+                onChange={(e) => updatePub("streetAddress", e.target.value)}
+                maxLength={255}
+              />
+            </label>
+
+            <div className="two-col">
+              <label className="field">
+                <span>City</span>
+                <input
+                  value={pubForm.city ?? ""}
+                  onChange={(e) => updatePub("city", e.target.value)}
+                  maxLength={100}
+                />
+              </label>
+              <label className="field">
+                <span>State / Region</span>
+                <input
+                  value={pubForm.state ?? ""}
+                  onChange={(e) => updatePub("state", e.target.value)}
+                  maxLength={100}
+                />
+              </label>
+            </div>
+
+            <div className="two-col">
+              <label className="field">
+                <span>ZIP / Postal</span>
+                <input
+                  value={pubForm.zipCode ?? ""}
+                  onChange={(e) => updatePub("zipCode", e.target.value)}
+                  maxLength={20}
+                />
+              </label>
+              <label className="field">
+                <span>County</span>
+                <input
+                  value={pubForm.county ?? ""}
+                  onChange={(e) => updatePub("county", e.target.value)}
+                  maxLength={100}
+                />
+              </label>
+            </div>
+
+            <div className="two-col">
+              <label className="field">
+                <span>Country</span>
+                <input
+                  value={pubForm.country ?? ""}
+                  onChange={(e) => updatePub("country", e.target.value)}
+                  maxLength={100}
+                />
+              </label>
+              <label className="field">
+                <span>Phone</span>
+                <input
+                  value={pubForm.phone ?? ""}
+                  onChange={(e) => updatePub("phone", e.target.value)}
+                  maxLength={50}
+                />
+              </label>
+            </div>
+
+            <div className="two-col">
+              <label className="field">
+                <span>Frequency</span>
+                <input
+                  value={pubForm.frequency ?? ""}
+                  onChange={(e) => updatePub("frequency", e.target.value)}
+                  maxLength={100}
+                />
+              </label>
+              <label className="field">
+                <span>Circulation</span>
+                <input
+                  type="number"
+                  value={
+                    pubForm.circulation == null
+                      ? ""
+                      : String(pubForm.circulation)
+                  }
+                  onChange={(e) =>
+                    updatePub(
+                      "circulation",
+                      e.target.value === ""
+                        ? null
+                        : parseInt(e.target.value, 10),
+                    )
+                  }
+                  min="0"
+                />
+              </label>
+            </div>
+
+            <div className="two-col">
+              <label className="field">
+                <span>Year established</span>
+                <input
+                  type="number"
+                  value={
+                    pubForm.yearEstablished == null
+                      ? ""
+                      : String(pubForm.yearEstablished)
+                  }
+                  onChange={(e) =>
+                    updatePub(
+                      "yearEstablished",
+                      e.target.value === ""
+                        ? null
+                        : parseInt(e.target.value, 10),
+                    )
+                  }
+                  min="1500"
+                  max="2100"
+                />
+              </label>
+              <label className="field">
+                <span>Office hours</span>
+                <input
+                  value={pubForm.officeHours ?? ""}
+                  onChange={(e) => updatePub("officeHours", e.target.value)}
+                  maxLength={255}
+                />
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Website</span>
+              <input
+                type="url"
+                value={pubForm.websiteUrl ?? ""}
+                onChange={(e) => updatePub("websiteUrl", e.target.value)}
+              />
+            </label>
+
+            <div className="two-col">
+              <label className="field">
+                <span>General email</span>
+                <input
+                  type="email"
+                  value={pubForm.generalEmail ?? ""}
+                  onChange={(e) => updatePub("generalEmail", e.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span>Transaction email</span>
+                <input
+                  type="email"
+                  value={pubForm.transactionEmail ?? ""}
+                  onChange={(e) =>
+                    updatePub("transactionEmail", e.target.value)
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="two-col">
+              <label className="field">
+                <span>Corporate email</span>
+                <input
+                  type="email"
+                  value={pubForm.corporateEmail ?? ""}
+                  onChange={(e) =>
+                    updatePub("corporateEmail", e.target.value)
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Status</span>
+                <select
+                  value={pubForm.isActive ? "true" : "false"}
+                  onChange={(e) =>
+                    updatePub("isActive", e.target.value === "true")
+                  }
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Notes</span>
+              <textarea
+                value={pubForm.notes ?? ""}
+                onChange={(e) => updatePub("notes", e.target.value)}
+                maxLength={2000}
+                rows={3}
+              />
+            </label>
+
+            {pubEditError && (
+              <p className="error" role="alert">
+                {pubEditError}
+              </p>
+            )}
+
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={pubSaving}
+              >
+                {pubSaving ? "Saving…" : "Save publisher"}
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={cancelPubEdit}
+                disabled={pubSaving}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
       {/* ── Create inventory form ── */}
