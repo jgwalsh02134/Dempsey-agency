@@ -6,6 +6,7 @@ import type {
   Campaign,
   CreativeSubmission,
   CampaignStatus,
+  Placement,
   SubmissionStatus,
 } from "../types";
 
@@ -45,6 +46,14 @@ function formatDate(iso: string): string {
   });
 }
 
+function formatCents(cents: number | null): string {
+  if (cents == null) return "—";
+  return `$${(cents / 100).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+}
+
 export function DashboardPage() {
   const { session } = useAuth();
 
@@ -55,6 +64,9 @@ export function DashboardPage() {
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [allSubs, setAllSubs] = useState<CreativeSubmission[]>([]);
+  const [placementsByCampaign, setPlacementsByCampaign] = useState<
+    Record<string, Placement[]>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,15 +80,38 @@ export function DashboardPage() {
         if (cancelled) return;
         setCampaigns(campRes.campaigns);
 
-        const subResults = await Promise.all(
-          campRes.campaigns.map((c) =>
-            api
-              .fetchCampaignSubmissions(c.id)
-              .catch(() => ({ campaignId: c.id, submissions: [] as CreativeSubmission[] })),
+        // Fetch submissions and placements in parallel, per campaign.
+        // Each individual failure is swallowed so one bad campaign doesn't
+        // blank the whole dashboard.
+        const [subResults, placementResults] = await Promise.all([
+          Promise.all(
+            campRes.campaigns.map((c) =>
+              api
+                .fetchCampaignSubmissions(c.id)
+                .catch(() => ({
+                  campaignId: c.id,
+                  submissions: [] as CreativeSubmission[],
+                })),
+            ),
           ),
-        );
+          Promise.all(
+            campRes.campaigns.map((c) =>
+              api
+                .fetchCampaignPlacements(c.id)
+                .catch(() => ({
+                  campaignId: c.id,
+                  placements: [] as Placement[],
+                })),
+            ),
+          ),
+        ]);
         if (cancelled) return;
         setAllSubs(subResults.flatMap((r) => r.submissions));
+        setPlacementsByCampaign(
+          Object.fromEntries(
+            placementResults.map((r) => [r.campaignId, r.placements]),
+          ),
+        );
       } catch {
         /* best effort */
       } finally {
@@ -105,6 +140,14 @@ export function DashboardPage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
+  // Attention list: most recent action-needed submissions first.
+  const attentionItems = [...needsAttention].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  const attentionShown = attentionItems.slice(0, 5);
+
+  const campaignTitleById = new Map(campaigns.map((c) => [c.id, c.title]));
+
   return (
     <>
       <section className="section-welcome">
@@ -113,6 +156,63 @@ export function DashboardPage() {
           Here is a summary of your campaigns and creative activity.
         </p>
       </section>
+
+      {/* ── Attention Required (only when there are client-actionable items) ── */}
+      {!loading && attentionShown.length > 0 && (
+        <section
+          className="section-block"
+          style={{
+            borderLeft: "3px solid #dc2626",
+            paddingLeft: "0.9rem",
+          }}
+          aria-label="Items that need your attention"
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 className="section-heading" style={{ margin: 0 }}>
+              Needs your attention
+            </h2>
+            <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+              {attentionItems.length} submission
+              {attentionItems.length === 1 ? "" : "s"} waiting on you
+            </span>
+          </div>
+          <ul className="dash-activity" style={{ marginTop: "0.65rem" }}>
+            {attentionShown.map((s) => {
+              const campTitle = campaignTitleById.get(s.campaignId) ?? "—";
+              const nextStep =
+                s.status === "VALIDATION_FAILED"
+                  ? "Fix validation issues and re-upload"
+                  : "Upload a corrected file";
+              return (
+                <li key={s.id} className="dash-activity-row">
+                  <div className="dash-activity-info">
+                    <span className="dash-activity-title">{s.title}</span>
+                    <span className="dash-activity-meta">
+                      {campTitle} · {nextStep}
+                    </span>
+                  </div>
+                  <span className={SUB_STATUS_BADGE[s.status]}>
+                    {SUB_STATUS_LABEL[s.status]}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <Link to="/creatives" className="dash-view-all">
+            {attentionItems.length > attentionShown.length
+              ? `View all ${attentionItems.length} items →`
+              : "Upload creative →"}
+          </Link>
+        </section>
+      )}
 
       {/* ── KPI Cards ── */}
       <div className="dash-kpi-grid">
@@ -163,11 +263,17 @@ export function DashboardPage() {
               const campApproved = campSubs.filter(
                 (s) => s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED",
               ).length;
+              const campAttention = campSubs.filter(
+                (s) =>
+                  s.status === "VALIDATION_FAILED" ||
+                  s.status === "NEEDS_RESIZING",
+              ).length;
               const campPending = campSubs.filter(
                 (s) =>
                   s.status === "UPLOADED" || s.status === "UNDER_REVIEW" ||
                   s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
               ).length;
+              const campPlacements = placementsByCampaign[c.id] ?? [];
 
               return (
                 <Link
@@ -186,6 +292,27 @@ export function DashboardPage() {
                     {c.description && (
                       <p className="dash-camp-desc">{c.description}</p>
                     )}
+                    <div
+                      className="dash-activity-meta"
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.4rem 0.75rem",
+                        marginTop: "0.4rem",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      {c.budgetCents != null && (
+                        <span>Budget {formatCents(c.budgetCents)}</span>
+                      )}
+                      {c.endDate && (
+                        <span>Ends {formatDate(c.endDate)}</span>
+                      )}
+                      <span>
+                        {campPlacements.length} placement
+                        {campPlacements.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
                     <div className="dash-camp-stats">
                       <span>{campSubs.length} creative{campSubs.length !== 1 ? "s" : ""}</span>
                       {campApproved > 0 && (
@@ -193,6 +320,11 @@ export function DashboardPage() {
                       )}
                       {campPending > 0 && (
                         <span className="dash-stat-pending">{campPending} pending</span>
+                      )}
+                      {campAttention > 0 && (
+                        <span className="report-badge badge-overdue">
+                          {campAttention} need attention
+                        </span>
                       )}
                     </div>
                   </div>
