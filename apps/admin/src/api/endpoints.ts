@@ -464,6 +464,23 @@ export async function createPlacement(
   );
 }
 
+export async function patchPlacement(
+  id: string,
+  body: {
+    name?: string;
+    status?: string;
+    grossCostCents?: number;
+    netCostCents?: number | null;
+    quantity?: number | null;
+    notes?: string | null;
+  },
+): Promise<Placement> {
+  return apiFetch<Placement>(
+    `/api/v1/placements/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify(body) },
+  );
+}
+
 export async function deletePlacement(id: string): Promise<void> {
   await apiFetch(`/api/v1/placements/${encodeURIComponent(id)}`, {
     method: "DELETE",
