@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Overview", end: true },
   { to: "/agency", label: "Agency" },
   { to: "/clients", label: "Clients" },
+  { to: "/campaigns", label: "Campaigns" },
   { to: "/publishers", label: "Publishers" },
   { to: "/creatives", label: "Creatives" },
   { to: "/access", label: "Access" },

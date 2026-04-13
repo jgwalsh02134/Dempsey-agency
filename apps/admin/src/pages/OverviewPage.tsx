@@ -105,7 +105,7 @@ export function OverviewPage() {
             <KpiCard
               label="Active Campaigns"
               value={data.activeCampaigns}
-              linkTo="/clients"
+              linkTo="/campaigns?status=ACTIVE"
             />
             <KpiCard
               label="Pending Reviews"

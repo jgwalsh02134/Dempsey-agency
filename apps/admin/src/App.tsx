@@ -4,6 +4,7 @@ import { useAuth } from "./auth/AuthContext";
 import { AdminLayout } from "./components/AdminLayout";
 import { AccessPage } from "./pages/AccessPage";
 import { CampaignDetailPage } from "./pages/CampaignDetailPage";
+import { CampaignsPage } from "./pages/CampaignsPage";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { CreativesQueuePage } from "./pages/CreativesQueuePage";
@@ -47,6 +48,7 @@ export function App() {
         <Route path="agency" element={<AgencyPage />} />
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
+        <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="campaigns/:id" element={<CampaignDetailPage />} />
         <Route path="publishers" element={<PublishersPage />} />
         <Route path="publishers/:id" element={<PublisherDetailPage />} />
