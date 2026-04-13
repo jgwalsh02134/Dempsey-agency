@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../../plugins/auth.js";
 import { requireRole } from "../../lib/rbac.js";
+import { resolveVisibleOrganizationIds } from "../../lib/org-scope.js";
+import { geocodeAddress } from "./geocode.js";
 import {
   publisherIdParamsSchema,
   createPublisherSchema,
@@ -11,6 +13,17 @@ import {
   updateInventorySchema,
   inventoryIdParamsSchema,
 } from "./schemas.js";
+
+const campaignPublisherParams = z.object({
+  campaignId: z.string().trim().min(1),
+});
+const campaignPublisherDeleteParams = z.object({
+  campaignId: z.string().trim().min(1),
+  publisherId: z.string().trim().min(1),
+});
+const addCampaignPublishersBody = z.object({
+  publisherIds: z.array(z.string().trim().min(1)).min(1).max(500),
+});
 
 const listQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
@@ -271,6 +284,170 @@ export async function publisherRoutes(app: FastifyInstance) {
         data,
       });
       return updated;
+    },
+  );
+
+  // ── Geocode a publisher (agency admin+) ──────────────────────
+  //
+  // Re-computes and persists latitude/longitude via Nominatim.
+  // Safe to re-run; updates geocodeStatus + geocodedAt regardless.
+  app.post(
+    "/publishers/:id/geocode",
+    {
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
+    },
+    async (request, reply) => {
+      const { id } = publisherIdParamsSchema.parse(request.params);
+
+      const publisher = await app.prisma.publisher.findUnique({ where: { id } });
+      if (!publisher) {
+        return reply.code(404).send({ error: "Publisher not found" });
+      }
+
+      const result = await geocodeAddress({
+        streetAddress: publisher.streetAddress,
+        city: publisher.city,
+        state: publisher.state,
+        zipCode: publisher.zipCode,
+        country: publisher.country,
+      });
+
+      const updated = await app.prisma.publisher.update({
+        where: { id },
+        data: {
+          latitude: result.status === "OK" ? result.latitude : null,
+          longitude: result.status === "OK" ? result.longitude : null,
+          geocodeStatus: result.status,
+          geocodedAt: new Date(),
+        },
+      });
+      return updated;
+    },
+  );
+
+  // ── List publishers attached to a campaign ───────────────────
+  //
+  // Org-scoped: client users only see campaigns that belong to their
+  // organization (or their agency's linked clients). Also the gate
+  // for the portal map — the full publisher catalog is NEVER exposed
+  // to client users through this route.
+  app.get(
+    "/campaigns/:campaignId/publishers",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { campaignId } = campaignPublisherParams.parse(request.params);
+
+      const campaign = await app.prisma.campaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true, organizationId: true },
+      });
+      if (!campaign) {
+        return reply.code(404).send({ error: "Campaign not found" });
+      }
+
+      const visible = await resolveVisibleOrganizationIds(
+        app.prisma,
+        request.currentUser!,
+      );
+      if (visible !== null && !visible.includes(campaign.organizationId)) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      const links = await app.prisma.campaignPublisher.findMany({
+        where: { campaignId },
+        orderBy: { createdAt: "asc" },
+        include: {
+          publisher: {
+            select: {
+              id: true,
+              name: true,
+              streetAddress: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              country: true,
+              websiteUrl: true,
+              latitude: true,
+              longitude: true,
+              geocodeStatus: true,
+            },
+          },
+        },
+      });
+
+      return {
+        campaignId,
+        publishers: links.map((l) => ({
+          linkId: l.id,
+          notes: l.notes,
+          ...l.publisher,
+        })),
+      };
+    },
+  );
+
+  // ── Attach publishers to a campaign (agency admin+) ──────────
+  app.post(
+    "/campaigns/:campaignId/publishers",
+    {
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
+    },
+    async (request, reply) => {
+      const { campaignId } = campaignPublisherParams.parse(request.params);
+      const { publisherIds } = addCampaignPublishersBody.parse(request.body);
+
+      const campaign = await app.prisma.campaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true },
+      });
+      if (!campaign) {
+        return reply.code(404).send({ error: "Campaign not found" });
+      }
+
+      // Filter to publishers that actually exist (avoids FK violations).
+      const validPublishers = await app.prisma.publisher.findMany({
+        where: { id: { in: publisherIds } },
+        select: { id: true },
+      });
+      const validIds = new Set(validPublishers.map((p) => p.id));
+
+      const data = publisherIds
+        .filter((pid) => validIds.has(pid))
+        .map((pid) => ({ campaignId, publisherId: pid }));
+
+      if (data.length === 0) {
+        return reply.code(400).send({ error: "No valid publishers" });
+      }
+
+      // createMany skipDuplicates handles the unique(campaignId, publisherId) constraint.
+      const result = await app.prisma.campaignPublisher.createMany({
+        data,
+        skipDuplicates: true,
+      });
+
+      return reply.code(201).send({
+        added: result.count,
+        requested: publisherIds.length,
+      });
+    },
+  );
+
+  // ── Remove publisher from a campaign (agency admin+) ─────────
+  app.delete(
+    "/campaigns/:campaignId/publishers/:publisherId",
+    {
+      preHandler: [requireAuth, requireRole("AGENCY_OWNER", "AGENCY_ADMIN")],
+    },
+    async (request, reply) => {
+      const { campaignId, publisherId } = campaignPublisherDeleteParams.parse(
+        request.params,
+      );
+
+      await app.prisma.campaignPublisher.deleteMany({
+        where: { campaignId, publisherId },
+      });
+
+      return reply.code(204).send();
     },
   );
 }

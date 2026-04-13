@@ -24,24 +24,31 @@ function errorMessage(e: unknown): string {
 }
 
 const IMPORT_COLUMNS = [
+  // Identity
   "name",
+  "parentCompany",
+  "yearEstablished",
+  // Location
   "streetAddress",
   "city",
   "state",
   "zipCode",
   "county",
   "country",
+  // Contact
   "phone",
-  "frequency",
-  "circulation",
-  "yearEstablished",
-  "officeHours",
-  "websiteUrl",
   "generalEmail",
-  "transactionEmail",
   "corporateEmail",
+  "transactionEmail",
+  // Digital
+  "websiteUrl",
+  // Publication
+  "frequency",
+  "format",
+  "circulation",
+  // Operations
+  "officeHours",
   "contactName",
-  "parentCompany",
   "notes",
 ] as const;
 
@@ -50,24 +57,31 @@ const NUMERIC_COLUMNS = new Set(["circulation", "yearEstablished"]);
 function csvTemplateString(): string {
   const header = IMPORT_COLUMNS.join(",");
   const example = [
+    // Identity
     "Boston Globe",
+    "Boston Globe Media",
+    "1872",
+    // Location
     "1 Exchange Pl",
     "Boston",
     "MA",
     "02109",
     "Suffolk",
     "USA",
+    // Contact
     "617-555-1000",
-    "Daily",
-    "250000",
-    "1872",
-    "Mon–Fri 9–5",
-    "https://www.bostonglobe.com",
     "info@bostonglobe.com",
-    "billing@bostonglobe.com",
     "corporate@bostonglobe.com",
+    "billing@bostonglobe.com",
+    // Digital
+    "https://www.bostonglobe.com",
+    // Publication
+    "Daily",
+    "Broadsheet",
+    "250000",
+    // Operations
+    "Mon–Fri 9–5",
     "Ada Lovelace",
-    "Boston Globe Media",
     "",
   ]
     .map((v) => (v.includes(",") ? `"${v}"` : v))
@@ -375,92 +389,111 @@ export function PublishersPage() {
             </button>
           </div>
           <form onSubmit={onCreate} className="stack">
-            <label className="field">
-              <span>Name</span>
-              <input
-                value={createForm.name ?? ""}
-                onChange={(e) => updateCreate("name", e.target.value)}
-                required
-                maxLength={255}
-                placeholder="e.g. Boston Globe"
-                autoFocus
-              />
-            </label>
-
-            <div className="two-col">
+            {/* ── Identity ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Identity</legend>
               <label className="field">
-                <span>Parent company</span>
+                <span>Publisher name</span>
                 <input
-                  value={createForm.parentCompany ?? ""}
+                  value={createForm.name ?? ""}
+                  onChange={(e) => updateCreate("name", e.target.value)}
+                  required
+                  maxLength={255}
+                  placeholder="e.g. Boston Globe"
+                  autoFocus
+                />
+              </label>
+              <div className="two-col">
+                <label className="field">
+                  <span>Parent company (optional)</span>
+                  <input
+                    value={createForm.parentCompany ?? ""}
+                    onChange={(e) =>
+                      updateCreate("parentCompany", e.target.value)
+                    }
+                    maxLength={255}
+                    placeholder="e.g. Boston Globe Media"
+                  />
+                </label>
+                <label className="field">
+                  <span>Year established</span>
+                  <input
+                    type="number"
+                    value={
+                      createForm.yearEstablished == null
+                        ? ""
+                        : String(createForm.yearEstablished)
+                    }
+                    onChange={(e) =>
+                      updateCreate(
+                        "yearEstablished",
+                        e.target.value === ""
+                          ? null
+                          : parseInt(e.target.value, 10),
+                      )
+                    }
+                    min="1500"
+                    max="2100"
+                    placeholder="e.g. 1872"
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            {/* ── Location ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Location</legend>
+              <label className="field">
+                <span>Street address</span>
+                <input
+                  value={createForm.streetAddress ?? ""}
                   onChange={(e) =>
-                    updateCreate("parentCompany", e.target.value)
+                    updateCreate("streetAddress", e.target.value)
                   }
                   maxLength={255}
-                  placeholder="e.g. Boston Globe Media"
+                  placeholder="123 Main St"
                 />
               </label>
-              <label className="field">
-                <span>Contact name</span>
-                <input
-                  value={createForm.contactName ?? ""}
-                  onChange={(e) => updateCreate("contactName", e.target.value)}
-                  maxLength={255}
-                  placeholder="Primary contact"
-                />
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Street address</span>
-              <input
-                value={createForm.streetAddress ?? ""}
-                onChange={(e) =>
-                  updateCreate("streetAddress", e.target.value)
-                }
-                maxLength={255}
-                placeholder="123 Main St"
-              />
-            </label>
-
-            <div className="two-col">
-              <label className="field">
-                <span>City</span>
-                <input
-                  value={createForm.city ?? ""}
-                  onChange={(e) => updateCreate("city", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-              <label className="field">
-                <span>State / Region</span>
-                <input
-                  value={createForm.state ?? ""}
-                  onChange={(e) => updateCreate("state", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-            </div>
-
-            <div className="two-col">
-              <label className="field">
-                <span>ZIP / Postal code</span>
-                <input
-                  value={createForm.zipCode ?? ""}
-                  onChange={(e) => updateCreate("zipCode", e.target.value)}
-                  maxLength={20}
-                />
-              </label>
-              <label className="field">
-                <span>County</span>
-                <input
-                  value={createForm.county ?? ""}
-                  onChange={(e) => updateCreate("county", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-            </div>
-
-            <div className="two-col">
+              <div className="two-col">
+                <label className="field">
+                  <span>City</span>
+                  <input
+                    value={createForm.city ?? ""}
+                    onChange={(e) => updateCreate("city", e.target.value)}
+                    maxLength={100}
+                    placeholder="Boston"
+                  />
+                </label>
+                <label className="field">
+                  <span>State / Region</span>
+                  <input
+                    value={createForm.state ?? ""}
+                    onChange={(e) => updateCreate("state", e.target.value)}
+                    maxLength={100}
+                    placeholder="MA"
+                  />
+                </label>
+              </div>
+              <div className="two-col">
+                <label className="field">
+                  <span>ZIP / Postal code</span>
+                  <input
+                    value={createForm.zipCode ?? ""}
+                    onChange={(e) => updateCreate("zipCode", e.target.value)}
+                    maxLength={20}
+                    placeholder="02109"
+                  />
+                </label>
+                <label className="field">
+                  <span>County</span>
+                  <input
+                    value={createForm.county ?? ""}
+                    onChange={(e) => updateCreate("county", e.target.value)}
+                    maxLength={100}
+                    placeholder="Suffolk"
+                  />
+                </label>
+              </div>
               <label className="field">
                 <span>Country</span>
                 <input
@@ -470,26 +503,97 @@ export function PublishersPage() {
                   placeholder="USA"
                 />
               </label>
+            </fieldset>
+
+            {/* ── Contact ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Contact</legend>
               <label className="field">
                 <span>Phone</span>
                 <input
+                  type="tel"
                   value={createForm.phone ?? ""}
                   onChange={(e) => updateCreate("phone", e.target.value)}
                   maxLength={50}
+                  placeholder="617-555-1000"
                 />
               </label>
-            </div>
-
-            <div className="two-col">
               <label className="field">
-                <span>Frequency</span>
+                <span>General email</span>
                 <input
-                  value={createForm.frequency ?? ""}
-                  onChange={(e) => updateCreate("frequency", e.target.value)}
-                  maxLength={100}
-                  placeholder="Daily / Weekly / Monthly"
+                  type="email"
+                  value={createForm.generalEmail ?? ""}
+                  onChange={(e) =>
+                    updateCreate("generalEmail", e.target.value)
+                  }
+                  placeholder="info@publisher.com"
                 />
               </label>
+              <div className="two-col">
+                <label className="field">
+                  <span>Corporate email</span>
+                  <input
+                    type="email"
+                    value={createForm.corporateEmail ?? ""}
+                    onChange={(e) =>
+                      updateCreate("corporateEmail", e.target.value)
+                    }
+                    placeholder="corporate@publisher.com"
+                  />
+                </label>
+                <label className="field">
+                  <span>Transaction email</span>
+                  <input
+                    type="email"
+                    value={createForm.transactionEmail ?? ""}
+                    onChange={(e) =>
+                      updateCreate("transactionEmail", e.target.value)
+                    }
+                    placeholder="billing@publisher.com"
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            {/* ── Digital ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Digital</legend>
+              <label className="field">
+                <span>Website URL</span>
+                <input
+                  type="url"
+                  value={createForm.websiteUrl ?? ""}
+                  onChange={(e) => updateCreate("websiteUrl", e.target.value)}
+                  placeholder="https://www.publisher.com"
+                />
+              </label>
+            </fieldset>
+
+            {/* ── Publication ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Publication</legend>
+              <div className="two-col">
+                <label className="field">
+                  <span>Frequency</span>
+                  <input
+                    value={createForm.frequency ?? ""}
+                    onChange={(e) =>
+                      updateCreate("frequency", e.target.value)
+                    }
+                    maxLength={100}
+                    placeholder="Daily / Weekly / Monthly"
+                  />
+                </label>
+                <label className="field">
+                  <span>Format (optional)</span>
+                  <input
+                    value={createForm.format ?? ""}
+                    onChange={(e) => updateCreate("format", e.target.value)}
+                    maxLength={100}
+                    placeholder="Broadsheet / Tabloid / Magazine / Digital"
+                  />
+                </label>
+              </div>
               <label className="field">
                 <span>Circulation</span>
                 <input
@@ -508,100 +612,49 @@ export function PublishersPage() {
                     )
                   }
                   min="0"
+                  placeholder="e.g. 250000"
                 />
               </label>
-            </div>
+            </fieldset>
 
-            <div className="two-col">
+            {/* ── Operations ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Operations</legend>
+              <div className="two-col">
+                <label className="field">
+                  <span>Office hours</span>
+                  <input
+                    value={createForm.officeHours ?? ""}
+                    onChange={(e) =>
+                      updateCreate("officeHours", e.target.value)
+                    }
+                    maxLength={255}
+                    placeholder="Mon–Fri 9am–5pm"
+                  />
+                </label>
+                <label className="field">
+                  <span>Contact name (optional)</span>
+                  <input
+                    value={createForm.contactName ?? ""}
+                    onChange={(e) =>
+                      updateCreate("contactName", e.target.value)
+                    }
+                    maxLength={255}
+                    placeholder="Primary contact"
+                  />
+                </label>
+              </div>
               <label className="field">
-                <span>Year established</span>
-                <input
-                  type="number"
-                  value={
-                    createForm.yearEstablished == null
-                      ? ""
-                      : String(createForm.yearEstablished)
-                  }
-                  onChange={(e) =>
-                    updateCreate(
-                      "yearEstablished",
-                      e.target.value === ""
-                        ? null
-                        : parseInt(e.target.value, 10),
-                    )
-                  }
-                  min="1500"
-                  max="2100"
-                  placeholder="e.g. 1872"
+                <span>Notes (optional)</span>
+                <textarea
+                  value={createForm.notes ?? ""}
+                  onChange={(e) => updateCreate("notes", e.target.value)}
+                  maxLength={2000}
+                  rows={3}
+                  placeholder="Internal notes, special instructions, relationships…"
                 />
               </label>
-              <label className="field">
-                <span>Office hours</span>
-                <input
-                  value={createForm.officeHours ?? ""}
-                  onChange={(e) => updateCreate("officeHours", e.target.value)}
-                  maxLength={255}
-                  placeholder="Mon–Fri 9am–5pm"
-                />
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Website</span>
-              <input
-                type="url"
-                value={createForm.websiteUrl ?? ""}
-                onChange={(e) => updateCreate("websiteUrl", e.target.value)}
-                placeholder="https://…"
-              />
-            </label>
-
-            <div className="two-col">
-              <label className="field">
-                <span>General email</span>
-                <input
-                  type="email"
-                  value={createForm.generalEmail ?? ""}
-                  onChange={(e) =>
-                    updateCreate("generalEmail", e.target.value)
-                  }
-                  placeholder="info@publisher.com"
-                />
-              </label>
-              <label className="field">
-                <span>Transaction email</span>
-                <input
-                  type="email"
-                  value={createForm.transactionEmail ?? ""}
-                  onChange={(e) =>
-                    updateCreate("transactionEmail", e.target.value)
-                  }
-                  placeholder="billing@publisher.com"
-                />
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Corporate email</span>
-              <input
-                type="email"
-                value={createForm.corporateEmail ?? ""}
-                onChange={(e) =>
-                  updateCreate("corporateEmail", e.target.value)
-                }
-                placeholder="corporate@publisher.com"
-              />
-            </label>
-
-            <label className="field">
-              <span>Notes</span>
-              <textarea
-                value={createForm.notes ?? ""}
-                onChange={(e) => updateCreate("notes", e.target.value)}
-                maxLength={2000}
-                rows={3}
-              />
-            </label>
+            </fieldset>
 
             {createError && (
               <p className="error" role="alert">
@@ -856,9 +909,10 @@ export function PublishersPage() {
                 <th>Name</th>
                 <th>Location</th>
                 <th>Frequency</th>
+                <th>Format</th>
                 <th>Circulation</th>
-                <th>Country</th>
-                <th>Contact</th>
+                <th>Email</th>
+                <th>Website</th>
                 <th>Inventory</th>
                 <th>Status</th>
                 <th />
@@ -887,24 +941,29 @@ export function PublishersPage() {
                     </td>
                     <td className="small">{location || "—"}</td>
                     <td className="small">{p.frequency ?? "—"}</td>
+                    <td className="small">{p.format ?? "—"}</td>
                     <td className="small" style={{ whiteSpace: "nowrap" }}>
                       {p.circulation != null
                         ? p.circulation.toLocaleString()
                         : "—"}
                     </td>
-                    <td className="small">{p.country ?? "—"}</td>
                     <td className="small">
                       {p.generalEmail ? (
                         <a href={`mailto:${p.generalEmail}`}>
                           {p.generalEmail}
                         </a>
-                      ) : p.websiteUrl ? (
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="small">
+                      {p.websiteUrl ? (
                         <a
                           href={p.websiteUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          website
+                          {p.websiteUrl.replace(/^https?:\/\//, "")}
                         </a>
                       ) : (
                         "—"

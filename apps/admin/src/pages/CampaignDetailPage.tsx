@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { CampaignPublishersSection } from "../components/CampaignPublishersSection";
 import { PlacementsSection } from "../components/PlacementsSection";
 import type { Campaign } from "../types";
 
@@ -104,6 +105,7 @@ export function CampaignDetailPage() {
         </div>
       </section>
 
+      <CampaignPublishersSection campaignId={campaign.id} />
       <PlacementsSection campaignId={campaign.id} />
     </>
   );

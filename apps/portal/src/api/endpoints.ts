@@ -2,6 +2,7 @@ import { apiFetch } from "./client";
 import type {
   Campaign,
   CampaignPlacementsResponse,
+  CampaignPublishersResponse,
   CampaignSubmissionsResponse,
   CreativeSubmission,
   DocumentDownloadResponse,
@@ -127,5 +128,13 @@ export async function fetchCampaignPlacements(
 ): Promise<CampaignPlacementsResponse> {
   return apiFetch<CampaignPlacementsResponse>(
     `/api/v1/campaigns/${encodeURIComponent(campaignId)}/placements`,
+  );
+}
+
+export async function fetchCampaignPublishers(
+  campaignId: string,
+): Promise<CampaignPublishersResponse> {
+  return apiFetch<CampaignPublishersResponse>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/publishers`,
   );
 }

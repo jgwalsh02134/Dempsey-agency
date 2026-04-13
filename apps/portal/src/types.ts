@@ -130,6 +130,28 @@ export interface CampaignPlacementsResponse {
   placements: Placement[];
 }
 
+/** Publisher shape returned for the campaign-scoped map. */
+export interface CampaignMapPublisher {
+  linkId: string;
+  notes: string | null;
+  id: string;
+  name: string;
+  streetAddress: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  country: string | null;
+  websiteUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geocodeStatus: string | null;
+}
+
+export interface CampaignPublishersResponse {
+  campaignId: string;
+  publishers: CampaignMapPublisher[];
+}
+
 export type InvoiceStatus = "PENDING" | "PAID" | "OVERDUE";
 
 export interface Invoice {

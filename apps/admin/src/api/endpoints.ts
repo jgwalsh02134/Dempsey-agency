@@ -8,6 +8,7 @@ import type {
   AICreativeReview,
   Campaign,
   CampaignPlacementsResponse,
+  CampaignPublishersResponse,
   CampaignStatus,
   CampaignSubmissionsResponse,
   CreativeSubmission,
@@ -357,6 +358,41 @@ export async function importPublishers(
     method: "POST",
     body: JSON.stringify({ rows }),
   });
+}
+
+export async function geocodePublisher(id: string): Promise<Publisher> {
+  return apiFetch<Publisher>(
+    `/api/v1/publishers/${encodeURIComponent(id)}/geocode`,
+    { method: "POST", body: JSON.stringify({}) },
+  );
+}
+
+export async function fetchCampaignPublishers(
+  campaignId: string,
+): Promise<CampaignPublishersResponse> {
+  return apiFetch<CampaignPublishersResponse>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/publishers`,
+  );
+}
+
+export async function addCampaignPublishers(
+  campaignId: string,
+  publisherIds: string[],
+): Promise<{ added: number; requested: number }> {
+  return apiFetch<{ added: number; requested: number }>(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/publishers`,
+    { method: "POST", body: JSON.stringify({ publisherIds }) },
+  );
+}
+
+export async function removeCampaignPublisher(
+  campaignId: string,
+  publisherId: string,
+): Promise<void> {
+  await apiFetch(
+    `/api/v1/campaigns/${encodeURIComponent(campaignId)}/publishers/${encodeURIComponent(publisherId)}`,
+    { method: "DELETE" },
+  );
 }
 
 export async function fetchPublisherInventory(

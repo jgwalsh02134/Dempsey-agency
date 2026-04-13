@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { CampaignMap } from "../components/CampaignMap";
 import type {
   Campaign,
+  CampaignMapPublisher,
   CampaignStatus,
   CreativeSubmission,
   Placement,
@@ -105,6 +107,10 @@ export function CampaignDetailPage() {
   const [subsLoading, setSubsLoading] = useState(false);
   const [subsError, setSubsError] = useState<string | null>(null);
 
+  const [pubs, setPubs] = useState<CampaignMapPublisher[]>([]);
+  const [pubsLoading, setPubsLoading] = useState(false);
+  const [pubsError, setPubsError] = useState<string | null>(null);
+
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   /* ── always fetch fresh campaign data ── */
@@ -160,6 +166,36 @@ export function CampaignDetailPage() {
       })
       .finally(() => {
         if (!cancelled) setPlacementsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaign]);
+
+  /* ── fetch campaign publishers (map) once campaign is resolved ── */
+  useEffect(() => {
+    if (!campaign) return;
+    let cancelled = false;
+
+    setPubsLoading(true);
+    setPubsError(null);
+    setPubs([]);
+    api
+      .fetchCampaignPublishers(campaign.id)
+      .then((res) => {
+        if (!cancelled) setPubs(res.publishers);
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setPubsError(
+            e instanceof ApiError
+              ? e.message
+              : "Could not load publishers.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setPubsLoading(false);
       });
 
     return () => {
@@ -318,6 +354,31 @@ export function CampaignDetailPage() {
               );
             })}
           </ul>
+        )}
+      </section>
+
+      {/* ── Publisher map (only publishers attached to this campaign) ── */}
+      <section className="section-block">
+        <h2 className="section-heading">Publisher Map</h2>
+
+        {pubsLoading && (
+          <p className="text-muted">Loading publishers…</p>
+        )}
+
+        {pubsError && (
+          <p className="form-error" role="alert">
+            {pubsError}
+          </p>
+        )}
+
+        {!pubsLoading && !pubsError && pubs.length === 0 && (
+          <p className="text-muted">
+            No publishers have been selected for this campaign yet.
+          </p>
+        )}
+
+        {!pubsLoading && !pubsError && pubs.length > 0 && (
+          <CampaignMap publishers={pubs} />
         )}
       </section>
 

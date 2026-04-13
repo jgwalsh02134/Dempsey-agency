@@ -185,8 +185,9 @@ model Campaign {
 
   organization Organization @relation(fields: [organizationId], references: [id])
   createdBy    User         @relation(fields: [createdById], references: [id])
-  submissions  CreativeSubmission[]
-  placements   Placement[]
+  submissions    CreativeSubmission[]
+  placements     Placement[]
+  publisherLinks CampaignPublisher[]
 
   @@index([organizationId, status])
 }
@@ -306,6 +307,7 @@ model Publisher {
   country          String?
   phone            String?
   frequency        String?
+  format           String?
   circulation      Int?
   yearEstablished  Int?
   officeHours      String?
@@ -317,14 +319,37 @@ model Publisher {
   contactName      String?
   parentCompany    String?
   notes            String?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  latitude         Float?
+  longitude        Float?
+  geocodeStatus    String?   // PENDING | OK | FAILED | NO_ADDRESS
+  geocodedAt       DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  inventory Inventory[]
+  inventory     Inventory[]
+  campaignLinks CampaignPublisher[]
 
   @@index([name])
   @@index([state, city])
+}
+
+/// Many-to-many: which publishers a client has selected for a given campaign.
+/// Drives the campaign-scoped publisher map in the portal.
+model CampaignPublisher {
+  id          String   @id @default(cuid())
+  campaignId  String
+  publisherId String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign  Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  publisher Publisher @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, publisherId])
+  @@index([campaignId])
+  @@index([publisherId])
 }
 
 model Inventory {

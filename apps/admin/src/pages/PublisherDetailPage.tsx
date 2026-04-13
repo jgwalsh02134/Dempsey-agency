@@ -65,6 +65,10 @@ export function PublisherDetailPage() {
   const [pubSaving, setPubSaving] = useState(false);
   const [pubEditError, setPubEditError] = useState<string | null>(null);
 
+  /* ── geocode state ── */
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeMsg, setGeocodeMsg] = useState<string | null>(null);
+
   /* ── inventory edit state ── */
   const [editId, setEditId] = useState<string | null>(null);
   const [eName, setEName] = useState("");
@@ -155,6 +159,7 @@ export function PublisherDetailPage() {
       country: publisher.country ?? "",
       phone: publisher.phone ?? "",
       frequency: publisher.frequency ?? "",
+      format: publisher.format ?? "",
       circulation: publisher.circulation,
       yearEstablished: publisher.yearEstablished,
       officeHours: publisher.officeHours ?? "",
@@ -202,6 +207,7 @@ export function PublisherDetailPage() {
         "country",
         "phone",
         "frequency",
+        "format",
         "officeHours",
         "websiteUrl",
         "generalEmail",
@@ -250,6 +256,26 @@ export function PublisherDetailPage() {
       setPubEditError(errorMessage(err));
     } finally {
       setPubSaving(false);
+    }
+  }
+
+  /* ── geocode handler ── */
+  async function onGeocode() {
+    if (!publisher) return;
+    setGeocoding(true);
+    setGeocodeMsg(null);
+    try {
+      const updated = await api.geocodePublisher(publisher.id);
+      setPublisher(updated);
+      setGeocodeMsg(
+        updated.latitude != null && updated.longitude != null
+          ? "Geocoded successfully."
+          : `Geocode status: ${updated.geocodeStatus ?? "unknown"}.`,
+      );
+    } catch (err) {
+      setGeocodeMsg(errorMessage(err));
+    } finally {
+      setGeocoding(false);
     }
   }
 
@@ -359,143 +385,170 @@ export function PublisherDetailPage() {
             )}
           </div>
           {!pubEditOpen && (
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={openPubEdit}
-            >
-              Edit
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={onGeocode}
+                disabled={geocoding}
+                title="Look up latitude/longitude from address via OpenStreetMap"
+              >
+                {geocoding ? "Geocoding…" : "Geocode"}
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={openPubEdit}
+              >
+                Edit
+              </button>
+            </div>
           )}
         </div>
 
-        {!pubEditOpen && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: "1rem 1.5rem",
-              marginTop: "1rem",
-            }}
+        {geocodeMsg && !pubEditOpen && (
+          <p
+            className="small muted"
+            role="status"
+            style={{ marginTop: "0.5rem" }}
           >
-            <div>
-              <span className="small muted">Address</span>
-              <div className="small">
-                {publisher.streetAddress ?? "—"}
-                {(publisher.city || publisher.state || publisher.zipCode) && (
-                  <>
-                    <br />
-                    {[publisher.city, publisher.state]
-                      .filter(Boolean)
-                      .join(", ")}
-                    {publisher.zipCode ? ` ${publisher.zipCode}` : ""}
-                  </>
-                )}
-                {publisher.country && (
-                  <>
-                    <br />
-                    {publisher.country}
-                  </>
-                )}
-              </div>
-            </div>
-            <div>
-              <span className="small muted">County</span>
-              <div>{publisher.county ?? "—"}</div>
-            </div>
-            <div>
-              <span className="small muted">Phone</span>
-              <div>{publisher.phone ?? "—"}</div>
-            </div>
-            <div>
-              <span className="small muted">Office hours</span>
-              <div>{publisher.officeHours ?? "—"}</div>
-            </div>
-            <div>
-              <span className="small muted">Frequency</span>
-              <div>{publisher.frequency ?? "—"}</div>
-            </div>
-            <div>
-              <span className="small muted">Circulation</span>
-              <div>
-                {publisher.circulation != null
-                  ? publisher.circulation.toLocaleString()
-                  : "—"}
-              </div>
-            </div>
-            <div>
-              <span className="small muted">Year established</span>
-              <div>{publisher.yearEstablished ?? "—"}</div>
-            </div>
-            <div>
-              <span className="small muted">Contact</span>
-              <div>{publisher.contactName ?? "—"}</div>
-            </div>
-            <div>
-              <span className="small muted">General email</span>
-              <div>
-                {publisher.generalEmail ? (
-                  <a href={`mailto:${publisher.generalEmail}`}>
-                    {publisher.generalEmail}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </div>
-            </div>
-            <div>
-              <span className="small muted">Transaction email</span>
-              <div>
-                {publisher.transactionEmail ? (
-                  <a href={`mailto:${publisher.transactionEmail}`}>
-                    {publisher.transactionEmail}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </div>
-            </div>
-            <div>
-              <span className="small muted">Corporate email</span>
-              <div>
-                {publisher.corporateEmail ? (
-                  <a href={`mailto:${publisher.corporateEmail}`}>
-                    {publisher.corporateEmail}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </div>
-            </div>
-            <div>
-              <span className="small muted">Website</span>
-              <div>
-                {publisher.websiteUrl ? (
-                  <a
-                    href={publisher.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {publisher.websiteUrl}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </div>
-            </div>
-            <div>
-              <span className="small muted">Status</span>
-              <div>{publisher.isActive ? "Active" : "Inactive"}</div>
-            </div>
-          </div>
+            {geocodeMsg}
+          </p>
         )}
 
-        {!pubEditOpen && publisher.notes && (
-          <div style={{ marginTop: "1rem" }}>
-            <span className="small muted">Notes</span>
-            <p style={{ margin: "0.25rem 0 0", whiteSpace: "pre-wrap" }}>
-              {publisher.notes}
-            </p>
+        {!pubEditOpen && (
+          <div className="pub-sections">
+            {/* Identity */}
+            <div className="pub-section">
+              <h3>Identity</h3>
+              <dl className="pub-dl">
+                <dt>Name</dt>
+                <dd>{publisher.name}</dd>
+                <dt>Parent company</dt>
+                <dd>{publisher.parentCompany ?? "—"}</dd>
+                <dt>Year established</dt>
+                <dd>{publisher.yearEstablished ?? "—"}</dd>
+                <dt>Status</dt>
+                <dd>{publisher.isActive ? "Active" : "Inactive"}</dd>
+              </dl>
+            </div>
+
+            {/* Location */}
+            <div className="pub-section">
+              <h3>Location</h3>
+              <dl className="pub-dl">
+                <dt>Street</dt>
+                <dd>{publisher.streetAddress ?? "—"}</dd>
+                <dt>City</dt>
+                <dd>{publisher.city ?? "—"}</dd>
+                <dt>State / Region</dt>
+                <dd>{publisher.state ?? "—"}</dd>
+                <dt>ZIP / Postal</dt>
+                <dd>{publisher.zipCode ?? "—"}</dd>
+                <dt>County</dt>
+                <dd>{publisher.county ?? "—"}</dd>
+                <dt>Country</dt>
+                <dd>{publisher.country ?? "—"}</dd>
+                <dt>Coordinates</dt>
+                <dd>
+                  {publisher.latitude != null && publisher.longitude != null
+                    ? `${publisher.latitude.toFixed(5)}, ${publisher.longitude.toFixed(5)}`
+                    : publisher.geocodeStatus ?? "Not geocoded"}
+                </dd>
+              </dl>
+            </div>
+
+            {/* Contact */}
+            <div className="pub-section">
+              <h3>Contact</h3>
+              <dl className="pub-dl">
+                <dt>Phone</dt>
+                <dd>{publisher.phone ?? "—"}</dd>
+                <dt>General email</dt>
+                <dd>
+                  {publisher.generalEmail ? (
+                    <a href={`mailto:${publisher.generalEmail}`}>
+                      {publisher.generalEmail}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+                <dt>Corporate email</dt>
+                <dd>
+                  {publisher.corporateEmail ? (
+                    <a href={`mailto:${publisher.corporateEmail}`}>
+                      {publisher.corporateEmail}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+                <dt>Transaction email</dt>
+                <dd>
+                  {publisher.transactionEmail ? (
+                    <a href={`mailto:${publisher.transactionEmail}`}>
+                      {publisher.transactionEmail}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+              </dl>
+            </div>
+
+            {/* Digital */}
+            <div className="pub-section">
+              <h3>Digital</h3>
+              <dl className="pub-dl">
+                <dt>Website</dt>
+                <dd>
+                  {publisher.websiteUrl ? (
+                    <a
+                      href={publisher.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {publisher.websiteUrl}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+              </dl>
+            </div>
+
+            {/* Publication */}
+            <div className="pub-section">
+              <h3>Publication</h3>
+              <dl className="pub-dl">
+                <dt>Frequency</dt>
+                <dd>{publisher.frequency ?? "—"}</dd>
+                <dt>Format</dt>
+                <dd>{publisher.format ?? "—"}</dd>
+                <dt>Circulation</dt>
+                <dd>
+                  {publisher.circulation != null
+                    ? publisher.circulation.toLocaleString()
+                    : "—"}
+                </dd>
+              </dl>
+            </div>
+
+            {/* Operations */}
+            <div className="pub-section">
+              <h3>Operations</h3>
+              <dl className="pub-dl">
+                <dt>Office hours</dt>
+                <dd>{publisher.officeHours ?? "—"}</dd>
+                <dt>Contact name</dt>
+                <dd>{publisher.contactName ?? "—"}</dd>
+                <dt>Notes</dt>
+                <dd style={{ whiteSpace: "pre-wrap" }}>
+                  {publisher.notes ?? "—"}
+                </dd>
+              </dl>
+            </div>
           </div>
         )}
 
@@ -505,83 +558,112 @@ export function PublisherDetailPage() {
             className="stack"
             style={{ marginTop: "1rem" }}
           >
-            <label className="field">
-              <span>Name</span>
-              <input
-                value={pubForm.name ?? ""}
-                onChange={(e) => updatePub("name", e.target.value)}
-                required
-                maxLength={255}
-              />
-            </label>
-
-            <div className="two-col">
+            {/* ── Identity ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Identity</legend>
               <label className="field">
-                <span>Parent company</span>
+                <span>Publisher name</span>
                 <input
-                  value={pubForm.parentCompany ?? ""}
-                  onChange={(e) => updatePub("parentCompany", e.target.value)}
+                  value={pubForm.name ?? ""}
+                  onChange={(e) => updatePub("name", e.target.value)}
+                  required
                   maxLength={255}
                 />
               </label>
+              <div className="two-col">
+                <label className="field">
+                  <span>Parent company (optional)</span>
+                  <input
+                    value={pubForm.parentCompany ?? ""}
+                    onChange={(e) =>
+                      updatePub("parentCompany", e.target.value)
+                    }
+                    maxLength={255}
+                  />
+                </label>
+                <label className="field">
+                  <span>Year established</span>
+                  <input
+                    type="number"
+                    value={
+                      pubForm.yearEstablished == null
+                        ? ""
+                        : String(pubForm.yearEstablished)
+                    }
+                    onChange={(e) =>
+                      updatePub(
+                        "yearEstablished",
+                        e.target.value === ""
+                          ? null
+                          : parseInt(e.target.value, 10),
+                      )
+                    }
+                    min="1500"
+                    max="2100"
+                  />
+                </label>
+              </div>
               <label className="field">
-                <span>Contact name</span>
+                <span>Status</span>
+                <select
+                  value={pubForm.isActive ? "true" : "false"}
+                  onChange={(e) =>
+                    updatePub("isActive", e.target.value === "true")
+                  }
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </label>
+            </fieldset>
+
+            {/* ── Location ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Location</legend>
+              <label className="field">
+                <span>Street address</span>
                 <input
-                  value={pubForm.contactName ?? ""}
-                  onChange={(e) => updatePub("contactName", e.target.value)}
+                  value={pubForm.streetAddress ?? ""}
+                  onChange={(e) => updatePub("streetAddress", e.target.value)}
                   maxLength={255}
                 />
               </label>
-            </div>
-
-            <label className="field">
-              <span>Street address</span>
-              <input
-                value={pubForm.streetAddress ?? ""}
-                onChange={(e) => updatePub("streetAddress", e.target.value)}
-                maxLength={255}
-              />
-            </label>
-
-            <div className="two-col">
-              <label className="field">
-                <span>City</span>
-                <input
-                  value={pubForm.city ?? ""}
-                  onChange={(e) => updatePub("city", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-              <label className="field">
-                <span>State / Region</span>
-                <input
-                  value={pubForm.state ?? ""}
-                  onChange={(e) => updatePub("state", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-            </div>
-
-            <div className="two-col">
-              <label className="field">
-                <span>ZIP / Postal</span>
-                <input
-                  value={pubForm.zipCode ?? ""}
-                  onChange={(e) => updatePub("zipCode", e.target.value)}
-                  maxLength={20}
-                />
-              </label>
-              <label className="field">
-                <span>County</span>
-                <input
-                  value={pubForm.county ?? ""}
-                  onChange={(e) => updatePub("county", e.target.value)}
-                  maxLength={100}
-                />
-              </label>
-            </div>
-
-            <div className="two-col">
+              <div className="two-col">
+                <label className="field">
+                  <span>City</span>
+                  <input
+                    value={pubForm.city ?? ""}
+                    onChange={(e) => updatePub("city", e.target.value)}
+                    maxLength={100}
+                  />
+                </label>
+                <label className="field">
+                  <span>State / Region</span>
+                  <input
+                    value={pubForm.state ?? ""}
+                    onChange={(e) => updatePub("state", e.target.value)}
+                    maxLength={100}
+                  />
+                </label>
+              </div>
+              <div className="two-col">
+                <label className="field">
+                  <span>ZIP / Postal</span>
+                  <input
+                    value={pubForm.zipCode ?? ""}
+                    onChange={(e) => updatePub("zipCode", e.target.value)}
+                    maxLength={20}
+                  />
+                </label>
+                <label className="field">
+                  <span>County</span>
+                  <input
+                    value={pubForm.county ?? ""}
+                    onChange={(e) => updatePub("county", e.target.value)}
+                    maxLength={100}
+                  />
+                </label>
+              </div>
               <label className="field">
                 <span>Country</span>
                 <input
@@ -590,25 +672,92 @@ export function PublisherDetailPage() {
                   maxLength={100}
                 />
               </label>
+            </fieldset>
+
+            {/* ── Contact ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Contact</legend>
               <label className="field">
                 <span>Phone</span>
                 <input
+                  type="tel"
                   value={pubForm.phone ?? ""}
                   onChange={(e) => updatePub("phone", e.target.value)}
                   maxLength={50}
                 />
               </label>
-            </div>
-
-            <div className="two-col">
               <label className="field">
-                <span>Frequency</span>
+                <span>General email</span>
                 <input
-                  value={pubForm.frequency ?? ""}
-                  onChange={(e) => updatePub("frequency", e.target.value)}
-                  maxLength={100}
+                  type="email"
+                  value={pubForm.generalEmail ?? ""}
+                  onChange={(e) => updatePub("generalEmail", e.target.value)}
+                  placeholder="info@publisher.com"
                 />
               </label>
+              <div className="two-col">
+                <label className="field">
+                  <span>Corporate email</span>
+                  <input
+                    type="email"
+                    value={pubForm.corporateEmail ?? ""}
+                    onChange={(e) =>
+                      updatePub("corporateEmail", e.target.value)
+                    }
+                    placeholder="corporate@publisher.com"
+                  />
+                </label>
+                <label className="field">
+                  <span>Transaction email</span>
+                  <input
+                    type="email"
+                    value={pubForm.transactionEmail ?? ""}
+                    onChange={(e) =>
+                      updatePub("transactionEmail", e.target.value)
+                    }
+                    placeholder="billing@publisher.com"
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            {/* ── Digital ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Digital</legend>
+              <label className="field">
+                <span>Website URL</span>
+                <input
+                  type="url"
+                  value={pubForm.websiteUrl ?? ""}
+                  onChange={(e) => updatePub("websiteUrl", e.target.value)}
+                  placeholder="https://www.publisher.com"
+                />
+              </label>
+            </fieldset>
+
+            {/* ── Publication ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Publication</legend>
+              <div className="two-col">
+                <label className="field">
+                  <span>Frequency</span>
+                  <input
+                    value={pubForm.frequency ?? ""}
+                    onChange={(e) => updatePub("frequency", e.target.value)}
+                    maxLength={100}
+                    placeholder="Daily / Weekly / Monthly"
+                  />
+                </label>
+                <label className="field">
+                  <span>Format (optional)</span>
+                  <input
+                    value={pubForm.format ?? ""}
+                    onChange={(e) => updatePub("format", e.target.value)}
+                    maxLength={100}
+                    placeholder="Broadsheet / Tabloid / Magazine / Digital"
+                  />
+                </label>
+              </div>
               <label className="field">
                 <span>Circulation</span>
                 <input
@@ -629,104 +778,40 @@ export function PublisherDetailPage() {
                   min="0"
                 />
               </label>
-            </div>
+            </fieldset>
 
-            <div className="two-col">
+            {/* ── Operations ── */}
+            <fieldset className="pub-fieldset">
+              <legend>Operations</legend>
+              <div className="two-col">
+                <label className="field">
+                  <span>Office hours</span>
+                  <input
+                    value={pubForm.officeHours ?? ""}
+                    onChange={(e) => updatePub("officeHours", e.target.value)}
+                    maxLength={255}
+                    placeholder="Mon–Fri 9am–5pm"
+                  />
+                </label>
+                <label className="field">
+                  <span>Contact name (optional)</span>
+                  <input
+                    value={pubForm.contactName ?? ""}
+                    onChange={(e) => updatePub("contactName", e.target.value)}
+                    maxLength={255}
+                  />
+                </label>
+              </div>
               <label className="field">
-                <span>Year established</span>
-                <input
-                  type="number"
-                  value={
-                    pubForm.yearEstablished == null
-                      ? ""
-                      : String(pubForm.yearEstablished)
-                  }
-                  onChange={(e) =>
-                    updatePub(
-                      "yearEstablished",
-                      e.target.value === ""
-                        ? null
-                        : parseInt(e.target.value, 10),
-                    )
-                  }
-                  min="1500"
-                  max="2100"
+                <span>Notes (optional)</span>
+                <textarea
+                  value={pubForm.notes ?? ""}
+                  onChange={(e) => updatePub("notes", e.target.value)}
+                  maxLength={2000}
+                  rows={3}
                 />
               </label>
-              <label className="field">
-                <span>Office hours</span>
-                <input
-                  value={pubForm.officeHours ?? ""}
-                  onChange={(e) => updatePub("officeHours", e.target.value)}
-                  maxLength={255}
-                />
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Website</span>
-              <input
-                type="url"
-                value={pubForm.websiteUrl ?? ""}
-                onChange={(e) => updatePub("websiteUrl", e.target.value)}
-              />
-            </label>
-
-            <div className="two-col">
-              <label className="field">
-                <span>General email</span>
-                <input
-                  type="email"
-                  value={pubForm.generalEmail ?? ""}
-                  onChange={(e) => updatePub("generalEmail", e.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Transaction email</span>
-                <input
-                  type="email"
-                  value={pubForm.transactionEmail ?? ""}
-                  onChange={(e) =>
-                    updatePub("transactionEmail", e.target.value)
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="two-col">
-              <label className="field">
-                <span>Corporate email</span>
-                <input
-                  type="email"
-                  value={pubForm.corporateEmail ?? ""}
-                  onChange={(e) =>
-                    updatePub("corporateEmail", e.target.value)
-                  }
-                />
-              </label>
-              <label className="field">
-                <span>Status</span>
-                <select
-                  value={pubForm.isActive ? "true" : "false"}
-                  onChange={(e) =>
-                    updatePub("isActive", e.target.value === "true")
-                  }
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Notes</span>
-              <textarea
-                value={pubForm.notes ?? ""}
-                onChange={(e) => updatePub("notes", e.target.value)}
-                maxLength={2000}
-                rows={3}
-              />
-            </label>
+            </fieldset>
 
             {pubEditError && (
               <p className="error" role="alert">

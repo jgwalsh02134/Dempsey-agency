@@ -141,6 +141,7 @@ export interface Publisher {
   country: string | null;
   phone: string | null;
   frequency: string | null;
+  format: string | null;
   circulation: number | null;
   yearEstablished: number | null;
   officeHours: string | null;
@@ -152,10 +153,36 @@ export interface Publisher {
   contactName: string | null;
   parentCompany: string | null;
   notes: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geocodeStatus: string | null;
+  geocodedAt: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
   _count?: { inventory: number };
+}
+
+/** Slim publisher shape returned by GET /campaigns/:id/publishers. */
+export interface CampaignPublisher {
+  linkId: string;
+  notes: string | null;
+  id: string;
+  name: string;
+  streetAddress: string | null;
+  city: string | null;
+  state: string | null;
+  zipCode: string | null;
+  country: string | null;
+  websiteUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geocodeStatus: string | null;
+}
+
+export interface CampaignPublishersResponse {
+  campaignId: string;
+  publishers: CampaignPublisher[];
 }
 
 /** Writeable publisher fields — shared shape for create and update bodies. */
@@ -169,6 +196,7 @@ export interface PublisherInput {
   country?: string | null;
   phone?: string | null;
   frequency?: string | null;
+  format?: string | null;
   circulation?: number | null;
   yearEstablished?: number | null;
   officeHours?: string | null;
