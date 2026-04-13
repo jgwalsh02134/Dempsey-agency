@@ -45,6 +45,7 @@ const IMPORT_COLUMNS = [
   "contactTitle",
   // Website / reference links (URLs)
   "websiteUrl",
+  "logoUrl",
   "rateCardUrl",
   "mediaKitUrl",
   "adSpecsUrl",
@@ -86,6 +87,7 @@ function csvTemplateString(): string {
     "Advertising Director",
     // URLs
     "https://www.bostonglobe.com",
+    "https://www.bostonglobe.com/logo.png",
     "https://www.bostonglobe.com/rate-card.pdf",
     "https://www.bostonglobe.com/media-kit.pdf",
     "https://www.bostonglobe.com/ad-specs.pdf",
@@ -145,45 +147,41 @@ export function PublishersPage() {
     PublisherImportResult | null
   >(null);
 
-  const loadPublishers = useCallback(async () => {
-    setLoading(true);
-    setListError(null);
-    try {
-      const res = await api.fetchPublishers();
-      setPublishers(res.publishers);
-    } catch (e) {
-      setListError(errorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadPublishers = useCallback(
+    async (filters?: { q?: string; isActive?: boolean }) => {
+      setLoading(true);
+      setListError(null);
+      try {
+        const res = await api.fetchPublishers(filters);
+        setPublishers(res.publishers);
+      } catch (e) {
+        setListError(errorMessage(e));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Server-side filtering: debounce `search` → `q`; send `isActive` directly.
+  // Server `q` covers name/city/state/parentCompany (case-insensitive).
+  const currentFilters = useMemo(() => {
+    const q = search.trim();
+    return {
+      q: q.length > 0 ? q : undefined,
+      isActive:
+        activeFilter === "" ? undefined : activeFilter === "true",
+    };
+  }, [search, activeFilter]);
 
   useEffect(() => {
-    void loadPublishers();
-  }, [loadPublishers]);
+    const handle = setTimeout(() => {
+      void loadPublishers(currentFilters);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [currentFilters, loadPublishers]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return publishers.filter((p) => {
-      if (activeFilter === "true" && !p.isActive) return false;
-      if (activeFilter === "false" && p.isActive) return false;
-      if (q.length === 0) return true;
-      const haystack = [
-        p.name,
-        p.city,
-        p.state,
-        p.county,
-        p.country,
-        p.parentCompany,
-        p.publicationType,
-        p.generalEmail,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [publishers, search, activeFilter]);
+  const hasFilters = currentFilters.q !== undefined || currentFilters.isActive !== undefined;
 
   const activeCount = publishers.filter((p) => p.isActive).length;
 
@@ -243,7 +241,7 @@ export function PublishersPage() {
       const payload = importPreview.map(rowToPayload);
       const res = await api.importPublishers(payload);
       setImportResult(res);
-      void loadPublishers();
+      void loadPublishers(currentFilters);
     } catch (err) {
       setImportError(errorMessage(err));
     } finally {
@@ -279,7 +277,7 @@ export function PublishersPage() {
           <button
             type="button"
             className="btn ghost"
-            onClick={loadPublishers}
+            onClick={() => loadPublishers(currentFilters)}
             disabled={loading}
           >
             {loading ? "Refreshing…" : "Refresh"}
@@ -488,7 +486,7 @@ export function PublishersPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name, city, state, parent, type…"
+            placeholder="Name, city, state, parent company…"
           />
         </label>
         <label className="q-filter-field">
@@ -514,15 +512,15 @@ export function PublishersPage() {
 
       {loading && <p className="muted">Loading publishers…</p>}
 
-      {!loading && filtered.length === 0 && !listError && (
+      {!loading && publishers.length === 0 && !listError && (
         <p className="muted" style={{ marginTop: "1rem" }}>
-          {publishers.length === 0
-            ? "No publishers yet. Create one or import a CSV."
-            : "No publishers match the current filters."}
+          {hasFilters
+            ? "No publishers match the current filters."
+            : "No publishers yet. Create one or import a CSV."}
         </p>
       )}
 
-      {!loading && filtered.length > 0 && (
+      {!loading && publishers.length > 0 && (
         <div className="table-wrap" style={{ marginTop: "0.75rem" }}>
           <table className="data-table">
             <thead>
@@ -540,7 +538,7 @@ export function PublishersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
+              {publishers.map((p) => {
                 const location = [p.city, p.state].filter(Boolean).join(", ");
                 return (
                   <tr

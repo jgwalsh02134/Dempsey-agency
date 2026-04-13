@@ -118,7 +118,7 @@ export function CampaignPublishersSection({ campaignId }: Props) {
       Array.from(
         new Set(
           catalog
-            .map((p) => p.format)
+            .map((p) => p.publicationType)
             .filter((s): s is string => !!s && s.trim().length > 0),
         ),
       ).sort(),
@@ -153,7 +153,7 @@ export function CampaignPublishersSection({ campaignId }: Props) {
       if (attachedIds.has(p.id)) return false;
       if (fState && p.state !== fState) return false;
       if (fFrequency && p.frequency !== fFrequency) return false;
-      if (fFormat && p.format !== fFormat) return false;
+      if (fFormat && p.publicationType !== fFormat) return false;
       if (bucket.min != null) {
         if (p.circulation == null || p.circulation < bucket.min) return false;
       }
@@ -234,12 +234,15 @@ export function CampaignPublishersSection({ campaignId }: Props) {
   ).length;
 
   /* ── chip helpers ── */
-  function chipsFor(p: { frequency: string | null; format: string | null }) {
+  function chipsFor(p: {
+    frequency: string | null;
+    publicationType: string | null;
+  }) {
     return (
       <>
         {p.frequency && <span className="pub-chip">{p.frequency}</span>}
-        {p.format && (
-          <span className="pub-chip pub-chip-alt">{p.format}</span>
+        {p.publicationType && (
+          <span className="pub-chip pub-chip-alt">{p.publicationType}</span>
         )}
       </>
     );

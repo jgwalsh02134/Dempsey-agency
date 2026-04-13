@@ -193,7 +193,10 @@ export function PublisherDetailPage() {
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeMsg, setGeocodeMsg] = useState<string | null>(null);
 
-  /* ── load publisher (from list since there's no single-publisher GET) ── */
+  /* ── load publisher ──
+   * No GET /publishers/:id endpoint exists today; we fetch the catalog and
+   * find by id. Acceptable while the catalog is small; revisit by adding a
+   * dedicated route once scale or row-level permissions warrant it. */
   useEffect(() => {
     if (!id) return;
     setPubLoading(true);
@@ -514,6 +517,10 @@ export function PublisherDetailPage() {
                 <dt>Website</dt>
                 <dd>
                   <ExternalLink url={publisher.websiteUrl} />
+                </dd>
+                <dt>Logo</dt>
+                <dd>
+                  <ExternalLink url={publisher.logoUrl} />
                 </dd>
                 <dt>Rate card</dt>
                 <dd>

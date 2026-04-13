@@ -228,14 +228,24 @@ export function PublisherForm({
       {/* ── Website / reference links (URLs ONLY — no emails) ── */}
       <fieldset className="pub-fieldset">
         <legend>Website &amp; reference links</legend>
-        <label className="field">
-          <span>Website URL</span>
-          <input
-            {...strFieldProps("websiteUrl")}
-            type="url"
-            placeholder="https://www.publisher.com"
-          />
-        </label>
+        <div className="two-col">
+          <label className="field">
+            <span>Website URL</span>
+            <input
+              {...strFieldProps("websiteUrl")}
+              type="url"
+              placeholder="https://www.publisher.com"
+            />
+          </label>
+          <label className="field">
+            <span>Logo URL</span>
+            <input
+              {...strFieldProps("logoUrl")}
+              type="url"
+              placeholder="https://…/logo.png"
+            />
+          </label>
+        </div>
         <div className="two-col">
           <label className="field">
             <span>Rate card URL</span>
