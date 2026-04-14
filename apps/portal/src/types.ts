@@ -69,6 +69,39 @@ export interface DocumentDownloadResponse {
   mimeType: string;
 }
 
+export type NotificationType =
+  | "CREATIVE_REVISION_REQUESTED"
+  | "CREATIVE_REVISION_UPLOADED"
+  | "PLACEMENT_AWAITING_APPROVAL"
+  | "PLACEMENT_APPROVED_BY_CLIENT"
+  | "NEW_INVOICE_UPLOADED"
+  | "NEW_PROOF_UPLOADED";
+
+export type NotificationLink =
+  | { type: "CAMPAIGN"; campaignId: string }
+  | { type: "DOCUMENTS" }
+  | null;
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  relatedId: string | null;
+  readAt: string | null;
+  createdAt: string;
+  link: NotificationLink;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
+
 export type CampaignStatus = "ACTIVE" | "PAUSED" | "COMPLETED";
 
 export interface Campaign {

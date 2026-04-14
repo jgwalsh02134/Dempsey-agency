@@ -14,6 +14,7 @@ import { publisherRoutes } from "./publishers/index.js";
 import { placementRoutes } from "./placements/index.js";
 import { aiRoutes } from "./ai/index.js";
 import { adminRoutes } from "./admin/index.js";
+import { notificationRoutes } from "./notifications/index.js";
 
 export async function v1Routes(app: FastifyInstance) {
   app.get("/", async () => ({ version: "v1", status: "ok" }));
@@ -32,5 +33,6 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(accountRequestRoutes);
   await app.register(inviteRoutes);
   await app.register(aiRoutes);
+  await app.register(notificationRoutes);
   await app.register(adminRoutes, { prefix: "/admin" });
 }

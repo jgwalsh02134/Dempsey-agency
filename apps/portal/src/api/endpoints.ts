@@ -7,6 +7,7 @@ import type {
   CreativeSubmission,
   DocumentDownloadResponse,
   LoginResponse,
+  NotificationsResponse,
   OrgCampaignsResponse,
   OrgDocumentsResponse,
   OrgInvoicesResponse,
@@ -15,6 +16,7 @@ import type {
   SessionUser,
   SubmissionDownloadResponse,
   SubmissionPreviewResponse,
+  UnreadCountResponse,
 } from "../types";
 
 export async function login(
@@ -149,4 +151,33 @@ export async function fetchCampaignPublishers(
   return apiFetch<CampaignPublishersResponse>(
     `/api/v1/campaigns/${encodeURIComponent(campaignId)}/publishers`,
   );
+}
+
+export async function fetchNotifications(
+  opts: { unread?: boolean; limit?: number } = {},
+): Promise<NotificationsResponse> {
+  const params = new URLSearchParams();
+  if (opts.unread !== undefined) params.set("unread", String(opts.unread));
+  if (opts.limit !== undefined) params.set("limit", String(opts.limit));
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<NotificationsResponse>(`/api/v1/notifications${suffix}`);
+}
+
+export async function fetchUnreadNotificationCount(): Promise<UnreadCountResponse> {
+  return apiFetch<UnreadCountResponse>("/api/v1/notifications/unread-count");
+}
+
+export async function markNotificationRead(
+  id: string,
+): Promise<{ id: string; readAt: string }> {
+  return apiFetch<{ id: string; readAt: string }>(
+    `/api/v1/notifications/${encodeURIComponent(id)}/read`,
+    { method: "POST" },
+  );
+}
+
+export async function markAllNotificationsRead(): Promise<{ updated: number }> {
+  return apiFetch<{ updated: number }>("/api/v1/notifications/read-all", {
+    method: "POST",
+  });
 }

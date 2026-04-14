@@ -10,6 +10,7 @@ import { ClientsPage } from "./pages/ClientsPage";
 import { CreativesQueuePage } from "./pages/CreativesQueuePage";
 import { AgencyPage } from "./pages/AgencyPage";
 import { LoginPage } from "./pages/LoginPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PublisherDetailPage } from "./pages/PublisherDetailPage";
 import { PublisherExplorerPage } from "./pages/PublisherExplorerPage";
@@ -57,6 +58,7 @@ export function App() {
         <Route path="publishers/explorer" element={<PublisherExplorerPage />} />
         <Route path="publishers/:id" element={<PublisherDetailPage />} />
         <Route path="creatives" element={<CreativesQueuePage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="access" element={<AccessPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

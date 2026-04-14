@@ -10,6 +10,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { DocumentsPage } from "./pages/DocumentsPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { LoginPage } from "./pages/LoginPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -50,6 +51,7 @@ export function App() {
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="billing" element={<BillingPage />} />
         <Route path="creatives" element={<CreativesPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
