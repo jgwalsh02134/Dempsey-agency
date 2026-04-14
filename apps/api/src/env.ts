@@ -23,6 +23,16 @@ const envSchema = z.object({
 
   /** OpenAI API key for AI-assisted features (creative review, etc.) */
   OPENAI_API_KEY: z.string().optional(),
+
+  /** Transactional email (Resend). All optional — when `RESEND_API_KEY` is
+   *  unset, sendEmail() is a logged no-op so dev/CI work without credentials.
+   *  EMAIL_FROM should be a verified sender, e.g.
+   *  "Dempsey Agency <notifications@example.com>". */
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+  /** Public base URLs used to build CTA links in outgoing emails. */
+  APP_PORTAL_URL: z.string().url().optional(),
+  APP_ADMIN_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

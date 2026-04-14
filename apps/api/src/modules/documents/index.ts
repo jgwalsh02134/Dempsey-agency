@@ -206,6 +206,7 @@ export async function documentRoutes(app: FastifyInstance) {
               : `New proof: ${document.title}`,
           body: `${document.title} was shared with your organization.`,
           relatedId: document.id,
+          link: { type: "DOCUMENTS" },
         });
       }
 

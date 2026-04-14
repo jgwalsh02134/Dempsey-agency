@@ -277,6 +277,7 @@ export async function submissionRoutes(app: FastifyInstance) {
           title: `Revised creative uploaded: ${submission.title}`,
           body: `Version ${nextVersion} of "${submission.title}" is ready for review.`,
           relatedId: submission.id,
+          link: { type: "CAMPAIGN", campaignId: submission.campaignId },
         });
       }
 
@@ -342,6 +343,7 @@ export async function submissionRoutes(app: FastifyInstance) {
             ? `Your agency left a note: ${updated.reviewNote}`
             : "Your agency has requested an updated file.",
           relatedId: updated.id,
+          link: { type: "CAMPAIGN", campaignId: updated.campaignId },
         });
       }
 

@@ -182,6 +182,7 @@ export async function placementRoutes(app: FastifyInstance) {
           title: `New placement awaiting your approval: ${placement.name}`,
           body: `Your agency added "${placement.name}" to this campaign.`,
           relatedId: placement.id,
+          link: { type: "CAMPAIGN", campaignId: placement.campaignId },
         });
       }
 
@@ -293,6 +294,7 @@ export async function placementRoutes(app: FastifyInstance) {
             ? `Client approved "${placement.name}" with a note: ${note}`
             : `Client approved "${placement.name}".`,
           relatedId: placement.id,
+          link: { type: "CAMPAIGN", campaignId: placement.campaignId },
         });
       }
 
