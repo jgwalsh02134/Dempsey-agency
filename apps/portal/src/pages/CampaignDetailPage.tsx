@@ -153,6 +153,15 @@ export function CampaignDetailPage() {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  /* ── per-placement approval form state ──
+   *  Keyed by placement id. Open toggles the inline note/confirm form. */
+  const [approval, setApproval] = useState<
+    Record<
+      string,
+      { open: boolean; note: string; submitting: boolean; error: string | null }
+    >
+  >({});
+
   /* ── per-chain revision upload state ──
    *  Keyed by the chain's *latest* submission id (what the row represents).
    *  Tracks in-flight upload and any error so multiple chains can revise
@@ -299,6 +308,54 @@ export function CampaignDetailPage() {
     }
   }
 
+  async function approvePlacement(placementId: string) {
+    const draft = approval[placementId] ?? {
+      open: true,
+      note: "",
+      submitting: false,
+      error: null,
+    };
+    setApproval((a) => ({
+      ...a,
+      [placementId]: { ...draft, submitting: true, error: null },
+    }));
+    try {
+      const updated = await api.respondToPlacement(placementId, {
+        response: "CLIENT_APPROVED",
+        note: draft.note.trim() || null,
+      });
+      setPlacements((prev) =>
+        prev.map((p) =>
+          p.id === placementId
+            ? {
+                ...p,
+                clientResponse: updated.clientResponse,
+                clientResponseNote: updated.clientResponseNote,
+                clientRespondedAt: updated.clientRespondedAt,
+              }
+            : p,
+        ),
+      );
+      setApproval((a) => {
+        const next = { ...a };
+        delete next[placementId];
+        return next;
+      });
+    } catch (e) {
+      setApproval((a) => ({
+        ...a,
+        [placementId]: {
+          ...draft,
+          submitting: false,
+          error:
+            e instanceof ApiError
+              ? e.message
+              : "Could not record approval. Please try again.",
+        },
+      }));
+    }
+  }
+
   /** Upload a revised file against an existing submission's chain. The
    *  server inherits title/creativeType/description from the parent and
    *  writes the new row with parentSubmissionId set to the chain root. */
@@ -372,6 +429,13 @@ export function CampaignDetailPage() {
       .map((p) => p.inventory.publisher.dmaName)
       .filter((v): v is string => v != null && v.trim().length > 0),
   ).size;
+
+  /** Placements still awaiting the client's acknowledgment. Used to surface
+   *  a pending-review count in the placements header and the next-steps
+   *  panel without rearranging existing sections. */
+  const placementsPendingReview = placements.filter(
+    (p) => p.clientResponse === "PENDING_CLIENT_REVIEW",
+  ).length;
 
   /** Group placements by publisher, sorted alphabetically by publisher name;
    *  placements within each group sorted by placement name. Subtotal is the
@@ -466,6 +530,14 @@ export function CampaignDetailPage() {
         level: "info",
         headline: `${awaiting} creative${awaiting === 1 ? "" : "s"} awaiting agency review`,
         detail: "No action needed — we'll reach out if anything's missing.",
+      });
+    }
+
+    if (placementsPendingReview > 0) {
+      steps.push({
+        level: "action",
+        headline: `Action required: ${placementsPendingReview} placement${placementsPendingReview === 1 ? "" : "s"} awaiting your approval`,
+        detail: "Review placements below and click Approve on each to acknowledge.",
       });
     }
 
@@ -743,6 +815,11 @@ export function CampaignDetailPage() {
               <strong style={{ color: "inherit" }}>
                 {formatCents(placementTotalCents)}
               </strong>
+              {placementsPendingReview > 0 && (
+                <>
+                  {" "}· {placementsPendingReview} awaiting your review
+                </>
+              )}
             </span>
           )}
         </div>
@@ -827,7 +904,10 @@ export function CampaignDetailPage() {
                       gap: "0.65rem",
                     }}
                   >
-                    {group.placements.map((p) => (
+                    {group.placements.map((p) => {
+                      const approvalDraft = approval[p.id];
+                      const approved = p.clientResponse === "CLIENT_APPROVED";
+                      return (
                       <li
                         key={p.id}
                         style={{
@@ -930,8 +1010,200 @@ export function CampaignDetailPage() {
                             {PLACEMENT_STATUS_LABEL[p.status]}
                           </span>
                         </div>
+
+                        {/* Client acknowledgment strip — full width below
+                            the main card content. Stacks cleanly on mobile. */}
+                        <div
+                          style={{
+                            flex: "1 0 100%",
+                            marginTop: "0.6rem",
+                            paddingTop: "0.6rem",
+                            borderTop: "1px solid rgba(15,23,42,0.08)",
+                          }}
+                        >
+                          {approved ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                alignItems: "baseline",
+                                gap: "0.5rem",
+                                fontSize: "0.9rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  padding: "0.18rem 0.55rem",
+                                  borderRadius: "999px",
+                                  fontSize: "0.78rem",
+                                  fontWeight: 600,
+                                  background: "var(--color-success-bg)",
+                                  color: "var(--color-success-text)",
+                                  border: "1px solid #BBF7D0",
+                                }}
+                              >
+                                ✓ Approved
+                              </span>
+                              {p.clientRespondedAt && (
+                                <span
+                                  className="text-muted"
+                                  style={{ fontSize: "0.85rem" }}
+                                >
+                                  {formatDate(p.clientRespondedAt)}
+                                </span>
+                              )}
+                              {p.clientResponseNote && (
+                                <span
+                                  style={{
+                                    fontSize: "0.85rem",
+                                    whiteSpace: "pre-wrap",
+                                  }}
+                                >
+                                  “{p.clientResponseNote}”
+                                </span>
+                              )}
+                            </div>
+                          ) : approvalDraft?.open ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.45rem",
+                              }}
+                            >
+                              <label style={{ fontSize: "0.85rem" }}>
+                                Optional note (visible to your agency)
+                                <textarea
+                                  value={approvalDraft.note}
+                                  maxLength={1000}
+                                  rows={2}
+                                  onChange={(e) =>
+                                    setApproval((a) => ({
+                                      ...a,
+                                      [p.id]: {
+                                        ...(a[p.id] ?? {
+                                          open: true,
+                                          note: "",
+                                          submitting: false,
+                                          error: null,
+                                        }),
+                                        note: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  disabled={approvalDraft.submitting}
+                                  style={{
+                                    display: "block",
+                                    width: "100%",
+                                    marginTop: "0.25rem",
+                                    padding: "0.4rem 0.55rem",
+                                    borderRadius: "0.35rem",
+                                    border: "1px solid rgba(15,23,42,0.18)",
+                                    fontSize: "0.9rem",
+                                  }}
+                                />
+                              </label>
+                              {approvalDraft.error && (
+                                <span
+                                  className="form-error"
+                                  role="alert"
+                                  style={{ fontSize: "0.85rem" }}
+                                >
+                                  {approvalDraft.error}
+                                </span>
+                              )}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "0.5rem",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  className="primary-button"
+                                  disabled={approvalDraft.submitting}
+                                  onClick={() => approvePlacement(p.id)}
+                                >
+                                  {approvalDraft.submitting
+                                    ? "Approving…"
+                                    : "Approve placement"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="inline-text-link"
+                                  disabled={approvalDraft.submitting}
+                                  onClick={() =>
+                                    setApproval((a) => {
+                                      const next = { ...a };
+                                      delete next[p.id];
+                                      return next;
+                                    })
+                                  }
+                                  style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                alignItems: "center",
+                                gap: "0.6rem",
+                                fontSize: "0.9rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  padding: "0.18rem 0.55rem",
+                                  borderRadius: "999px",
+                                  fontSize: "0.78rem",
+                                  fontWeight: 600,
+                                  background: "var(--color-pending-bg)",
+                                  color: "var(--color-pending-text)",
+                                  border: "1px solid #BFDBFE",
+                                }}
+                              >
+                                Awaiting your review
+                              </span>
+                              <button
+                                type="button"
+                                className="inline-text-link"
+                                onClick={() =>
+                                  setApproval((a) => ({
+                                    ...a,
+                                    [p.id]: {
+                                      open: true,
+                                      note: "",
+                                      submitting: false,
+                                      error: null,
+                                    },
+                                  }))
+                                }
+                                style={{
+                                  background: "transparent",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                Approve placement →
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 </div>
               );

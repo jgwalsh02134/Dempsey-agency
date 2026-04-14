@@ -8,6 +8,7 @@ import {
   placementIdParamsSchema,
   createPlacementSchema,
   updatePlacementSchema,
+  clientResponseSchema,
 } from "./schemas.js";
 
 const AGENCY_ROLES = new Set(["AGENCY_OWNER", "AGENCY_ADMIN", "STAFF"]);
@@ -75,6 +76,9 @@ export async function placementRoutes(app: FastifyInstance) {
           grossCostCents: p.grossCostCents,
           quantity: p.quantity,
           notes: p.notes,
+          clientResponse: p.clientResponse,
+          clientResponseNote: p.clientResponseNote,
+          clientRespondedAt: p.clientRespondedAt,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
           inventory: {
@@ -198,6 +202,52 @@ export async function placementRoutes(app: FastifyInstance) {
       const updated = await app.prisma.placement.update({
         where: { id },
         data,
+      });
+      return updated;
+    },
+  );
+
+  // ── Client acknowledgment / approval ──────────────────────────
+  //
+  // Scoped to users who can see the campaign (client org members AND
+  // agency users with org visibility). Orthogonal to PlacementStatus —
+  // this only flips the `clientResponse` fields, never the operational
+  // status. `clientRespondedAt` is stamped on every write so the agency
+  // can see when a response changed.
+  app.post(
+    "/placements/:id/client-response",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id } = placementIdParamsSchema.parse(request.params);
+
+      const placement = await app.prisma.placement.findUnique({
+        where: { id },
+        include: { campaign: { select: { organizationId: true } } },
+      });
+      if (!placement) {
+        return reply.code(404).send({ error: "Placement not found" });
+      }
+
+      const visible = await resolveVisibleOrganizationIds(
+        app.prisma,
+        request.currentUser!,
+      );
+      if (
+        visible !== null &&
+        !visible.includes(placement.campaign.organizationId)
+      ) {
+        return reply.code(403).send({ error: "Forbidden" });
+      }
+
+      const { response, note } = clientResponseSchema.parse(request.body);
+
+      const updated = await app.prisma.placement.update({
+        where: { id },
+        data: {
+          clientResponse: response,
+          clientResponseNote: note ?? null,
+          clientRespondedAt: new Date(),
+        },
       });
       return updated;
     },

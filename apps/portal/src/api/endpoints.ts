@@ -10,6 +10,8 @@ import type {
   OrgCampaignsResponse,
   OrgDocumentsResponse,
   OrgInvoicesResponse,
+  Placement,
+  PlacementClientResponse,
   SessionUser,
   SubmissionDownloadResponse,
   SubmissionPreviewResponse,
@@ -120,6 +122,16 @@ export async function fetchSubmissionPreviewUrl(
 export async function fetchCampaign(id: string): Promise<Campaign> {
   return apiFetch<Campaign>(
     `/api/v1/campaigns/${encodeURIComponent(id)}`,
+  );
+}
+
+export async function respondToPlacement(
+  id: string,
+  body: { response: PlacementClientResponse; note?: string | null },
+): Promise<Placement> {
+  return apiFetch<Placement>(
+    `/api/v1/placements/${encodeURIComponent(id)}/client-response`,
+    { method: "POST", body: JSON.stringify(body) },
   );
 }
 

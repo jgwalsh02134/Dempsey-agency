@@ -100,6 +100,10 @@ export type PlacementStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+export type PlacementClientResponse =
+  | "PENDING_CLIENT_REVIEW"
+  | "CLIENT_APPROVED";
+
 export interface Placement {
   id: string;
   campaignId: string;
@@ -109,6 +113,9 @@ export interface Placement {
   grossCostCents: number;
   quantity: number | null;
   notes: string | null;
+  clientResponse: PlacementClientResponse;
+  clientResponseNote: string | null;
+  clientRespondedAt: string | null;
   createdAt: string;
   updatedAt: string;
   inventory: {

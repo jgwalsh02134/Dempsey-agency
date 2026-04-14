@@ -34,3 +34,17 @@ export const updatePlacementSchema = z.object({
   quantity: z.number().int().min(1).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
 });
+
+/** Body for POST /placements/:id/client-response. `note` is an optional
+ *  single-line client comment; whitespace-only notes collapse to null. */
+export const clientResponseSchema = z.object({
+  response: z.enum(["PENDING_CLIENT_REVIEW", "CLIENT_APPROVED"]),
+  note: z
+    .union([z.string().max(1000), z.null()])
+    .optional()
+    .transform((v) => {
+      if (v == null) return v;
+      const trimmed = v.trim();
+      return trimmed.length === 0 ? null : trimmed;
+    }),
+});

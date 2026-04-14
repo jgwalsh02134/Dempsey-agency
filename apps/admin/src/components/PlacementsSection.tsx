@@ -663,6 +663,8 @@ export function PlacementsSection({
                             </tr>
                           );
                         }
+                        const clientApproved =
+                          p.clientResponse === "CLIENT_APPROVED";
                         return (
                           <tr key={p.id}>
                             <td>
@@ -670,6 +672,53 @@ export function PlacementsSection({
                               {p.notes && (
                                 <span className="small muted">{p.notes}</span>
                               )}
+                              <div
+                                style={{
+                                  marginTop: "0.25rem",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  alignItems: "center",
+                                  gap: "0.35rem",
+                                }}
+                              >
+                                <span
+                                  title={
+                                    clientApproved
+                                      ? p.clientRespondedAt
+                                        ? `Client approved ${new Date(p.clientRespondedAt).toLocaleString()}`
+                                        : "Client approved"
+                                      : "Client has not yet approved this placement"
+                                  }
+                                  style={{
+                                    display: "inline-block",
+                                    padding: "0.1rem 0.45rem",
+                                    borderRadius: "999px",
+                                    fontSize: "0.7rem",
+                                    fontWeight: 600,
+                                    letterSpacing: "0.02em",
+                                    textTransform: "uppercase",
+                                    background: clientApproved
+                                      ? "rgba(16, 185, 129, 0.12)"
+                                      : "rgba(234, 179, 8, 0.14)",
+                                    color: clientApproved
+                                      ? "rgb(6, 95, 70)"
+                                      : "rgb(120, 53, 15)",
+                                  }}
+                                >
+                                  {clientApproved
+                                    ? "Client approved"
+                                    : "Pending client"}
+                                </span>
+                                {p.clientResponseNote && (
+                                  <span
+                                    className="small muted"
+                                    style={{ whiteSpace: "pre-wrap" }}
+                                    title={p.clientResponseNote}
+                                  >
+                                    “{p.clientResponseNote}”
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="small">
                               {p.inventory.mediaType}

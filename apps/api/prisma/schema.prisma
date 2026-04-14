@@ -68,6 +68,15 @@ enum PlacementStatus {
   CANCELLED
 }
 
+/// Client-side acknowledgment state for a placement. Orthogonal to the
+/// operational PlacementStatus above — agencies control placement status;
+/// clients control this response. Two-state v1; additional states (e.g.,
+/// FLAGGED) can be added later without breaking existing rows.
+enum PlacementClientResponse {
+  PENDING_CLIENT_REVIEW
+  CLIENT_APPROVED
+}
+
 enum PricingModel {
   CPM
   VCPM
@@ -409,6 +418,11 @@ model Placement {
   netCostCents   Int?
   quantity       Int?
   notes          String?
+  // Client acknowledgment — defaults to PENDING_CLIENT_REVIEW on create.
+  // Orthogonal to `status`; does not affect booking/live state.
+  clientResponse     PlacementClientResponse @default(PENDING_CLIENT_REVIEW)
+  clientResponseNote String?
+  clientRespondedAt  DateTime?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
