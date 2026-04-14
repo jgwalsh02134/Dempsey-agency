@@ -340,6 +340,9 @@ export function PublishersPage() {
               Import CSV
             </button>
           )}
+          <Link to="/publishers/explorer" className="btn ghost">
+            Explorer
+          </Link>
           <Link to="/publishers/new" className="btn primary">
             + New Publisher
           </Link>
