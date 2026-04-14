@@ -142,12 +142,47 @@ export async function submissionRoutes(app: FastifyInstance) {
         });
       }
 
-      const title = getFieldValue(file.fields, "title");
-      if (!title || title.trim().length === 0) {
+      // Revision upload: if parentSubmissionId is supplied, inherit the
+      // parent's title/creativeType/description so the client can post a
+      // file-only form. We also resolve the chain ROOT so the stored
+      // parentSubmissionId is always the original (flat chain).
+      const parentSubmissionIdRaw = getFieldValue(
+        file.fields,
+        "parentSubmissionId",
+      );
+      let parent: Awaited<
+        ReturnType<typeof app.prisma.creativeSubmission.findUnique>
+      > = null;
+      let chainRootId: string | null = null;
+      if (parentSubmissionIdRaw && parentSubmissionIdRaw.trim().length > 0) {
+        parent = await app.prisma.creativeSubmission.findUnique({
+          where: { id: parentSubmissionIdRaw.trim() },
+        });
+        if (!parent) {
+          return reply.code(404).send({ error: "Parent submission not found" });
+        }
+        if (parent.campaignId !== campaignId) {
+          return reply
+            .code(400)
+            .send({ error: "Parent submission is for a different campaign" });
+        }
+        chainRootId = parent.parentSubmissionId ?? parent.id;
+      }
+
+      const providedTitle = getFieldValue(file.fields, "title");
+      const title =
+        providedTitle && providedTitle.trim().length > 0
+          ? providedTitle.trim()
+          : parent?.title ?? "";
+      if (title.length === 0) {
         return reply.code(400).send({ error: "Title is required" });
       }
 
-      const creativeType = getFieldValue(file.fields, "creativeType");
+      const providedCreativeType = getFieldValue(file.fields, "creativeType");
+      const creativeType =
+        providedCreativeType && CREATIVE_TYPES.has(providedCreativeType)
+          ? providedCreativeType
+          : parent?.creativeType;
       if (!creativeType || !CREATIVE_TYPES.has(creativeType)) {
         return reply.code(400).send({
           error: "creativeType is required (PRINT, DIGITAL, or MASTER_ASSET)",
@@ -168,8 +203,11 @@ export async function submissionRoutes(app: FastifyInstance) {
         });
       }
 
+      const providedDescription = getFieldValue(file.fields, "description");
       const description =
-        getFieldValue(file.fields, "description")?.trim() || null;
+        providedDescription && providedDescription.trim().length > 0
+          ? providedDescription.trim()
+          : parent?.description ?? null;
       const filename = sanitizeFilename(file.filename);
       const storageKey = `submissions/${campaignId}/${randomUUID()}/${filename}`;
 
@@ -182,11 +220,26 @@ export async function submissionRoutes(app: FastifyInstance) {
         buffer.length,
       );
 
+      /* Compute next version within the chain, if this is a revision. */
+      let nextVersion = 1;
+      if (chainRootId) {
+        const agg = await app.prisma.creativeSubmission.aggregate({
+          where: {
+            OR: [
+              { id: chainRootId },
+              { parentSubmissionId: chainRootId },
+            ],
+          },
+          _max: { version: true },
+        });
+        nextVersion = (agg._max.version ?? 1) + 1;
+      }
+
       const submission = await app.prisma.creativeSubmission.create({
         data: {
           campaignId,
           organizationId: campaign.organizationId,
-          title: title.trim(),
+          title,
           description,
           creativeType: creativeType as "PRINT" | "DIGITAL" | "MASTER_ASSET",
           filename,
@@ -201,6 +254,8 @@ export async function submissionRoutes(app: FastifyInstance) {
           validationSummary:
             validation.validationSummary as unknown as Prisma.InputJsonValue,
           submittedById: request.currentUser!.id,
+          parentSubmissionId: chainRootId,
+          version: nextVersion,
         },
       });
 

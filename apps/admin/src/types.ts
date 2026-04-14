@@ -378,6 +378,8 @@ export interface CreativeSubmission {
   colorSpace: string | null;
   validationSummary: ValidationSummary | null;
   submittedById: string;
+  parentSubmissionId: string | null;
+  version: number;
   createdAt: string;
   updatedAt: string;
   submittedBy?: {

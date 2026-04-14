@@ -226,6 +226,12 @@ model CreativeSubmission {
   status            SubmissionStatus @default(UPLOADED)
   reviewNote        String?
   placementId       String?
+  // Basic revision chain. parentSubmissionId points at the ROOT submission
+  // in the chain (not the immediately-previous revision) so each row has
+  // O(1) access to its siblings. version is 1 for the original, 2+ for
+  // subsequent client-uploaded revisions.
+  parentSubmissionId String?
+  version            Int              @default(1)
   widthPx           Int?
   heightPx          Int?
   dpi               Int?
@@ -239,9 +245,12 @@ model CreativeSubmission {
   organization Organization @relation(fields: [organizationId], references: [id])
   submittedBy  User         @relation(fields: [submittedById], references: [id])
   placement    Placement?   @relation(fields: [placementId], references: [id], onDelete: SetNull)
+  parent       CreativeSubmission?  @relation("SubmissionRevisions", fields: [parentSubmissionId], references: [id], onDelete: SetNull)
+  revisions    CreativeSubmission[] @relation("SubmissionRevisions")
 
   @@index([campaignId, status])
   @@index([organizationId])
+  @@index([parentSubmissionId])
 }
 
 model AccountRequest {

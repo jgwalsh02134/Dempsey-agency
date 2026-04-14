@@ -103,12 +103,18 @@ const PRICING_MODEL_LABEL: Record<PricingModel, string> = {
  *  from the existing enum; no new statuses are invented. */
 const SUB_NEXT_STEP: Record<SubmissionStatus, string> = {
   UPLOADED: "Awaiting agency review",
-  VALIDATION_FAILED: "Fix validation issues and re-upload",
+  VALIDATION_FAILED: "Fix issues and re-upload",
   UNDER_REVIEW: "Agency is reviewing your creative",
-  NEEDS_RESIZING: "Upload a corrected file",
+  NEEDS_RESIZING: "Please upload a corrected version",
   READY_FOR_PUBLISHER: "Approved — scheduled to send to publisher",
   PUSHED: "Sent to publisher",
 };
+
+/** Statuses that require the client to upload a revised file. */
+const ACTION_STATUSES: ReadonlySet<SubmissionStatus> = new Set([
+  "VALIDATION_FAILED",
+  "NEEDS_RESIZING",
+]);
 
 /** Separator used in inline metadata strips. */
 function MetaSep() {
@@ -146,6 +152,14 @@ export function CampaignDetailPage() {
   const [pubsError, setPubsError] = useState<string | null>(null);
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  /* ── per-chain revision upload state ──
+   *  Keyed by the chain's *latest* submission id (what the row represents).
+   *  Tracks in-flight upload and any error so multiple chains can revise
+   *  independently without blocking each other. */
+  const [revising, setRevising] = useState<
+    Record<string, { submitting: boolean; error: string | null }>
+  >({});
 
   /* ── always fetch fresh campaign data ── */
   useEffect(() => {
@@ -285,6 +299,42 @@ export function CampaignDetailPage() {
     }
   }
 
+  /** Upload a revised file against an existing submission's chain. The
+   *  server inherits title/creativeType/description from the parent and
+   *  writes the new row with parentSubmissionId set to the chain root. */
+  async function uploadRevision(parent: CreativeSubmission, file: File) {
+    if (!campaign) return;
+    setRevising((r) => ({
+      ...r,
+      [parent.id]: { submitting: true, error: null },
+    }));
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("parentSubmissionId", parent.id);
+      await api.uploadSubmission(campaign.id, form);
+      // Refetch the full list so grouping picks up the new version cleanly.
+      const res = await api.fetchCampaignSubmissions(campaign.id);
+      setSubs(res.submissions);
+      setRevising((r) => {
+        const next = { ...r };
+        delete next[parent.id];
+        return next;
+      });
+    } catch (e) {
+      setRevising((r) => ({
+        ...r,
+        [parent.id]: {
+          submitting: false,
+          error:
+            e instanceof ApiError
+              ? e.message
+              : "Upload failed. Please try again.",
+        },
+      }));
+    }
+  }
+
   if (campaignLoading) {
     return (
       <section className="section-welcome">
@@ -369,11 +419,27 @@ export function CampaignDetailPage() {
     headline: string;
     detail?: string;
   }
+  /** The latest submission in each revision chain — used so review-loop counts
+   *  reflect one creative per chain instead of every historical version. */
+  const latestByChain: CreativeSubmission[] = (() => {
+    const map = new Map<string, CreativeSubmission>();
+    for (const s of subs) {
+      const root = s.parentSubmissionId ?? s.id;
+      const prev = map.get(root);
+      if (!prev || s.version > prev.version) map.set(root, s);
+    }
+    return Array.from(map.values());
+  })();
+
   const nextSteps: NextStep[] = (() => {
     const steps: NextStep[] = [];
 
-    const failed = subs.filter((s) => s.status === "VALIDATION_FAILED").length;
-    const resize = subs.filter((s) => s.status === "NEEDS_RESIZING").length;
+    const failed = latestByChain.filter(
+      (s) => s.status === "VALIDATION_FAILED",
+    ).length;
+    const resize = latestByChain.filter(
+      (s) => s.status === "NEEDS_RESIZING",
+    ).length;
     const actionCount = failed + resize;
     if (actionCount > 0) {
       const parts: string[] = [];
@@ -392,7 +458,7 @@ export function CampaignDetailPage() {
       });
     }
 
-    const awaiting = subs.filter(
+    const awaiting = latestByChain.filter(
       (s) => s.status === "UPLOADED" || s.status === "UNDER_REVIEW",
     ).length;
     if (awaiting > 0) {
@@ -440,19 +506,62 @@ export function CampaignDetailPage() {
   })();
   const hasAction = nextSteps.some((s) => s.level === "action");
 
-  const subCounts = subs.reduce(
-    (acc, s) => {
-      if (s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED") {
-        acc.approved += 1;
-      } else if (
-        s.status === "VALIDATION_FAILED" ||
-        s.status === "NEEDS_RESIZING"
-      ) {
+  /** Group submissions into revision chains keyed by the root submission id.
+   *  Within each chain, the entry with the highest `version` is the current
+   *  creative; older entries are preserved for transparency but rendered
+   *  behind a disclosure. */
+  interface SubChain {
+    rootId: string;
+    latest: CreativeSubmission;
+    prior: CreativeSubmission[];
+  }
+  const subChains: SubChain[] = (() => {
+    const groups = new Map<string, CreativeSubmission[]>();
+    for (const s of subs) {
+      const root = s.parentSubmissionId ?? s.id;
+      const bucket = groups.get(root);
+      if (bucket) bucket.push(s);
+      else groups.set(root, [s]);
+    }
+    // Sort within each chain: newest version first, createdAt as tiebreak.
+    const chains = Array.from(groups.entries()).map(([rootId, list]) => {
+      const sorted = [...list].sort((a, b) => {
+        if (b.version !== a.version) return b.version - a.version;
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+      return { rootId, latest: sorted[0]!, prior: sorted.slice(1) };
+    });
+    // Order chains so action-required appears first, then awaiting, then
+    // approved; ties broken by the latest createdAt descending.
+    const priority: Record<SubmissionStatus, number> = {
+      VALIDATION_FAILED: 0,
+      NEEDS_RESIZING: 1,
+      UPLOADED: 2,
+      UNDER_REVIEW: 3,
+      READY_FOR_PUBLISHER: 4,
+      PUSHED: 5,
+    };
+    return chains.sort((a, b) => {
+      const p = priority[a.latest.status] - priority[b.latest.status];
+      if (p !== 0) return p;
+      return (
+        new Date(b.latest.createdAt).getTime() -
+        new Date(a.latest.createdAt).getTime()
+      );
+    });
+  })();
+
+  /* Counts reflect chains (one per creative) rather than every row, so
+   * revisions don't inflate the "N submissions" summary. */
+  const subCounts = subChains.reduce(
+    (acc, c) => {
+      const s = c.latest.status;
+      if (s === "READY_FOR_PUBLISHER" || s === "PUSHED") acc.approved += 1;
+      else if (s === "VALIDATION_FAILED" || s === "NEEDS_RESIZING")
         acc.actionNeeded += 1;
-      } else {
-        // UPLOADED + UNDER_REVIEW
-        acc.awaiting += 1;
-      }
+      else acc.awaiting += 1;
       return acc;
     },
     { approved: 0, awaiting: 0, actionNeeded: 0 },
@@ -895,12 +1004,12 @@ export function CampaignDetailPage() {
           <Link to="/creatives" className="camp-upload-link">Upload creative &rarr;</Link>
         </div>
 
-        {subs.length > 0 && (
+        {subChains.length > 0 && (
           <p
             className="text-muted"
             style={{ margin: "0.4rem 0 0.75rem", fontSize: "0.9rem" }}
           >
-            {subs.length} submission{subs.length === 1 ? "" : "s"}
+            {subChains.length} creative{subChains.length === 1 ? "" : "s"}
             {subCounts.approved > 0 && ` · ${subCounts.approved} approved`}
             {subCounts.awaiting > 0 && ` · ${subCounts.awaiting} awaiting review`}
             {subCounts.actionNeeded > 0 &&
@@ -918,7 +1027,7 @@ export function CampaignDetailPage() {
           </p>
         )}
 
-        {!subsLoading && !subsError && subs.length === 0 && (
+        {!subsLoading && !subsError && subChains.length === 0 && (
           <p className="text-muted">
             No creatives have been uploaded for this campaign yet.{" "}
             <Link to="/creatives" className="inline-text-link">
@@ -928,57 +1037,219 @@ export function CampaignDetailPage() {
           </p>
         )}
 
-        {!subsLoading && !subsError && subs.length > 0 && (
+        {!subsLoading && !subsError && subChains.length > 0 && (
           <ul className="report-list">
-            {subs.map((s) => (
-              <li key={s.id} className="report-item">
-                <div className="report-info">
-                  <span className="report-name">{s.title}</span>
-                  {s.description && (
-                    <span className="report-description">
-                      {s.description}
+            {subChains.map((chain) => {
+              const s = chain.latest;
+              const revState = revising[s.id];
+              const needsAction = ACTION_STATUSES.has(s.status);
+              return (
+                <li key={chain.rootId} className="report-item">
+                  <div className="report-info">
+                    <span className="report-name">
+                      {s.title}
+                      {s.version > 1 && (
+                        <span
+                          className="text-muted"
+                          style={{
+                            marginLeft: "0.5rem",
+                            fontWeight: 500,
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          · v{s.version}
+                        </span>
+                      )}
                     </span>
-                  )}
-                  {s.reviewNote && (
-                    <div className="review-note">{s.reviewNote}</div>
-                  )}
-                  <div className="submission-meta">
-                    <span className="doc-type-badge">
-                      {s.creativeType}
-                    </span>
-                    <span>
-                      {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
-                      &middot; {formatDate(s.createdAt)}
-                    </span>
+                    {s.description && (
+                      <span className="report-description">
+                        {s.description}
+                      </span>
+                    )}
+
+                    {/* Agency feedback callout — prominent when present */}
+                    {s.reviewNote && (
+                      <div
+                        role="note"
+                        style={{
+                          marginTop: "0.5rem",
+                          padding: "0.75rem 0.9rem",
+                          borderRadius: "0.5rem",
+                          border: `1px solid ${needsAction ? "var(--color-error-border)" : "#BFDBFE"}`,
+                          background: needsAction
+                            ? "var(--color-error-bg)"
+                            : "var(--color-pending-bg)",
+                          color: needsAction
+                            ? "var(--color-error-text)"
+                            : "var(--color-pending-text)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.85rem",
+                            marginBottom: "0.2rem",
+                          }}
+                        >
+                          Agency feedback
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.9rem",
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {s.reviewNote}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="submission-meta">
+                      <span className="doc-type-badge">{s.creativeType}</span>
+                      <span>
+                        {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
+                        &middot; {formatDate(s.createdAt)}
+                      </span>
+                    </div>
+                    <div
+                      className="text-muted"
+                      style={{ fontSize: "0.85rem", marginTop: "0.35rem" }}
+                    >
+                      <strong style={{ color: "inherit", fontWeight: 600 }}>
+                        Next step:
+                      </strong>{" "}
+                      {SUB_NEXT_STEP[s.status]}
+                    </div>
+
+                    {/* Inline revised-version upload when action is required */}
+                    {needsAction && (
+                      <div
+                        style={{
+                          marginTop: "0.6rem",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.5rem",
+                          alignItems: "center",
+                        }}
+                      >
+                        <label
+                          className="inline-text-link"
+                          style={{
+                            cursor: revState?.submitting
+                              ? "not-allowed"
+                              : "pointer",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          {revState?.submitting
+                            ? "Uploading…"
+                            : "Upload revised version"}
+                          <input
+                            type="file"
+                            style={{ display: "none" }}
+                            disabled={revState?.submitting}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              // Clear the input so selecting the same file
+                              // again still triggers the handler.
+                              e.target.value = "";
+                              if (f) void uploadRevision(s, f);
+                            }}
+                          />
+                        </label>
+                        {revState?.error && (
+                          <span
+                            className="form-error"
+                            role="alert"
+                            style={{ fontSize: "0.85rem" }}
+                          >
+                            {revState.error}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Prior versions disclosure */}
+                    {chain.prior.length > 0 && (
+                      <details style={{ marginTop: "0.6rem" }}>
+                        <summary
+                          className="text-muted"
+                          style={{
+                            cursor: "pointer",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          View {chain.prior.length} previous version
+                          {chain.prior.length === 1 ? "" : "s"}
+                        </summary>
+                        <ul
+                          style={{
+                            listStyle: "none",
+                            padding: 0,
+                            margin: "0.5rem 0 0",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "0.35rem",
+                          }}
+                        >
+                          {chain.prior.map((old) => (
+                            <li
+                              key={old.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "0.6rem",
+                                padding: "0.4rem 0.6rem",
+                                borderRadius: "0.35rem",
+                                background: "rgba(15,23,42,0.04)",
+                                fontSize: "0.85rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <strong>v{old.version}</strong> · {old.filename}{" "}
+                                · {formatDate(old.createdAt)}
+                              </span>
+                              <button
+                                type="button"
+                                className="doc-download"
+                                disabled={downloadingId === old.id}
+                                onClick={() => downloadSub(old)}
+                                style={{ fontSize: "0.8rem" }}
+                              >
+                                {downloadingId === old.id
+                                  ? "Preparing…"
+                                  : "Download"}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   </div>
-                  <div
-                    className="text-muted"
-                    style={{
-                      fontSize: "0.85rem",
-                      marginTop: "0.35rem",
-                    }}
-                  >
-                    <strong style={{ color: "inherit", fontWeight: 600 }}>
-                      Next step:
-                    </strong>{" "}
-                    {SUB_NEXT_STEP[s.status]}
+                  <div className="submission-actions">
+                    <span className={SUB_STATUS_BADGE[s.status]}>
+                      {SUB_STATUS_LABEL[s.status]}
+                    </span>
+                    <button
+                      type="button"
+                      className="doc-download"
+                      disabled={downloadingId === s.id}
+                      onClick={() => downloadSub(s)}
+                    >
+                      {downloadingId === s.id ? "Preparing…" : "Download"}
+                    </button>
                   </div>
-                </div>
-                <div className="submission-actions">
-                  <span className={SUB_STATUS_BADGE[s.status]}>
-                    {SUB_STATUS_LABEL[s.status]}
-                  </span>
-                  <button
-                    type="button"
-                    className="doc-download"
-                    disabled={downloadingId === s.id}
-                    onClick={() => downloadSub(s)}
-                  >
-                    {downloadingId === s.id ? "Preparing…" : "Download"}
-                  </button>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
