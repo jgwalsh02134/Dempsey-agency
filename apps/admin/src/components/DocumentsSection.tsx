@@ -7,7 +7,16 @@ import {
 } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import type { Document } from "../types";
+import type { Document, DocumentCategory } from "../types";
+
+const CATEGORY_OPTIONS: { value: DocumentCategory; label: string }[] = [
+  { value: "PROOF", label: "Proof" },
+  { value: "INVOICE", label: "Invoice" },
+  { value: "INSERTION_ORDER", label: "Insertion Order" },
+  { value: "CONTRACT", label: "Contract" },
+  { value: "CREATIVE_ASSET", label: "Creative Asset" },
+  { value: "OTHER", label: "Other" },
+];
 
 const MIME_LABELS: Record<string, string> = {
   "application/pdf": "PDF",
@@ -53,6 +62,7 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
   /* ── upload state ── */
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<DocumentCategory>("OTHER");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -62,6 +72,10 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
   /* ── delete state ── */
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  /* ── inline category edit state ── */
+  const [savingCategoryId, setSavingCategoryId] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   /* ── load documents ── */
   const loadDocuments = useCallback(async () => {
@@ -92,11 +106,13 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
       const fd = new FormData();
       fd.append("title", title.trim());
       if (description.trim()) fd.append("description", description.trim());
+      fd.append("category", category);
       fd.append("file", file);
       await api.uploadDocument(orgId, fd);
       setUploadSuccess(`"${title.trim()}" uploaded.`);
       setTitle("");
       setDescription("");
+      setCategory("OTHER");
       setFile(null);
       if (fileRef.current) fileRef.current.value = "";
       void loadDocuments();
@@ -104,6 +120,21 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
       setUploadError(errorMessage(err));
     } finally {
       setUploading(false);
+    }
+  }
+
+  /* ── inline category change ── */
+  async function onCategoryChange(doc: Document, next: DocumentCategory) {
+    if (doc.category === next) return;
+    setCategoryError(null);
+    setSavingCategoryId(doc.id);
+    try {
+      const updated = await api.patchDocument(doc.id, { category: next });
+      setDocs((prev) => prev.map((d) => (d.id === doc.id ? updated : d)));
+    } catch (e) {
+      setCategoryError(errorMessage(e));
+    } finally {
+      setSavingCategoryId(null);
     }
   }
 
@@ -154,6 +185,21 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
           />
         </label>
         <label className="field">
+          <span>Category</span>
+          <select
+            value={category}
+            onChange={(e) =>
+              setCategory(e.target.value as DocumentCategory)
+            }
+          >
+            {CATEGORY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
           <span>File</span>
           <input
             ref={fileRef}
@@ -192,6 +238,11 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
           {deleteError}
         </p>
       )}
+      {categoryError && (
+        <p className="error" role="alert">
+          {categoryError}
+        </p>
+      )}
       {!loading && docs.length === 0 && !listError && (
         <p className="muted">No documents yet.</p>
       )}
@@ -201,6 +252,7 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
             <thead>
               <tr>
                 <th>Title</th>
+                <th>Category</th>
                 <th>File</th>
                 <th>Type</th>
                 <th>Size</th>
@@ -215,6 +267,28 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
                     <div>{doc.title}</div>
                     {doc.description && (
                       <span className="small">{doc.description}</span>
+                    )}
+                  </td>
+                  <td>
+                    <select
+                      value={doc.category ?? "OTHER"}
+                      disabled={savingCategoryId === doc.id}
+                      onChange={(e) =>
+                        onCategoryChange(
+                          doc,
+                          e.target.value as DocumentCategory,
+                        )
+                      }
+                      aria-label={`Category for ${doc.title}`}
+                    >
+                      {CATEGORY_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    {savingCategoryId === doc.id && (
+                      <span className="small muted"> saving…</span>
                     )}
                   </td>
                   <td>

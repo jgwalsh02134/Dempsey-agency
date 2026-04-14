@@ -8,11 +8,30 @@ import type {
   CampaignMapPublisher,
   CampaignStatus,
   CreativeSubmission,
+  Document,
+  DocumentCategory,
   Placement,
   PlacementStatus,
   PricingModel,
   SubmissionStatus,
 } from "../types";
+
+const DOC_CATEGORY_LABEL: Record<DocumentCategory, string> = {
+  INVOICE: "Invoices",
+  PROOF: "Proofs",
+  INSERTION_ORDER: "Insertion Orders",
+  CONTRACT: "Contracts",
+  CREATIVE_ASSET: "Creative Assets",
+  OTHER: "Other",
+};
+const DOC_CATEGORY_ORDER: DocumentCategory[] = [
+  "INVOICE",
+  "PROOF",
+  "INSERTION_ORDER",
+  "CONTRACT",
+  "CREATIVE_ASSET",
+  "OTHER",
+];
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
   ACTIVE: "Active",
@@ -169,6 +188,16 @@ export function CampaignDetailPage() {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  /* ── documents scoped to the campaign's organization ──
+   *  The document model is still org-scoped (no campaignId link yet), so
+   *  we surface the org's documents categorized here. Clients get a useful
+   *  hub on the campaign page without waiting for a fuller campaign-doc
+   *  linking model. */
+  const [docs, setDocs] = useState<Document[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+  const [docDownloadingId, setDocDownloadingId] = useState<string | null>(null);
+
   /* ── per-placement approval form state ──
    *  Keyed by placement id. Open toggles the inline note/confirm form. */
   const [approval, setApproval] = useState<
@@ -306,6 +335,34 @@ export function CampaignDetailPage() {
     };
   }, [campaign]);
 
+  /* ── fetch org documents once campaign is resolved ── */
+  useEffect(() => {
+    if (!campaign) return;
+    let cancelled = false;
+
+    setDocsLoading(true);
+    setDocsError(null);
+    setDocs([]);
+    api
+      .fetchOrgDocuments(campaign.organizationId)
+      .then((res) => {
+        if (!cancelled) setDocs(res.documents);
+      })
+      .catch((e) => {
+        if (!cancelled)
+          setDocsError(
+            e instanceof ApiError ? e.message : "Could not load documents.",
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setDocsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaign]);
+
   async function downloadSub(sub: CreativeSubmission) {
     setDownloadingId(sub.id);
     try {
@@ -321,6 +378,24 @@ export function CampaignDetailPage() {
       /* non-blocking */
     } finally {
       setDownloadingId(null);
+    }
+  }
+
+  async function downloadDoc(doc: Document) {
+    setDocDownloadingId(doc.id);
+    try {
+      const { url } = await api.fetchDocumentDownloadUrl(doc.id);
+      const a = document.createElement("a");
+      a.href = url;
+      a.rel = "noopener";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch {
+      /* non-blocking */
+    } finally {
+      setDocDownloadingId(null);
     }
   }
 
@@ -452,6 +527,23 @@ export function CampaignDetailPage() {
   const placementsPendingReview = placements.filter(
     (p) => p.clientResponse === "PENDING_CLIENT_REVIEW",
   ).length;
+
+  /** Documents grouped by category in canonical order, empty buckets
+   *  dropped. Rendered in the Documents hub section below. */
+  const docGroups: { category: DocumentCategory; docs: Document[] }[] = (() => {
+    const map = new Map<DocumentCategory, Document[]>();
+    for (const d of docs) {
+      const key = (d.category ?? "OTHER") as DocumentCategory;
+      const bucket = map.get(key);
+      if (bucket) bucket.push(d);
+      else map.set(key, [d]);
+    }
+    return DOC_CATEGORY_ORDER.filter((c) => map.has(c)).map((c) => ({
+      category: c,
+      docs: map.get(c)!,
+    }));
+  })();
+  const invoiceDocs = docs.filter((d) => d.category === "INVOICE");
 
   /** Financial summary — derived from existing placement data only.
    *  `planned` excludes CANCELLED placements since they won't be spent.
@@ -1693,16 +1785,173 @@ export function CampaignDetailPage() {
         )}
       </section>
 
-      {/* ── Documents (campaign-specific linking not available yet) ── */}
+      {/* ── Documents & Billing hub ──
+          Docs are org-scoped, so this surfaces the owning organization's
+          library categorized for quick scanning. Invoices are promoted to
+          their own sub-list; other categories appear as a count strip that
+          deep-links into the full Documents library with none-category
+          filtering left for a future pass. */}
       <section className="section-block">
-        <h2 className="section-heading">Documents</h2>
-        <p className="text-muted">
-          Campaign-specific documents are not shown here yet. Use{" "}
+        <div
+          className="camp-section-header"
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <h2 className="section-heading" style={{ margin: 0 }}>
+            Documents &amp; Billing
+          </h2>
           <Link to="/documents" className="inline-text-link">
-            Documents
-          </Link>{" "}
-          for files shared with your organization.
-        </p>
+            Full document library →
+          </Link>
+        </div>
+
+        {docsLoading && (
+          <p className="text-muted" style={{ marginTop: "0.5rem" }}>
+            Loading documents…
+          </p>
+        )}
+
+        {docsError && (
+          <p className="form-error" role="alert">
+            {docsError}
+          </p>
+        )}
+
+        {!docsLoading && !docsError && docs.length === 0 && (
+          <p className="text-muted" style={{ marginTop: "0.5rem" }}>
+            No documents have been shared with your organization yet. Proofs,
+            invoices, and insertion orders will appear here as your agency
+            uploads them.
+          </p>
+        )}
+
+        {!docsLoading && !docsError && docs.length > 0 && (
+          <>
+            {/* Category count chips — at-a-glance overview of what's on file */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.4rem",
+                marginTop: "0.5rem",
+              }}
+              aria-label="Document category counts"
+            >
+              {docGroups.map((g) => (
+                <span
+                  key={g.category}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                    padding: "0.3rem 0.6rem",
+                    borderRadius: "999px",
+                    border: "1px solid rgba(15,23,42,0.12)",
+                    background: "rgba(15,23,42,0.03)",
+                    fontSize: "0.82rem",
+                  }}
+                >
+                  <strong>{g.docs.length}</strong>{" "}
+                  <span className="text-muted">
+                    {DOC_CATEGORY_LABEL[g.category]}
+                  </span>
+                </span>
+              ))}
+            </div>
+
+            {/* Invoices — promoted sub-section when any exist */}
+            {invoiceDocs.length > 0 && (
+              <div style={{ marginTop: "1rem" }}>
+                <h3
+                  style={{
+                    margin: "0 0 0.45rem",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  Invoices{" "}
+                  <span
+                    className="text-muted"
+                    style={{ fontWeight: 500, fontSize: "0.85rem" }}
+                  >
+                    ({invoiceDocs.length})
+                  </span>
+                </h3>
+                <ul
+                  style={{
+                    listStyle: "none",
+                    padding: 0,
+                    margin: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.4rem",
+                  }}
+                >
+                  {invoiceDocs.map((doc) => (
+                    <li
+                      key={doc.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.6rem",
+                        flexWrap: "wrap",
+                        padding: "0.55rem 0.7rem",
+                        borderRadius: "0.4rem",
+                        border: "1px solid rgba(15,23,42,0.1)",
+                        background: "var(--color-surface, #fff)",
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: "1 1 16rem" }}>
+                        <div
+                          style={{ fontWeight: 600, fontSize: "0.95rem" }}
+                        >
+                          {doc.title}
+                        </div>
+                        <div
+                          className="text-muted"
+                          style={{ fontSize: "0.82rem", marginTop: "0.1rem" }}
+                        >
+                          {doc.filename} · {formatBytes(doc.sizeBytes)} ·{" "}
+                          {formatDate(doc.createdAt)}
+                          {doc.uploadedBy?.name && (
+                            <> · from {doc.uploadedBy.name}</>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="doc-download"
+                        disabled={docDownloadingId === doc.id}
+                        onClick={() => downloadDoc(doc)}
+                      >
+                        {docDownloadingId === doc.id
+                          ? "Preparing…"
+                          : "Download"}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p
+              className="text-muted"
+              style={{ marginTop: "0.75rem", fontSize: "0.85rem" }}
+            >
+              Organization-wide files appear in the{" "}
+              <Link to="/documents" className="inline-text-link">
+                full document library
+              </Link>
+              , grouped by category.
+            </p>
+          </>
+        )}
       </section>
 
       {/* ── Creative Submissions ── */}

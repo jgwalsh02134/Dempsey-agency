@@ -30,6 +30,14 @@ export interface LoginResponse {
   user: { id: string; email: string; name: string | null };
 }
 
+export type DocumentCategory =
+  | "PROOF"
+  | "INVOICE"
+  | "INSERTION_ORDER"
+  | "CONTRACT"
+  | "CREATIVE_ASSET"
+  | "OTHER";
+
 export interface Document {
   id: string;
   organizationId: string;
@@ -39,6 +47,7 @@ export interface Document {
   mimeType: string;
   sizeBytes: number;
   storageKey: string;
+  category: DocumentCategory;
   uploadedById: string;
   createdAt: string;
   updatedAt: string;

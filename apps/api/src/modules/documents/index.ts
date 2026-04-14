@@ -8,7 +8,12 @@ import {
   deleteObject,
   getSignedDownloadUrl,
 } from "../../lib/storage.js";
-import { orgIdParamsSchema, documentIdParamsSchema } from "./schemas.js";
+import {
+  orgIdParamsSchema,
+  documentIdParamsSchema,
+  documentCategory,
+  updateDocumentSchema,
+} from "./schemas.js";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
@@ -149,6 +154,15 @@ export async function documentRoutes(app: FastifyInstance) {
 
       const description =
         getFieldValue(file.fields, "description")?.trim() || null;
+      const rawCategory = getFieldValue(file.fields, "category");
+      const categoryParsed = rawCategory
+        ? documentCategory.safeParse(rawCategory.trim().toUpperCase())
+        : null;
+      if (rawCategory && !categoryParsed?.success) {
+        return reply.code(400).send({
+          error: `Invalid category "${rawCategory}".`,
+        });
+      }
       const filename = sanitizeFilename(file.filename);
       const storageKey = `documents/${orgId}/${randomUUID()}/${filename}`;
 
@@ -163,11 +177,60 @@ export async function documentRoutes(app: FastifyInstance) {
           mimeType: file.mimetype,
           sizeBytes: buffer.length,
           storageKey,
+          category: categoryParsed?.data ?? "OTHER",
           uploadedById: request.currentUser!.id,
+        },
+        include: {
+          uploadedBy: { select: { id: true, email: true, name: true } },
         },
       });
 
       return reply.code(201).send(document);
+    },
+  );
+
+  // ── Update document metadata (admin only) ──────────────────────
+  //
+  // Intentionally narrow — changes only the editable metadata fields
+  // (category/title/description). The underlying file (storageKey,
+  // filename, mimeType) is immutable; to replace the file, delete and
+  // re-upload.
+  app.patch(
+    "/documents/:id",
+    { preHandler: [requireAuth] },
+    async (request, reply) => {
+      const { id } = documentIdParamsSchema.parse(request.params);
+
+      const existing = await app.prisma.document.findUnique({ where: { id } });
+      if (!existing) {
+        return reply.code(404).send({ error: "Document not found" });
+      }
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        existing.organizationId,
+        reply,
+      );
+      if (!manage) return;
+
+      const parsed = updateDocumentSchema.parse(request.body);
+      const data: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(parsed)) {
+        if (value !== undefined) data[key] = value;
+      }
+      if (Object.keys(data).length === 0) {
+        return reply.code(400).send({ error: "No fields to update" });
+      }
+
+      const updated = await app.prisma.document.update({
+        where: { id },
+        data,
+        include: {
+          uploadedBy: { select: { id: true, email: true, name: true } },
+        },
+      });
+      return updated;
     },
   );
 

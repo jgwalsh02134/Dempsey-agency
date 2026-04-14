@@ -1,8 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
-import type { Document } from "../types";
+import type { Document, DocumentCategory } from "../types";
+
+/** Client-friendly labels for document categories. Invoices are intentionally
+ *  ordered first so billing items surface above planning artifacts. */
+const CATEGORY_LABEL: Record<DocumentCategory, string> = {
+  INVOICE: "Invoices",
+  PROOF: "Proofs",
+  INSERTION_ORDER: "Insertion Orders",
+  CONTRACT: "Contracts",
+  CREATIVE_ASSET: "Creative Assets",
+  OTHER: "Other",
+};
+const CATEGORY_ORDER: DocumentCategory[] = [
+  "INVOICE",
+  "PROOF",
+  "INSERTION_ORDER",
+  "CONTRACT",
+  "CREATIVE_ASSET",
+  "OTHER",
+];
 
 const MIME_LABELS: Record<string, string> = {
   "application/pdf": "PDF",
@@ -154,8 +173,60 @@ export function DocumentsPage() {
         )}
 
         {!loading && docs.length > 0 && (
+          <GroupedDocs
+            docs={docs}
+            downloadingId={downloadingId}
+            onDownload={download}
+          />
+        )}
+      </section>
+    </>
+  );
+}
+
+interface GroupedDocsProps {
+  docs: Document[];
+  downloadingId: string | null;
+  onDownload: (doc: Document) => void;
+}
+
+function GroupedDocs({ docs, downloadingId, onDownload }: GroupedDocsProps) {
+  const grouped = useMemo(() => {
+    const map = new Map<DocumentCategory, Document[]>();
+    for (const d of docs) {
+      const key = (d.category ?? "OTHER") as DocumentCategory;
+      const bucket = map.get(key);
+      if (bucket) bucket.push(d);
+      else map.set(key, [d]);
+    }
+    // Render in canonical order; skip empty buckets.
+    return CATEGORY_ORDER.filter((c) => map.has(c)).map((c) => ({
+      category: c,
+      docs: map.get(c)!,
+    }));
+  }, [docs]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      {grouped.map((g) => (
+        <div key={g.category}>
+          <h3
+            style={{
+              margin: "0 0 0.5rem",
+              fontSize: "1rem",
+              fontWeight: 600,
+            }}
+          >
+            {CATEGORY_LABEL[g.category]}{" "}
+            <span
+              className="text-muted"
+              style={{ fontWeight: 500, fontSize: "0.85rem" }}
+            >
+              ({g.docs.length})
+            </span>
+          </h3>
           <ul className="report-list">
-            {docs.map((doc) => (
+            {g.docs.map((doc) => (
               <li key={doc.id} className="report-item">
                 <div className="report-info">
                   <span className="report-name">{doc.title}</span>
@@ -171,6 +242,9 @@ export function DocumentsPage() {
                     <span>
                       {doc.filename} &middot; {formatBytes(doc.sizeBytes)}{" "}
                       &middot; {formatDate(doc.createdAt)}
+                      {doc.uploadedBy?.name && (
+                        <> &middot; from {doc.uploadedBy.name}</>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -178,15 +252,15 @@ export function DocumentsPage() {
                   type="button"
                   className="doc-download"
                   disabled={downloadingId === doc.id}
-                  onClick={() => download(doc)}
+                  onClick={() => onDownload(doc)}
                 >
                   {downloadingId === doc.id ? "Preparing…" : "Download"}
                 </button>
               </li>
             ))}
           </ul>
-        )}
-      </section>
-    </>
+        </div>
+      ))}
+    </div>
   );
 }

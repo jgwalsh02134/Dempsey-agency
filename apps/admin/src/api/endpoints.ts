@@ -159,6 +159,18 @@ export async function deleteDocument(id: string): Promise<void> {
   });
 }
 
+export async function patchDocument(
+  id: string,
+  body: Partial<
+    Pick<Document, "category" | "title" | "description">
+  >,
+): Promise<Document> {
+  return apiFetch<Document>(`/api/v1/documents/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function fetchOrgCampaigns(
   orgId: string,
 ): Promise<OrgCampaignsResponse> {
