@@ -49,7 +49,14 @@ export async function placementRoutes(app: FastifyInstance) {
           inventory: {
             include: {
               publisher: {
-                select: { id: true, name: true, city: true, state: true },
+                select: {
+                  id: true,
+                  name: true,
+                  city: true,
+                  state: true,
+                  dmaName: true,
+                  dmaCode: true,
+                },
               },
             },
           },
@@ -137,7 +144,14 @@ export async function placementRoutes(app: FastifyInstance) {
           inventory: {
             include: {
               publisher: {
-                select: { id: true, name: true, city: true, state: true },
+                select: {
+                  id: true,
+                  name: true,
+                  city: true,
+                  state: true,
+                  dmaName: true,
+                  dmaCode: true,
+                },
               },
             },
           },

@@ -94,6 +94,9 @@ export const publisherFields = {
   country: optStr(100),
   latitude: optFloat(-90, 90),
   longitude: optFloat(-180, 180),
+  // DMA (Designated Market Area) — accepted as free text; no format enforced yet.
+  dmaName: optStr(255),
+  dmaCode: optStr(20),
   // Contacts
   phone: optStr(50),
   officeHours: optStr(255),
@@ -158,6 +161,8 @@ export const updatePublisherSchema = z.object({
   zipCode: nullableOptStr(20),
   county: nullableOptStr(100),
   country: nullableOptStr(100),
+  dmaName: nullableOptStr(255),
+  dmaCode: nullableOptStr(20),
   // Contacts
   phone: nullableOptStr(50),
   officeHours: nullableOptStr(255),

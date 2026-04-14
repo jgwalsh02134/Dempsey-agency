@@ -318,6 +318,11 @@ model Publisher {
   longitude        Float?
   geocodeStatus    String?   // OK | FAILED | NO_ADDRESS
   geocodedAt       DateTime?
+  // DMA (Designated Market Area) — Nielsen-style market identifiers.
+  // Both nullable; no enum (DMA list is large + externally maintained).
+  // TODO: Backfill dmaName and dmaCode from publisher DMA dataset
+  dmaName          String?
+  dmaCode          String?
   // Contacts
   phone            String?
   officeHours      String?

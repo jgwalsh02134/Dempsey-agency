@@ -181,6 +181,24 @@ export function PublisherForm({
             placeholder="USA"
           />
         </label>
+        <div className="two-col">
+          <label className="field">
+            <span>DMA name</span>
+            <input
+              {...strFieldProps("dmaName")}
+              maxLength={255}
+              placeholder="e.g. ALBANY - SCHENECTADY - TROY"
+            />
+          </label>
+          <label className="field">
+            <span>DMA code</span>
+            <input
+              {...strFieldProps("dmaCode")}
+              maxLength={20}
+              placeholder="e.g. 532"
+            />
+          </label>
+        </div>
       </fieldset>
 
       {/* ── Contacts ── */}

@@ -121,6 +121,8 @@ export interface Placement {
       name: string;
       city: string | null;
       state: string | null;
+      dmaName: string | null;
+      dmaCode: string | null;
     };
   };
 }

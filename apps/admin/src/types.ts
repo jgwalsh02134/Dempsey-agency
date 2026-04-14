@@ -152,6 +152,9 @@ export interface Publisher {
   longitude: number | null;
   geocodeStatus: string | null;
   geocodedAt: string | null;
+  // DMA
+  dmaName: string | null;
+  dmaCode: string | null;
   // Contacts
   phone: string | null;
   officeHours: string | null;
@@ -218,6 +221,9 @@ export interface PublisherInput {
   zipCode?: string | null;
   county?: string | null;
   country?: string | null;
+  // DMA
+  dmaName?: string | null;
+  dmaCode?: string | null;
   // Contacts
   phone?: string | null;
   officeHours?: string | null;
@@ -292,6 +298,8 @@ export interface Placement {
       name: string;
       city: string | null;
       state: string | null;
+      dmaName: string | null;
+      dmaCode: string | null;
     };
   };
 }

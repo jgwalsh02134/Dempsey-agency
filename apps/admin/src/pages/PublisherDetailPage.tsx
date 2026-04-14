@@ -55,6 +55,8 @@ function buildPatchBody(
     "zipCode",
     "county",
     "country",
+    "dmaName",
+    "dmaCode",
     "phone",
     "officeHours",
     "contactName",
@@ -116,6 +118,8 @@ function publisherToFormValues(p: Publisher): PublisherInput {
     zipCode: p.zipCode ?? "",
     county: p.county ?? "",
     country: p.country ?? "",
+    dmaName: p.dmaName ?? "",
+    dmaCode: p.dmaCode ?? "",
     phone: p.phone ?? "",
     officeHours: p.officeHours ?? "",
     contactName: p.contactName ?? "",
@@ -531,6 +535,16 @@ export function PublisherDetailPage() {
                 </dd>
                 <dt>Year established</dt>
                 <dd>{publisher.yearEstablished ?? "—"}</dd>
+                <dt>DMA</dt>
+                <dd>
+                  {publisher.dmaName && publisher.dmaCode
+                    ? `${publisher.dmaName} (${publisher.dmaCode})`
+                    : publisher.dmaName
+                      ? publisher.dmaName
+                      : publisher.dmaCode
+                        ? publisher.dmaCode
+                        : "—"}
+                </dd>
                 <dt>Status</dt>
                 <dd>{publisher.isActive ? "Active" : "Inactive"}</dd>
               </dl>

@@ -140,6 +140,10 @@ export function PublishersPage() {
   /* ── filters ── */
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<"" | "true" | "false">("");
+  // DMA filter is applied client-side: server `q` doesn't cover DMA, and the
+  // publisher catalog is small enough that in-browser filtering is simpler
+  // than plumbing a new query param.
+  const [dmaFilter, setDmaFilter] = useState("");
 
   /* ── per-row delete state ── */
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -193,9 +197,23 @@ export function PublishersPage() {
     return () => clearTimeout(handle);
   }, [currentFilters, loadPublishers]);
 
-  const hasFilters = currentFilters.q !== undefined || currentFilters.isActive !== undefined;
+  const hasFilters =
+    currentFilters.q !== undefined ||
+    currentFilters.isActive !== undefined ||
+    dmaFilter.trim().length > 0;
 
-  const activeCount = publishers.filter((p) => p.isActive).length;
+  /* ── client-side DMA filter on top of server results ── */
+  const visiblePublishers = useMemo(() => {
+    const needle = dmaFilter.trim().toLowerCase();
+    if (!needle) return publishers;
+    return publishers.filter((p) => {
+      const name = (p.dmaName ?? "").toLowerCase();
+      const code = (p.dmaCode ?? "").toLowerCase();
+      return name.includes(needle) || code.includes(needle);
+    });
+  }, [publishers, dmaFilter]);
+
+  const activeCount = visiblePublishers.filter((p) => p.isActive).length;
 
   /* ── CSV import handlers ── */
   function openImport() {
@@ -297,7 +315,8 @@ export function PublishersPage() {
           <h1 className="page-title">Publishers</h1>
           {!loading && (
             <p className="muted" style={{ margin: 0, fontSize: "0.85rem" }}>
-              {publishers.length} publisher{publishers.length !== 1 ? "s" : ""}
+              {visiblePublishers.length} publisher
+              {visiblePublishers.length !== 1 ? "s" : ""}
               {activeCount > 0 && ` · ${activeCount} active`}
             </p>
           )}
@@ -519,6 +538,15 @@ export function PublishersPage() {
           />
         </label>
         <label className="q-filter-field">
+          <span className="small">Filter by DMA</span>
+          <input
+            type="search"
+            value={dmaFilter}
+            onChange={(e) => setDmaFilter(e.target.value)}
+            placeholder="DMA name or code"
+          />
+        </label>
+        <label className="q-filter-field">
           <span className="small">Status</span>
           <select
             value={activeFilter}
@@ -546,7 +574,7 @@ export function PublishersPage() {
 
       {loading && <p className="muted">Loading publishers…</p>}
 
-      {!loading && publishers.length === 0 && !listError && (
+      {!loading && visiblePublishers.length === 0 && !listError && (
         <p className="muted" style={{ marginTop: "1rem" }}>
           {hasFilters
             ? "No publishers match the current filters."
@@ -554,13 +582,14 @@ export function PublishersPage() {
         </p>
       )}
 
-      {!loading && publishers.length > 0 && (
+      {!loading && visiblePublishers.length > 0 && (
         <div className="table-wrap" style={{ marginTop: "0.75rem" }}>
           <table className="data-table">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Location</th>
+                <th>DMA</th>
                 <th>Type</th>
                 <th>Frequency</th>
                 <th>Circulation</th>
@@ -572,8 +601,20 @@ export function PublishersPage() {
               </tr>
             </thead>
             <tbody>
-              {publishers.map((p) => {
+              {visiblePublishers.map((p) => {
                 const location = [p.city, p.state].filter(Boolean).join(", ");
+                const dmaCity = p.dmaName
+                  ? p.dmaName
+                      .split(/[-·,]/)[0]
+                      .trim()
+                      .toLowerCase()
+                      .replace(/\b\w/g, (c) => c.toUpperCase())
+                  : "";
+                const dmaLabel = p.dmaName
+                  ? p.dmaCode
+                    ? `${dmaCity} (${p.dmaCode})`
+                    : dmaCity
+                  : p.dmaCode ?? "—";
                 return (
                   <tr
                     key={p.id}
@@ -593,6 +634,9 @@ export function PublishersPage() {
                       )}
                     </td>
                     <td className="small">{location || "—"}</td>
+                    <td className="small" title={p.dmaName ?? undefined}>
+                      {dmaLabel}
+                    </td>
                     <td className="small">{p.publicationType ?? "—"}</td>
                     <td className="small">{p.frequency ?? "—"}</td>
                     <td className="small" style={{ whiteSpace: "nowrap" }}>

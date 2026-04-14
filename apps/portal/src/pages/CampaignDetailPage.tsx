@@ -315,6 +315,14 @@ export function CampaignDetailPage() {
     placements.map((p) => p.inventory.publisher.id),
   ).size;
 
+  /** Unique DMAs (by name) represented across this campaign's placements. Used
+   *  for the one-line coverage summary in the overview; hidden when zero. */
+  const placementDmaCount = new Set(
+    placements
+      .map((p) => p.inventory.publisher.dmaName)
+      .filter((v): v is string => v != null && v.trim().length > 0),
+  ).size;
+
   /** Group placements by publisher, sorted alphabetically by publisher name;
    *  placements within each group sorted by placement name. Subtotal is the
    *  sum of `grossCostCents` across the group. */
@@ -488,6 +496,16 @@ export function CampaignDetailPage() {
               <span className="text-muted">
                 {placements.length} placement
                 {placements.length === 1 ? "" : "s"}
+              </span>
+            </>
+          )}
+          {placementDmaCount > 0 && (
+            <>
+              <MetaSep />
+              <span className="text-muted">
+                Coverage: {placementPublisherCount} publisher
+                {placementPublisherCount === 1 ? "" : "s"} across{" "}
+                {placementDmaCount} DMA{placementDmaCount === 1 ? "" : "s"}
               </span>
             </>
           )}
