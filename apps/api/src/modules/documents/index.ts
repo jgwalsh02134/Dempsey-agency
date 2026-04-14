@@ -14,6 +14,7 @@ import {
   documentCategory,
   updateDocumentSchema,
 } from "./schemas.js";
+import { notify, getClientUserIdsForOrg } from "../../lib/notifications.js";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 
@@ -184,6 +185,29 @@ export async function documentRoutes(app: FastifyInstance) {
           uploadedBy: { select: { id: true, email: true, name: true } },
         },
       });
+
+      // Notify client users on billing/creative-review-critical document
+      // categories. Other categories (contracts, insertion orders, misc)
+      // skip the ping for v1 to keep signal-to-noise tight.
+      if (
+        document.category === "INVOICE" ||
+        document.category === "PROOF"
+      ) {
+        const recipients = await getClientUserIdsForOrg(app.prisma, orgId);
+        await notify(app.prisma, request.log, {
+          userIds: recipients,
+          type:
+            document.category === "INVOICE"
+              ? "NEW_INVOICE_UPLOADED"
+              : "NEW_PROOF_UPLOADED",
+          title:
+            document.category === "INVOICE"
+              ? `New invoice: ${document.title}`
+              : `New proof: ${document.title}`,
+          body: `${document.title} was shared with your organization.`,
+          relatedId: document.id,
+        });
+      }
 
       return reply.code(201).send(document);
     },

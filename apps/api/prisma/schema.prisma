@@ -114,6 +114,7 @@ model User {
   reviewedAccountRequests  AccountRequest[]
   createdInvites           Invite[]           @relation("InviteCreator")
   passwordResets           PasswordReset[]
+  notifications            Notification[]
 }
 
 model Organization {
@@ -447,6 +448,37 @@ model Placement {
 
   @@index([campaignId])
   @@index([inventoryId])
+}
+
+/// Per-user notification row for lightweight in-app/email awareness of key
+/// workflow events. Persistence-only for v1; delivery channels (email, in-app
+/// center, push) can read this table without changing upstream call sites.
+/// `relatedId` is an opaque pointer into the originating domain row
+/// (submission, placement, document) — no enforced FK, so a target can be
+/// deleted without breaking history.
+enum NotificationType {
+  CREATIVE_REVISION_REQUESTED
+  CREATIVE_REVISION_UPLOADED
+  PLACEMENT_AWAITING_APPROVAL
+  PLACEMENT_APPROVED_BY_CLIENT
+  NEW_INVOICE_UPLOADED
+  NEW_PROOF_UPLOADED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  relatedId String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
 
 /// Append-only security audit trail (admin / membership actions).

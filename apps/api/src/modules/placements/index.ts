@@ -10,6 +10,11 @@ import {
   updatePlacementSchema,
   clientResponseSchema,
 } from "./schemas.js";
+import {
+  notify,
+  getClientUserIdsForOrg,
+  getAgencyUserIdsForClientOrg,
+} from "../../lib/notifications.js";
 
 const AGENCY_ROLES = new Set(["AGENCY_OWNER", "AGENCY_ADMIN", "STAFF"]);
 
@@ -162,6 +167,24 @@ export async function placementRoutes(app: FastifyInstance) {
         },
       });
 
+      // Every fresh placement starts in PENDING_CLIENT_REVIEW (schema
+      // default), so this is always a real awaiting-approval transition.
+      // If a future code path creates placements with a non-pending
+      // response, guard this with a status check.
+      if (placement.clientResponse === "PENDING_CLIENT_REVIEW") {
+        const recipients = await getClientUserIdsForOrg(
+          app.prisma,
+          campaign.organizationId,
+        );
+        await notify(app.prisma, request.log, {
+          userIds: recipients,
+          type: "PLACEMENT_AWAITING_APPROVAL",
+          title: `New placement awaiting your approval: ${placement.name}`,
+          body: `Your agency added "${placement.name}" to this campaign.`,
+          relatedId: placement.id,
+        });
+      }
+
       return reply.code(201).send(placement);
     },
   );
@@ -241,6 +264,7 @@ export async function placementRoutes(app: FastifyInstance) {
 
       const { response, note } = clientResponseSchema.parse(request.body);
 
+      const prevResponse = placement.clientResponse;
       const updated = await app.prisma.placement.update({
         where: { id },
         data: {
@@ -249,6 +273,29 @@ export async function placementRoutes(app: FastifyInstance) {
           clientRespondedAt: new Date(),
         },
       });
+
+      // Only fire on the real PENDING → APPROVED transition. Re-approvals
+      // (someone saving the same state twice) and revert-to-pending don't
+      // ping agency staff.
+      if (
+        prevResponse === "PENDING_CLIENT_REVIEW" &&
+        response === "CLIENT_APPROVED"
+      ) {
+        const recipients = await getAgencyUserIdsForClientOrg(
+          app.prisma,
+          placement.campaign.organizationId,
+        );
+        await notify(app.prisma, request.log, {
+          userIds: recipients,
+          type: "PLACEMENT_APPROVED_BY_CLIENT",
+          title: `Placement approved by client: ${placement.name}`,
+          body: note
+            ? `Client approved "${placement.name}" with a note: ${note}`
+            : `Client approved "${placement.name}".`,
+          relatedId: placement.id,
+        });
+      }
+
       return updated;
     },
   );

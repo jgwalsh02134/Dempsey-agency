@@ -16,6 +16,11 @@ import {
   updateSubmissionSchema,
 } from "./schemas.js";
 import { validateCreative } from "./validate.js";
+import {
+  notify,
+  getClientUserIdsForOrg,
+  getAgencyUserIdsForClientOrg,
+} from "../../lib/notifications.js";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
@@ -259,6 +264,22 @@ export async function submissionRoutes(app: FastifyInstance) {
         },
       });
 
+      // Notify agency staff when this was a real client-uploaded revision
+      // (original uploads don't trigger; they're not revisions).
+      if (chainRootId) {
+        const recipients = await getAgencyUserIdsForClientOrg(
+          app.prisma,
+          campaign.organizationId,
+        );
+        await notify(app.prisma, request.log, {
+          userIds: recipients,
+          type: "CREATIVE_REVISION_UPLOADED",
+          title: `Revised creative uploaded: ${submission.title}`,
+          body: `Version ${nextVersion} of "${submission.title}" is ready for review.`,
+          relatedId: submission.id,
+        });
+      }
+
       return reply.code(201).send(submission);
     },
   );
@@ -299,6 +320,30 @@ export async function submissionRoutes(app: FastifyInstance) {
         where: { id },
         data,
       });
+
+      // Notify client users ONLY on a real transition into an
+      // action-required status (VALIDATION_FAILED / NEEDS_RESIZING) from
+      // a different status. Saving the same status or editing only the
+      // reviewNote deliberately does not fire — avoids review-pass spam.
+      const prevStatus = submission.status;
+      const nextStatus = updated.status;
+      const actionRequired =
+        nextStatus === "VALIDATION_FAILED" || nextStatus === "NEEDS_RESIZING";
+      if (actionRequired && prevStatus !== nextStatus) {
+        const recipients = await getClientUserIdsForOrg(
+          app.prisma,
+          updated.organizationId,
+        );
+        await notify(app.prisma, request.log, {
+          userIds: recipients,
+          type: "CREATIVE_REVISION_REQUESTED",
+          title: `Revision requested: ${updated.title}`,
+          body: updated.reviewNote
+            ? `Your agency left a note: ${updated.reviewNote}`
+            : "Your agency has requested an updated file.",
+          relatedId: updated.id,
+        });
+      }
 
       return updated;
     },
