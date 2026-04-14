@@ -453,6 +453,38 @@ export function CampaignDetailPage() {
     (p) => p.clientResponse === "PENDING_CLIENT_REVIEW",
   ).length;
 
+  /** Financial summary — derived from existing placement data only.
+   *  `planned` excludes CANCELLED placements since they won't be spent.
+   *  `approved` additionally requires the client to have approved the row.
+   *  `remaining` is null when the campaign has no budget set. */
+  const financials = (() => {
+    let planned = 0;
+    let approved = 0;
+    let approvedCount = 0;
+    let billableCount = 0;
+    for (const p of placements) {
+      if (p.status === "CANCELLED") continue;
+      billableCount += 1;
+      planned += p.grossCostCents;
+      if (p.clientResponse === "CLIENT_APPROVED") {
+        approved += p.grossCostCents;
+        approvedCount += 1;
+      }
+    }
+    const budget = campaign.budgetCents;
+    const remaining = budget != null ? budget - planned : null;
+    const overBudget = budget != null && planned > budget;
+    return {
+      budget,
+      planned,
+      approved,
+      remaining,
+      overBudget,
+      approvedCount,
+      billableCount,
+    };
+  })();
+
   /** Group placements by publisher, sorted alphabetically by publisher name;
    *  placements within each group sorted by placement name. Subtotal is the
    *  sum of `grossCostCents` across the group. */
@@ -804,6 +836,208 @@ export function CampaignDetailPage() {
           </div>
         )}
       </section>
+
+      {/* ── Budget summary ──
+          Derived entirely from campaign.budgetCents + placement.grossCostCents
+          and placement.clientResponse. Hidden while placements are still
+          loading so numbers don't jump, and when there's no budget AND no
+          placements to report against. */}
+      {!placementsLoading && (financials.budget != null || placements.length > 0) && (
+        <section className="section-block">
+          <div
+            className="camp-section-header"
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 className="section-heading" style={{ margin: 0 }}>
+              Budget summary
+            </h2>
+            {financials.billableCount > 0 && (
+              <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+                {financials.approvedCount} of {financials.billableCount}{" "}
+                placement{financials.billableCount === 1 ? "" : "s"} approved
+              </span>
+            )}
+          </div>
+
+          <dl
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(10rem, 1fr))",
+              gap: "0.75rem",
+              margin: "0.6rem 0 0",
+            }}
+          >
+            {/* Budget */}
+            <div
+              style={{
+                padding: "0.75rem 0.9rem",
+                borderRadius: "0.5rem",
+                border: "1px solid rgba(15,23,42,0.1)",
+                background: "var(--color-surface, #fff)",
+              }}
+            >
+              <dt
+                className="text-muted"
+                style={{
+                  fontSize: "0.78rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Campaign budget
+              </dt>
+              <dd
+                style={{
+                  margin: "0.25rem 0 0",
+                  fontWeight: 700,
+                  fontSize: "1.2rem",
+                }}
+              >
+                {financials.budget != null
+                  ? formatCents(financials.budget)
+                  : "Not set"}
+              </dd>
+            </div>
+
+            {/* Planned */}
+            <div
+              style={{
+                padding: "0.75rem 0.9rem",
+                borderRadius: "0.5rem",
+                border: `1px solid ${financials.overBudget ? "var(--color-error-border)" : "rgba(15,23,42,0.1)"}`,
+                background: financials.overBudget
+                  ? "var(--color-error-bg)"
+                  : "var(--color-surface, #fff)",
+              }}
+            >
+              <dt
+                className="text-muted"
+                style={{
+                  fontSize: "0.78rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: financials.overBudget
+                    ? "var(--color-error-text)"
+                    : undefined,
+                }}
+              >
+                Total planned
+              </dt>
+              <dd
+                style={{
+                  margin: "0.25rem 0 0",
+                  fontWeight: 700,
+                  fontSize: "1.2rem",
+                  color: financials.overBudget
+                    ? "var(--color-error-text)"
+                    : undefined,
+                }}
+              >
+                {formatCents(financials.planned)}
+              </dd>
+            </div>
+
+            {/* Approved */}
+            <div
+              style={{
+                padding: "0.75rem 0.9rem",
+                borderRadius: "0.5rem",
+                border: "1px solid rgba(15,23,42,0.1)",
+                background: "var(--color-surface, #fff)",
+              }}
+            >
+              <dt
+                className="text-muted"
+                style={{
+                  fontSize: "0.78rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Approved by you
+              </dt>
+              <dd
+                style={{
+                  margin: "0.25rem 0 0",
+                  fontWeight: 700,
+                  fontSize: "1.2rem",
+                }}
+              >
+                {formatCents(financials.approved)}
+              </dd>
+            </div>
+
+            {/* Remaining (hidden when budget missing) */}
+            {financials.budget != null && (
+              <div
+                style={{
+                  padding: "0.75rem 0.9rem",
+                  borderRadius: "0.5rem",
+                  border: "1px solid rgba(15,23,42,0.1)",
+                  background: "var(--color-surface, #fff)",
+                }}
+              >
+                <dt
+                  className="text-muted"
+                  style={{
+                    fontSize: "0.78rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {financials.overBudget ? "Over budget by" : "Remaining"}
+                </dt>
+                <dd
+                  style={{
+                    margin: "0.25rem 0 0",
+                    fontWeight: 700,
+                    fontSize: "1.2rem",
+                    color: financials.overBudget
+                      ? "var(--color-error-text)"
+                      : undefined,
+                  }}
+                >
+                  {formatCents(Math.abs(financials.remaining ?? 0))}
+                </dd>
+              </div>
+            )}
+          </dl>
+
+          {financials.overBudget && (
+            <p
+              role="alert"
+              style={{
+                marginTop: "0.6rem",
+                padding: "0.6rem 0.85rem",
+                borderRadius: "0.45rem",
+                background: "var(--color-error-bg)",
+                color: "var(--color-error-text)",
+                border: "1px solid var(--color-error-border)",
+                fontSize: "0.9rem",
+              }}
+            >
+              Planned cost exceeds the campaign budget. Your agency will
+              reconcile this with you.
+            </p>
+          )}
+
+          {financials.budget == null && placements.length > 0 && (
+            <p
+              className="text-muted"
+              style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}
+            >
+              No campaign budget has been set; your agency can add one at any
+              time.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* ── Next Steps ── */}
       {!placementsLoading && !subsLoading && nextSteps.length > 0 && (

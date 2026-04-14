@@ -64,6 +64,10 @@ interface Props {
   /** Bump to force a refetch of attached publishers (e.g., after the
    *  Publishers section attaches or removes one). */
   publishersVersion?: number;
+  /** Campaign budget in cents (null/undefined if unset). When provided,
+   *  the totals panel also renders a budget-vs-planned comparison and a
+   *  client-approved subtotal. */
+  budgetCents?: number | null;
 }
 
 interface EditDraft {
@@ -113,6 +117,7 @@ function emptyAddState(): AddFormState {
 export function PlacementsSection({
   campaignId,
   publishersVersion = 0,
+  budgetCents = null,
 }: Props) {
   const [publishers, setPublishers] = useState<CampaignPublisher[]>([]);
   const [placements, setPlacements] = useState<Placement[]>([]);
@@ -398,15 +403,43 @@ export function PlacementsSection({
     let gross = 0;
     let net = 0;
     let netCount = 0;
+    // `planned` / `approved` exclude CANCELLED so budget comparisons reflect
+    // money the campaign is actually committing. `gross`/`net` stay as the
+    // raw sum across every row since operators may want visibility on
+    // cancelled placements too.
+    let planned = 0;
+    let approved = 0;
+    let approvedCount = 0;
+    let billableCount = 0;
     for (const p of placements) {
       gross += p.grossCostCents;
       if (p.netCostCents != null) {
         net += p.netCostCents;
         netCount += 1;
       }
+      if (p.status !== "CANCELLED") {
+        billableCount += 1;
+        planned += p.grossCostCents;
+        if (p.clientResponse === "CLIENT_APPROVED") {
+          approved += p.grossCostCents;
+          approvedCount += 1;
+        }
+      }
     }
-    return { gross, net, netCount };
-  }, [placements]);
+    const remaining = budgetCents != null ? budgetCents - planned : null;
+    const overBudget = budgetCents != null && planned > budgetCents;
+    return {
+      gross,
+      net,
+      netCount,
+      planned,
+      approved,
+      approvedCount,
+      billableCount,
+      remaining,
+      overBudget,
+    };
+  }, [placements, budgetCents]);
 
   /* ── render ────────────────────────────────────────────────── */
 
@@ -452,9 +485,42 @@ export function PlacementsSection({
                 </span>
               )}
             </div>
+            <div>
+              <span className="muted">Client-approved:</span>{" "}
+              <strong>{formatCents(totals.approved)}</strong>{" "}
+              <span className="muted">
+                ({totals.approvedCount}/{totals.billableCount})
+              </span>
+            </div>
+            {budgetCents != null && (
+              <div>
+                <span className="muted">Budget:</span>{" "}
+                <strong>{formatCents(budgetCents)}</strong>{" "}
+                <span
+                  className={totals.overBudget ? "error" : "muted"}
+                  style={{ fontWeight: 600 }}
+                >
+                  {totals.overBudget
+                    ? `· over by ${formatCents(Math.abs(totals.remaining ?? 0))}`
+                    : `· ${formatCents(totals.remaining ?? 0)} remaining`}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {totals.overBudget && (
+        <p
+          className="error small"
+          role="alert"
+          style={{ margin: "-0.25rem 0 0.75rem" }}
+        >
+          Planned placement cost exceeds this campaign's budget by{" "}
+          {formatCents(Math.abs(totals.remaining ?? 0))}. Review with the
+          client before booking additional spend.
+        </p>
+      )}
 
       {listError && (
         <p className="error" role="alert">

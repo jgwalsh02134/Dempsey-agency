@@ -115,6 +115,7 @@ export function CampaignDetailPage() {
       <PlacementsSection
         campaignId={campaign.id}
         publishersVersion={publishersVersion}
+        budgetCents={campaign.budgetCents}
       />
     </>
   );
