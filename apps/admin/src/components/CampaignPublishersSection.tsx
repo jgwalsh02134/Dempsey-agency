@@ -65,6 +65,10 @@ export function CampaignPublishersSection({
   const [fFrequency, setFFrequency] = useState<string>("");
   const [fFormat, setFFormat] = useState<string>("");
   const [fCirc, setFCirc] = useState<CircKey>(CIRC_ANY);
+  // Free-text DMA filter: substring match against dmaName OR dmaCode.
+  // Kept as free text (not a select) because the DMA list is large and
+  // operators often know only a partial name or a code.
+  const [fDma, setFDma] = useState<string>("");
 
   /* ── initial load (catalog + attached in parallel) ── */
   const loadAll = useCallback(async () => {
@@ -136,6 +140,27 @@ export function CampaignPublishersSection({
     [attached],
   );
 
+  /** Catalog lookup by id — used to back-fill DMA (and other fields not
+   *  returned by GET /campaigns/:id/publishers) onto attached rows without
+   *  expanding the API. */
+  const catalogById = useMemo(() => {
+    const map = new Map<string, Publisher>();
+    for (const p of catalog) map.set(p.id, p);
+    return map;
+  }, [catalog]);
+
+  /** Unique DMAs represented across the selected publishers. Derived from
+   *  the catalog join above; attached publishers missing from the catalog
+   *  (shouldn't happen) simply don't contribute. */
+  const attachedDmaCount = useMemo(() => {
+    const dmas = new Set<string>();
+    for (const a of attached) {
+      const dma = catalogById.get(a.id)?.dmaName;
+      if (dma && dma.trim().length > 0) dmas.add(dma.trim().toUpperCase());
+    }
+    return dmas.size;
+  }, [attached, catalogById]);
+
   const activeFilters = useMemo(() => {
     const list: { label: string; clear: () => void }[] = [];
     if (search.trim()) {
@@ -147,11 +172,17 @@ export function CampaignPublishersSection({
     if (fFormat) list.push({ label: fFormat, clear: () => setFFormat("") });
     if (fCirc !== CIRC_ANY)
       list.push({ label: fCirc, clear: () => setFCirc(CIRC_ANY) });
+    if (fDma.trim())
+      list.push({
+        label: `DMA: ${fDma.trim()}`,
+        clear: () => setFDma(""),
+      });
     return list;
-  }, [search, fState, fFrequency, fFormat, fCirc]);
+  }, [search, fState, fFrequency, fFormat, fCirc, fDma]);
 
   const filteredCatalog = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const dmaNeedle = fDma.trim().toLowerCase();
     const bucket =
       CIRC_BUCKETS.find((b) => b.label === fCirc) ?? CIRC_BUCKETS[0];
     return catalog.filter((p) => {
@@ -166,6 +197,13 @@ export function CampaignPublishersSection({
       if (bucket.max != null) {
         if (p.circulation == null || p.circulation > bucket.max) return false;
       }
+      if (dmaNeedle.length > 0) {
+        const name = (p.dmaName ?? "").toLowerCase();
+        const code = (p.dmaCode ?? "").toLowerCase();
+        if (!name.includes(dmaNeedle) && !code.includes(dmaNeedle)) {
+          return false;
+        }
+      }
       if (q.length > 0) {
         const hay = [p.name, p.city, p.state, p.country, p.parentCompany]
           .filter(Boolean)
@@ -175,7 +213,16 @@ export function CampaignPublishersSection({
       }
       return true;
     });
-  }, [catalog, attachedIds, search, fState, fFrequency, fFormat, fCirc]);
+  }, [
+    catalog,
+    attachedIds,
+    search,
+    fState,
+    fFrequency,
+    fFormat,
+    fCirc,
+    fDma,
+  ]);
 
   function clearAllFilters() {
     setSearch("");
@@ -183,6 +230,7 @@ export function CampaignPublishersSection({
     setFFrequency("");
     setFFormat("");
     setFCirc(CIRC_ANY);
+    setFDma("");
   }
 
   /* ── add / remove handlers (persist immediately; optimistic local update) ── */
@@ -266,6 +314,12 @@ export function CampaignPublishersSection({
             {attached.length} selected · {mappable} on map
             {attached.length > mappable &&
               ` (${attached.length - mappable} not geocoded)`}
+            {attached.length > 0 && attachedDmaCount > 0 && (
+              <>
+                {" "}· across {attachedDmaCount} DMA
+                {attachedDmaCount === 1 ? "" : "s"}
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -285,6 +339,9 @@ export function CampaignPublishersSection({
             <h3>Selected publishers</h3>
             <span className="pub-count-pill">
               {attached.length} selected
+              {attached.length > 0 && attachedDmaCount > 0 && (
+                <> · {attachedDmaCount} DMA{attachedDmaCount === 1 ? "" : "s"}</>
+              )}
             </span>
           </div>
 
@@ -310,6 +367,15 @@ export function CampaignPublishersSection({
                   busy?.kind === "removing" && busy.publisherId === p.id;
                 const geo = p.latitude != null && p.longitude != null;
                 const flashed = flashId === p.id;
+                // Back-fill DMA from catalog since GET /campaigns/:id/publishers
+                // doesn't return it. Safe: catalogById is keyed by publisher id.
+                const dmaSource = catalogById.get(p.id);
+                const dmaName = dmaSource?.dmaName ?? null;
+                const dmaCode = dmaSource?.dmaCode ?? null;
+                const dmaLabel =
+                  dmaName && dmaCode
+                    ? `${dmaName} (${dmaCode})`
+                    : dmaName ?? dmaCode ?? null;
                 return (
                   <li
                     key={p.id}
@@ -330,6 +396,7 @@ export function CampaignPublishersSection({
                       </div>
                       <div className="pub-planner-selected-meta small muted">
                         {loc || "Location unknown"}
+                        {dmaLabel && <> · DMA {dmaLabel}</>}
                       </div>
                     </div>
                     <button
@@ -365,6 +432,16 @@ export function CampaignPublishersSection({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, city, or state…"
               aria-label="Search publisher catalog"
+            />
+          </div>
+
+          <div className="pub-planner-search" style={{ marginTop: "0.5rem" }}>
+            <input
+              type="search"
+              value={fDma}
+              onChange={(e) => setFDma(e.target.value)}
+              placeholder="Filter by DMA (name or code)…"
+              aria-label="Filter publisher catalog by DMA"
             />
           </div>
 
@@ -495,6 +572,14 @@ export function CampaignPublishersSection({
                           <>
                             {" "}
                             · {p.circulation.toLocaleString()} circ.
+                          </>
+                        )}
+                        {(p.dmaName || p.dmaCode) && (
+                          <>
+                            {" "}· DMA{" "}
+                            {p.dmaName && p.dmaCode
+                              ? `${p.dmaName} (${p.dmaCode})`
+                              : p.dmaName ?? p.dmaCode}
                           </>
                         )}
                       </div>
