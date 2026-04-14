@@ -52,6 +52,22 @@ function formatDate(iso: string): string {
   });
 }
 
+/** Relative time label for timeline entries. Coarse — days for anything over
+ *  a day old — which is appropriate for an activity feed that's read at a
+ *  glance, not a precise audit log. */
+function formatRelative(iso: string, now: number = Date.now()): string {
+  const then = new Date(iso).getTime();
+  const diffMs = Math.max(0, now - then);
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  return formatDate(iso);
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -623,6 +639,77 @@ export function CampaignDetailPage() {
         new Date(a.latest.createdAt).getTime()
       );
     });
+  })();
+
+  /** Activity timeline — derived client-side from already-loaded state.
+   *  Honest about what timestamps actually represent: each submission row's
+   *  createdAt is exact, placement.clientRespondedAt is exact, but the
+   *  campaign-completed entry uses `campaign.updatedAt`, which is only a
+   *  best-effort proxy (it reflects the most recent write). Events that
+   *  can't be honestly sourced (placement status transitions, agency
+   *  review-note writes) are intentionally omitted. */
+  interface TimelineEvent {
+    id: string;
+    at: string;
+    icon: string;
+    title: string;
+    detail?: string;
+  }
+  const timelineEvents: TimelineEvent[] = (() => {
+    const events: TimelineEvent[] = [];
+
+    // Every submission row — originals AND revisions.
+    for (const s of subs) {
+      if (s.version > 1) {
+        events.push({
+          id: `sub-${s.id}`,
+          at: s.createdAt,
+          icon: "↻",
+          title: `Revised ${s.title} uploaded`,
+          detail: `Version ${s.version} · ${s.filename}`,
+        });
+      } else {
+        events.push({
+          id: `sub-${s.id}`,
+          at: s.createdAt,
+          icon: "＋",
+          title: `${s.title} uploaded`,
+          detail: s.filename,
+        });
+      }
+    }
+
+    // Placement client approvals.
+    for (const p of placements) {
+      if (
+        p.clientResponse === "CLIENT_APPROVED" &&
+        p.clientRespondedAt != null
+      ) {
+        events.push({
+          id: `plc-approved-${p.id}`,
+          at: p.clientRespondedAt,
+          icon: "✓",
+          title: `Placement approved: ${p.name}`,
+          detail: p.clientResponseNote
+            ? `“${p.clientResponseNote}”`
+            : p.inventory.publisher.name,
+        });
+      }
+    }
+
+    // Campaign completion — approximate timestamp (see note above).
+    if (campaign.status === "COMPLETED") {
+      events.push({
+        id: `camp-completed-${campaign.id}`,
+        at: campaign.updatedAt,
+        icon: "★",
+        title: "Campaign marked complete",
+      });
+    }
+
+    return events.sort(
+      (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+    );
   })();
 
   /* Counts reflect chains (one per creative) rather than every row, so
@@ -1211,6 +1298,121 @@ export function CampaignDetailPage() {
           </div>
         )}
       </section>
+
+      {/* ── Activity timeline ──
+          Read-only feed derived from existing campaign/submission/placement
+          timestamps. Skipped while the dependent lists are still loading to
+          avoid a flicker of "no activity yet" followed by a filled list. */}
+      {!placementsLoading && !subsLoading && (
+        <section className="section-block">
+          <div
+            className="camp-section-header"
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 className="section-heading" style={{ margin: 0 }}>
+              Activity
+            </h2>
+            {timelineEvents.length > 0 && (
+              <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+                {timelineEvents.length} event
+                {timelineEvents.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+
+          {timelineEvents.length === 0 ? (
+            <p className="text-muted" style={{ marginTop: "0.5rem" }}>
+              No recent activity yet. Events will appear here as creatives are
+              uploaded and placements are approved.
+            </p>
+          ) : (
+            <ol
+              style={{
+                listStyle: "none",
+                margin: "0.75rem 0 0",
+                padding: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              {timelineEvents.map((e) => (
+                <li
+                  key={e.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "0.75rem",
+                    padding: "0.65rem 0.8rem",
+                    borderRadius: "0.5rem",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    background: "rgba(15,23,42,0.02)",
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      flex: "0 0 auto",
+                      width: "1.6rem",
+                      height: "1.6rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "999px",
+                      background: "rgba(15,23,42,0.06)",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "rgb(55,65,81)",
+                    }}
+                  >
+                    {e.icon}
+                  </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "baseline",
+                        justifyContent: "space-between",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <span style={{ fontWeight: 600 }}>{e.title}</span>
+                      <span
+                        className="text-muted"
+                        style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}
+                        title={new Date(e.at).toLocaleString()}
+                      >
+                        {formatRelative(e.at)}
+                      </span>
+                    </div>
+                    {e.detail && (
+                      <div
+                        className="text-muted"
+                        style={{
+                          fontSize: "0.85rem",
+                          marginTop: "0.15rem",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {e.detail}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
 
       {/* ── Publisher map (only publishers attached to this campaign) ── */}
       <section className="section-block">
