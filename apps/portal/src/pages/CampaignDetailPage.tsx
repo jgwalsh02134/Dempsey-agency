@@ -353,6 +353,85 @@ export function CampaignDetailPage() {
     (p) => p.latitude != null && p.longitude != null,
   ).length;
 
+  /** Client-facing status items derived from loaded campaign/placement/submission
+   *  state. Order: creative actions → creatives in review → campaign/placement
+   *  state. Fallback to a positive "on track" message when nothing else applies. */
+  interface NextStep {
+    level: "action" | "info" | "positive";
+    headline: string;
+    detail?: string;
+  }
+  const nextSteps: NextStep[] = (() => {
+    const steps: NextStep[] = [];
+
+    const failed = subs.filter((s) => s.status === "VALIDATION_FAILED").length;
+    const resize = subs.filter((s) => s.status === "NEEDS_RESIZING").length;
+    const actionCount = failed + resize;
+    if (actionCount > 0) {
+      const parts: string[] = [];
+      if (failed)
+        parts.push(
+          `${failed} failed validation — fix and re-upload`,
+        );
+      if (resize)
+        parts.push(
+          `${resize} need${resize === 1 ? "s" : ""} a corrected size`,
+        );
+      steps.push({
+        level: "action",
+        headline: `Action required: ${actionCount} creative${actionCount === 1 ? "" : "s"} need${actionCount === 1 ? "s" : ""} updates`,
+        detail: parts.join(" · "),
+      });
+    }
+
+    const awaiting = subs.filter(
+      (s) => s.status === "UPLOADED" || s.status === "UNDER_REVIEW",
+    ).length;
+    if (awaiting > 0) {
+      steps.push({
+        level: "info",
+        headline: `${awaiting} creative${awaiting === 1 ? "" : "s"} awaiting agency review`,
+        detail: "No action needed — we'll reach out if anything's missing.",
+      });
+    }
+
+    const live = placements.filter((p) => p.status === "LIVE").length;
+    const booked = placements.filter((p) => p.status === "BOOKED").length;
+    const draft = placements.filter((p) => p.status === "DRAFT").length;
+    const completed = placements.filter((p) => p.status === "COMPLETED").length;
+
+    if (campaign.status === "COMPLETED") {
+      steps.push({ level: "positive", headline: "Campaign completed" });
+    } else if (live > 0) {
+      steps.push({ level: "positive", headline: "Campaign is running" });
+    } else if (placements.length > 0 && booked === placements.length) {
+      steps.push({
+        level: "positive",
+        headline: "Placements confirmed — awaiting launch",
+      });
+    } else if (
+      placements.length > 0 &&
+      completed > 0 &&
+      live === 0 &&
+      booked === 0 &&
+      draft === 0
+    ) {
+      steps.push({ level: "positive", headline: "All placements completed" });
+    } else if (draft > 0) {
+      steps.push({
+        level: "info",
+        headline: "Placements being prepared by your agency",
+      });
+    }
+
+    if (steps.length === 0 && !placementsLoading && !subsLoading) {
+      steps.push({ level: "positive", headline: "Everything is on track" });
+    }
+
+    return steps;
+  })();
+  const hasAction = nextSteps.some((s) => s.level === "action");
+
   const subCounts = subs.reduce(
     (acc, s) => {
       if (s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED") {
@@ -439,6 +518,80 @@ export function CampaignDetailPage() {
           </div>
         )}
       </section>
+
+      {/* ── Next Steps ── */}
+      {!placementsLoading && !subsLoading && nextSteps.length > 0 && (
+        <section className="section-block">
+          <h2 className="section-heading">Next Steps</h2>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.6rem",
+              marginTop: "0.5rem",
+            }}
+          >
+            {nextSteps.map((step, i) => {
+              const styleFor = {
+                action: {
+                  bg: "var(--color-error-bg)",
+                  border: "var(--color-error-border)",
+                  color: "var(--color-error-text)",
+                },
+                info: {
+                  bg: "var(--color-pending-bg)",
+                  border: "#BFDBFE",
+                  color: "var(--color-pending-text)",
+                },
+                positive: {
+                  bg: "var(--color-success-bg)",
+                  border: "#BBF7D0",
+                  color: "var(--color-success-text)",
+                },
+              }[step.level];
+              return (
+                <div
+                  key={i}
+                  style={{
+                    padding: "0.85rem 1rem",
+                    borderRadius: "0.5rem",
+                    border: `1px solid ${styleFor.border}`,
+                    background: styleFor.bg,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: styleFor.color,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {step.headline}
+                  </div>
+                  {step.detail && (
+                    <div
+                      style={{
+                        fontSize: "0.9rem",
+                        marginTop: "0.25rem",
+                        color: styleFor.color,
+                      }}
+                    >
+                      {step.detail}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {hasAction && (
+            <p style={{ margin: "0.75rem 0 0", fontSize: "0.9rem" }}>
+              <Link to="/creatives" className="inline-text-link">
+                Go to Creatives →
+              </Link>
+            </p>
+          )}
+        </section>
+      )}
 
       {/* ── Placements ── */}
       <section className="section-block">
