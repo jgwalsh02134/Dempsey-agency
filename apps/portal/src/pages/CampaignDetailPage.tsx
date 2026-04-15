@@ -151,6 +151,20 @@ const ACTION_STATUSES: ReadonlySet<SubmissionStatus> = new Set([
   "NEEDS_RESIZING",
 ]);
 
+/** Tone of the per-submission "Next step" callout — drives the colored
+ *  accent bar and background. */
+const SUB_NEXT_STEP_TONE: Record<
+  SubmissionStatus,
+  "action" | "info" | "positive"
+> = {
+  UPLOADED: "info",
+  VALIDATION_FAILED: "action",
+  UNDER_REVIEW: "info",
+  NEEDS_RESIZING: "action",
+  READY_FOR_PUBLISHER: "positive",
+  PUSHED: "positive",
+};
+
 /** Legend swatch + label used under the Results snapshot progress bar. */
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
@@ -981,77 +995,77 @@ export function CampaignDetailPage() {
         <Link to="/campaigns" className="back-link">
           ← Back to campaigns
         </Link>
-        <h1 className="welcome-heading" style={{ marginTop: "0.75rem" }}>
-          {campaign.title}
-        </h1>
-        {campaign.description?.trim() ? (
-          <p className="welcome-body">{campaign.description}</p>
-        ) : (
-          <p className="text-muted">No description provided.</p>
-        )}
-        <div
-          className="detail-header-meta"
-          style={{ flexWrap: "wrap", rowGap: "0.5rem" }}
-        >
-          <span className={STATUS_BADGE[campaign.status]}>
-            {STATUS_LABEL[campaign.status]}
-          </span>
-          <span className="text-muted">
-            {dateRange(campaign.startDate, campaign.endDate)}
-          </span>
-          {pubs.length > 0 && (
-            <>
-              <MetaSep />
-              <span className="text-muted">
-                {pubs.length} publisher{pubs.length === 1 ? "" : "s"}
-              </span>
-            </>
+        <div className="campaign-hero">
+          <div className="campaign-hero-title-row">
+            <h1 className="welcome-heading" style={{ margin: 0 }}>
+              {campaign.title}
+            </h1>
+            <span className={STATUS_BADGE[campaign.status]}>
+              {STATUS_LABEL[campaign.status]}
+            </span>
+          </div>
+          {campaign.description?.trim() ? (
+            <p className="welcome-body">{campaign.description}</p>
+          ) : (
+            <p className="text-muted" style={{ margin: "0.5rem 0 0" }}>
+              No description provided.
+            </p>
           )}
-          {placements.length > 0 && (
-            <>
-              <MetaSep />
-              <span className="text-muted">
-                {placements.length} placement
-                {placements.length === 1 ? "" : "s"}
-              </span>
-            </>
-          )}
-          {placementDmaCount > 0 && (
-            <>
-              <MetaSep />
-              <span className="text-muted">
-                Coverage: {placementPublisherCount} publisher
-                {placementPublisherCount === 1 ? "" : "s"} across{" "}
-                {placementDmaCount} DMA{placementDmaCount === 1 ? "" : "s"}
-              </span>
-            </>
-          )}
-        </div>
-        {(campaign.budgetCents != null || placements.length > 0) && (
-          <div style={{ marginTop: "0.75rem" }}>
-            {campaign.budgetCents != null && (
-              <div className="money-block">
-                <span className="money-label">Budget</span>
-                <span className="money-value">
-                  {formatCents(campaign.budgetCents)}
+          <div className="campaign-hero-meta">
+            <span>{dateRange(campaign.startDate, campaign.endDate)}</span>
+            {pubs.length > 0 && (
+              <>
+                <MetaSep />
+                <span>
+                  {pubs.length} publisher{pubs.length === 1 ? "" : "s"}
                 </span>
-              </div>
+              </>
             )}
             {placements.length > 0 && (
-              <p
-                className="text-muted"
-                style={{ margin: "0.35rem 0 0", fontSize: "0.9rem" }}
-              >
-                Total planned:{" "}
-                <strong style={{ color: "inherit" }}>
-                  {formatCents(placementTotalCents)}
-                </strong>{" "}
-                across {placements.length} placement
-                {placements.length === 1 ? "" : "s"}
-              </p>
+              <>
+                <MetaSep />
+                <span>
+                  {placements.length} placement
+                  {placements.length === 1 ? "" : "s"}
+                </span>
+              </>
+            )}
+            {placementDmaCount > 0 && (
+              <>
+                <MetaSep />
+                <span>
+                  Coverage: {placementPublisherCount} publisher
+                  {placementPublisherCount === 1 ? "" : "s"} across{" "}
+                  {placementDmaCount} DMA{placementDmaCount === 1 ? "" : "s"}
+                </span>
+              </>
             )}
           </div>
-        )}
+          {(campaign.budgetCents != null || placements.length > 0) && (
+            <div className="campaign-hero-budget">
+              {campaign.budgetCents != null ? (
+                <div className="money-block">
+                  <span className="money-label">Budget</span>
+                  <span className="money-value">
+                    {formatCents(campaign.budgetCents)}
+                  </span>
+                </div>
+              ) : (
+                <span />
+              )}
+              {placements.length > 0 && (
+                <span className="campaign-hero-budget-total">
+                  Total planned:{" "}
+                  <strong style={{ color: "inherit" }} className="mono">
+                    {formatCents(placementTotalCents)}
+                  </strong>{" "}
+                  across {placements.length} placement
+                  {placements.length === 1 ? "" : "s"}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* ── Budget summary ──
@@ -1259,74 +1273,29 @@ export function CampaignDetailPage() {
       {/* ── Next Steps ── */}
       {!placementsLoading && !subsLoading && nextSteps.length > 0 && (
         <section className="section-block">
-          <h2 className="section-heading">Next Steps</h2>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.6rem",
-              marginTop: "0.5rem",
-            }}
-          >
-            {nextSteps.map((step, i) => {
-              const styleFor = {
-                action: {
-                  bg: "var(--color-error-bg)",
-                  border: "var(--color-error-border)",
-                  color: "var(--color-error-text)",
-                },
-                info: {
-                  bg: "var(--color-pending-bg)",
-                  border: "#BFDBFE",
-                  color: "var(--color-pending-text)",
-                },
-                positive: {
-                  bg: "var(--color-success-bg)",
-                  border: "#BBF7D0",
-                  color: "var(--color-success-text)",
-                },
-              }[step.level];
-              return (
+          <div className="next-steps-block">
+            <h2 className="next-steps-title">What you need to do next</h2>
+            <div className="next-steps-list">
+              {nextSteps.map((step, i) => (
                 <div
                   key={i}
-                  style={{
-                    padding: "0.85rem 1rem",
-                    borderRadius: "0.5rem",
-                    border: `1px solid ${styleFor.border}`,
-                    background: styleFor.bg,
-                  }}
+                  className={`next-step-item next-step-item-${step.level}`}
                 >
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      color: styleFor.color,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {step.headline}
-                  </div>
+                  <div className="next-step-headline">{step.headline}</div>
                   {step.detail && (
-                    <div
-                      style={{
-                        fontSize: "0.9rem",
-                        marginTop: "0.25rem",
-                        color: styleFor.color,
-                      }}
-                    >
-                      {step.detail}
-                    </div>
+                    <div className="next-step-detail">{step.detail}</div>
                   )}
                 </div>
-              );
-            })}
+              ))}
+            </div>
+            {hasAction && (
+              <p className="next-steps-cta">
+                <Link to="/creatives" className="inline-text-link">
+                  Go to Creatives →
+                </Link>
+              </p>
+            )}
           </div>
-          {hasAction && (
-            <p style={{ margin: "0.75rem 0 0", fontSize: "0.9rem" }}>
-              <Link to="/creatives" className="inline-text-link">
-                Go to Creatives →
-              </Link>
-            </p>
-          )}
         </section>
       )}
 
@@ -1446,39 +1415,10 @@ export function CampaignDetailPage() {
                       const approvalDraft = approval[p.id];
                       const approved = p.clientResponse === "CLIENT_APPROVED";
                       return (
-                      <li
-                        key={p.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: "1rem",
-                          flexWrap: "wrap",
-                          padding: "0.9rem 1rem",
-                          borderRadius: "0.5rem",
-                          border: "1px solid rgba(15, 23, 42, 0.12)",
-                          background: "var(--color-surface, #fff)",
-                          boxShadow: "0 1px 2px rgba(15, 23, 42, 0.06)",
-                        }}
-                      >
+                      <li key={p.id} className="placement-card">
                         <div style={{ flex: "1 1 16rem", minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontWeight: 700,
-                              fontSize: "1.2rem",
-                              lineHeight: 1.25,
-                              color: "var(--color-text, #111827)",
-                            }}
-                          >
-                            {p.name}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.9rem",
-                              marginTop: "0.25rem",
-                              color: "rgb(55, 65, 81)",
-                            }}
-                          >
+                          <div className="placement-card-name">{p.name}</div>
+                          <div className="placement-card-inventory">
                             {p.inventory.name}
                           </div>
                           <div
@@ -1527,15 +1467,7 @@ export function CampaignDetailPage() {
                             minWidth: "6rem",
                           }}
                         >
-                          <span
-                            style={{
-                              fontWeight: 800,
-                              fontSize: "1.45rem",
-                              lineHeight: 1,
-                              color: "#0f172a",
-                              letterSpacing: "-0.01em",
-                            }}
-                          >
+                          <span className="placement-card-price">
                             {formatCents(p.grossCostCents)}
                           </span>
                           <span
@@ -1783,77 +1715,29 @@ export function CampaignDetailPage() {
               uploaded and placements are approved.
             </p>
           ) : (
-            <ol
-              style={{
-                listStyle: "none",
-                margin: "0.75rem 0 0",
-                padding: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
+            <ol className="campaign-timeline">
               {timelineEvents.map((e) => (
-                <li
-                  key={e.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "0.75rem",
-                    padding: "0.65rem 0.8rem",
-                    borderRadius: "0.5rem",
-                    border: "1px solid rgba(15,23,42,0.08)",
-                    background: "rgba(15,23,42,0.02)",
-                  }}
-                >
+                <li key={e.id} className="campaign-timeline-item">
                   <span
                     aria-hidden="true"
-                    style={{
-                      flex: "0 0 auto",
-                      width: "1.6rem",
-                      height: "1.6rem",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: "999px",
-                      background: "rgba(15,23,42,0.06)",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                      color: "rgb(55,65,81)",
-                    }}
+                    className="campaign-timeline-icon"
                   >
                     {e.icon}
                   </span>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        alignItems: "baseline",
-                        justifyContent: "space-between",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      <span style={{ fontWeight: 600 }}>{e.title}</span>
+                  <div className="campaign-timeline-body">
+                    <div className="campaign-timeline-row">
+                      <span className="campaign-timeline-title">
+                        {e.title}
+                      </span>
                       <span
-                        className="text-muted"
-                        style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}
+                        className="campaign-timeline-time mono"
                         title={new Date(e.at).toLocaleString()}
                       >
                         {formatRelative(e.at)}
                       </span>
                     </div>
                     {e.detail && (
-                      <div
-                        className="text-muted"
-                        style={{
-                          fontSize: "0.85rem",
-                          marginTop: "0.15rem",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
+                      <div className="campaign-timeline-detail">
                         {e.detail}
                       </div>
                     )}
@@ -2355,13 +2239,12 @@ export function CampaignDetailPage() {
                       </span>
                     </div>
                     <div
-                      className="text-muted"
-                      style={{ fontSize: "0.85rem", marginTop: "0.35rem" }}
+                      className={`submission-next-step submission-next-step-${SUB_NEXT_STEP_TONE[s.status]}`}
                     >
-                      <strong style={{ color: "inherit", fontWeight: 600 }}>
-                        Next step:
-                      </strong>{" "}
-                      {SUB_NEXT_STEP[s.status]}
+                      <span className="submission-next-step-label">
+                        Next step
+                      </span>
+                      <span>{SUB_NEXT_STEP[s.status]}</span>
                     </div>
 
                     {/* Inline revised-version upload when action is required */}
