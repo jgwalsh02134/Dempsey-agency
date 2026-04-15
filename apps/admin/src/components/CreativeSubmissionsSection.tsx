@@ -444,13 +444,13 @@ export function CreativeSubmissionsSection({ orgId }: { orgId: string }) {
                       <td>
                         <code className="small">{s.filename}</code>
                         <br />
-                        <span className="small">
+                        <span className="small mono">
                           {formatBytes(s.sizeBytes)}
                         </span>
                         {s.widthPx != null && s.heightPx != null && (
                           <>
                             <br />
-                            <span className="small">{s.widthPx}×{s.heightPx}px</span>
+                            <span className="small mono">{s.widthPx}×{s.heightPx}px</span>
                           </>
                         )}
                       </td>

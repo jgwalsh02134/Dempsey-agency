@@ -441,6 +441,33 @@ export function PlacementsSection({
     };
   }, [placements, budgetCents]);
 
+  /** Lifecycle distribution across placement statuses — used to render a
+   *  compact stacked bar that lets operators see campaign progress at a
+   *  glance without opening each row. Cancelled is included for parity
+   *  with the totals above. */
+  const lifecycle = useMemo(() => {
+    let draft = 0;
+    let booked = 0;
+    let live = 0;
+    let completed = 0;
+    let cancelled = 0;
+    for (const p of placements) {
+      if (p.status === "DRAFT") draft += 1;
+      else if (p.status === "BOOKED") booked += 1;
+      else if (p.status === "LIVE") live += 1;
+      else if (p.status === "COMPLETED") completed += 1;
+      else if (p.status === "CANCELLED") cancelled += 1;
+    }
+    return {
+      draft,
+      booked,
+      live,
+      completed,
+      cancelled,
+      total: placements.length,
+    };
+  }, [placements]);
+
   /* ── render ────────────────────────────────────────────────── */
 
   return (
@@ -471,11 +498,11 @@ export function PlacementsSection({
           >
             <div>
               <span className="muted">Gross total:</span>{" "}
-              <strong>{formatCents(totals.gross)}</strong>
+              <strong className="mono">{formatCents(totals.gross)}</strong>
             </div>
             <div className="muted">
               Net total (agency only):{" "}
-              <strong style={{ color: "inherit" }}>
+              <strong className="mono" style={{ color: "inherit" }}>
                 {totals.netCount > 0 ? formatCents(totals.net) : "—"}
               </strong>
               {totals.netCount > 0 && totals.netCount < placements.length && (
@@ -487,7 +514,7 @@ export function PlacementsSection({
             </div>
             <div>
               <span className="muted">Client-approved:</span>{" "}
-              <strong>{formatCents(totals.approved)}</strong>{" "}
+              <strong className="mono">{formatCents(totals.approved)}</strong>{" "}
               <span className="muted">
                 ({totals.approvedCount}/{totals.billableCount})
               </span>
@@ -495,9 +522,9 @@ export function PlacementsSection({
             {budgetCents != null && (
               <div>
                 <span className="muted">Budget:</span>{" "}
-                <strong>{formatCents(budgetCents)}</strong>{" "}
+                <strong className="mono">{formatCents(budgetCents)}</strong>{" "}
                 <span
-                  className={totals.overBudget ? "error" : "muted"}
+                  className={`mono ${totals.overBudget ? "error" : "muted"}`}
                   style={{ fontWeight: 600 }}
                 >
                   {totals.overBudget
@@ -520,6 +547,130 @@ export function PlacementsSection({
           {formatCents(Math.abs(totals.remaining ?? 0))}. Review with the
           client before booking additional spend.
         </p>
+      )}
+
+      {/* Compact placement lifecycle bar — quick read on campaign progress
+          without scanning every row. Cancelled is shown as a muted segment
+          so operators see it but it doesn't dominate. */}
+      {lifecycle.total > 0 && (
+        <div style={{ marginBottom: "0.9rem" }}>
+          <div
+            aria-label="Placement lifecycle progress"
+            role="img"
+            style={{
+              display: "flex",
+              height: "0.5rem",
+              borderRadius: "999px",
+              overflow: "hidden",
+              background: "rgba(15,23,42,0.08)",
+            }}
+          >
+            {[
+              { key: "completed", count: lifecycle.completed, color: "#16a34a" },
+              { key: "live", count: lifecycle.live, color: "#2563eb" },
+              { key: "booked", count: lifecycle.booked, color: "#60a5fa" },
+              { key: "draft", count: lifecycle.draft, color: "#9ca3af" },
+              { key: "cancelled", count: lifecycle.cancelled, color: "rgba(15,23,42,0.2)" },
+            ]
+              .filter((s) => s.count > 0)
+              .map((s) => (
+                <div
+                  key={s.key}
+                  style={{ flex: `${s.count} 0 0`, background: s.color }}
+                />
+              ))}
+          </div>
+          <div
+            className="small muted"
+            style={{
+              marginTop: "0.35rem",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.85rem",
+            }}
+          >
+            {lifecycle.completed > 0 && (
+              <span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: "0.5rem",
+                    height: "0.5rem",
+                    borderRadius: "999px",
+                    background: "#16a34a",
+                    marginRight: "0.3rem",
+                  }}
+                />
+                {lifecycle.completed} completed
+              </span>
+            )}
+            {lifecycle.live > 0 && (
+              <span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: "0.5rem",
+                    height: "0.5rem",
+                    borderRadius: "999px",
+                    background: "#2563eb",
+                    marginRight: "0.3rem",
+                  }}
+                />
+                {lifecycle.live} live
+              </span>
+            )}
+            {lifecycle.booked > 0 && (
+              <span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: "0.5rem",
+                    height: "0.5rem",
+                    borderRadius: "999px",
+                    background: "#60a5fa",
+                    marginRight: "0.3rem",
+                  }}
+                />
+                {lifecycle.booked} booked
+              </span>
+            )}
+            {lifecycle.draft > 0 && (
+              <span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: "0.5rem",
+                    height: "0.5rem",
+                    borderRadius: "999px",
+                    background: "#9ca3af",
+                    marginRight: "0.3rem",
+                  }}
+                />
+                {lifecycle.draft} draft
+              </span>
+            )}
+            {lifecycle.cancelled > 0 && (
+              <span>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: "0.5rem",
+                    height: "0.5rem",
+                    borderRadius: "999px",
+                    background: "rgba(15,23,42,0.25)",
+                    marginRight: "0.3rem",
+                  }}
+                />
+                {lifecycle.cancelled} cancelled
+              </span>
+            )}
+          </div>
+        </div>
       )}
 
       {listError && (
@@ -812,13 +963,13 @@ export function PlacementsSection({
                                 ))}
                               </select>
                             </td>
-                            <td style={{ whiteSpace: "nowrap" }}>
+                            <td className="mono" style={{ whiteSpace: "nowrap" }}>
                               {formatCents(p.grossCostCents)}
                             </td>
-                            <td style={{ whiteSpace: "nowrap" }}>
+                            <td className="mono" style={{ whiteSpace: "nowrap" }}>
                               {formatCents(p.netCostCents ?? null)}
                             </td>
-                            <td>{p.quantity ?? "—"}</td>
+                            <td className="mono">{p.quantity ?? "—"}</td>
                             <td style={{ whiteSpace: "nowrap" }}>
                               <div
                                 style={{ display: "flex", gap: "0.35rem" }}

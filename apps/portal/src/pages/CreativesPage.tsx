@@ -391,7 +391,7 @@ export function CreativesPage() {
               {file ? (
                 <div className="cr-file-selected">
                   <span className="cr-file-name">{file.name}</span>
-                  <span className="cr-file-size">{formatBytes(file.size)}</span>
+                  <span className="cr-file-size mono">{formatBytes(file.size)}</span>
                   <button
                     type="button"
                     className="cr-file-remove"
@@ -511,11 +511,11 @@ export function CreativesPage() {
                             {CREATIVE_TYPE_LABEL[s.creativeType]}
                           </span>
                           {s.widthPx != null && s.heightPx != null && (
-                            <span>{s.widthPx}&times;{s.heightPx}</span>
+                            <span className="mono">{s.widthPx}&times;{s.heightPx}</span>
                           )}
                           <span>{s.filename}</span>
-                          <span>{formatBytes(s.sizeBytes)}</span>
-                          <span>{formatDate(s.createdAt)}</span>
+                          <span className="mono">{formatBytes(s.sizeBytes)}</span>
+                          <span className="mono">{formatDate(s.createdAt)}</span>
                         </span>
                       </div>
                       <div className="cr-sub-status-area">

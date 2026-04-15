@@ -528,15 +528,15 @@ export function PublisherDetailPage() {
                 <dt>Frequency</dt>
                 <dd>{publisher.frequency ?? "—"}</dd>
                 <dt>Circulation</dt>
-                <dd>
+                <dd className="mono">
                   {publisher.circulation != null
                     ? publisher.circulation.toLocaleString()
                     : "—"}
                 </dd>
                 <dt>Year established</dt>
-                <dd>{publisher.yearEstablished ?? "—"}</dd>
+                <dd className="mono">{publisher.yearEstablished ?? "—"}</dd>
                 <dt>DMA</dt>
-                <dd>
+                <dd className="mono">
                   {publisher.dmaName && publisher.dmaCode
                     ? `${publisher.dmaName} (${publisher.dmaCode})`
                     : publisher.dmaName

@@ -286,7 +286,7 @@ export function CreativesQueuePage() {
                   </div>
                   <div className="q-row-file">
                     <span>{s.filename}</span>
-                    <span className="muted">
+                    <span className="muted mono">
                       {formatBytes(s.sizeBytes)}
                       {s.widthPx != null && s.heightPx != null && ` · ${s.widthPx}×${s.heightPx}`}
                     </span>

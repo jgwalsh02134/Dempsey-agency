@@ -297,7 +297,7 @@ export function DocumentsSection({ orgId }: { orgId: string }) {
                   <td>
                     <span className="type-badge">{mimeLabel(doc.mimeType)}</span>
                   </td>
-                  <td>{formatBytes(doc.sizeBytes)}</td>
+                  <td className="mono">{formatBytes(doc.sizeBytes)}</td>
                   <td>
                     <div>{formatDate(doc.createdAt)}</div>
                     {doc.uploadedBy && (

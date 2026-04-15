@@ -637,12 +637,12 @@ export function PublishersPage() {
                       )}
                     </td>
                     <td className="small">{location || "—"}</td>
-                    <td className="small" title={p.dmaName ?? undefined}>
+                    <td className="small mono" title={p.dmaName ?? undefined}>
                       {dmaLabel}
                     </td>
                     <td className="small">{p.publicationType ?? "—"}</td>
                     <td className="small">{p.frequency ?? "—"}</td>
-                    <td className="small" style={{ whiteSpace: "nowrap" }}>
+                    <td className="small mono" style={{ whiteSpace: "nowrap" }}>
                       {p.circulation != null
                         ? p.circulation.toLocaleString()
                         : "—"}

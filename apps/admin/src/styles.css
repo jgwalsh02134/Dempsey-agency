@@ -13,6 +13,9 @@
   --success: #34d399;
   --warning: #fbbf24;
   --radius: 10px;
+  --font-mono:
+    "andale-mono", "Andale Mono", ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
   font-family:
     "Inter",
     system-ui,
@@ -46,6 +49,15 @@ code,
 
 .muted {
   color: var(--muted);
+}
+
+/* Mono data utility — use for money, counts, codes, timestamps, file sizes,
+   and other fixed-width values where scanability/alignment matter. Do not
+   apply to body text, headings, nav, or buttons. */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .small {
@@ -1022,6 +1034,9 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .kpi-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;

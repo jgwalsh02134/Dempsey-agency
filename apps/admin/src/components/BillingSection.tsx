@@ -285,7 +285,7 @@ export function BillingSection({ orgId }: { orgId: string }) {
                       <span className="small">{inv.description}</span>
                     )}
                   </td>
-                  <td>{formatCurrency(inv.amountCents, inv.currency)}</td>
+                  <td className="mono">{formatCurrency(inv.amountCents, inv.currency)}</td>
                   <td>
                     <select
                       className="inline-select"
@@ -305,8 +305,8 @@ export function BillingSection({ orgId }: { orgId: string }) {
                       ))}
                     </select>
                   </td>
-                  <td>{formatDate(inv.invoiceDate)}</td>
-                  <td>
+                  <td className="mono">{formatDate(inv.invoiceDate)}</td>
+                  <td className="mono">
                     {inv.dueDate ? formatDate(inv.dueDate) : "—"}
                   </td>
                   <td>

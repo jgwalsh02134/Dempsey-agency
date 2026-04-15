@@ -240,8 +240,10 @@ function GroupedDocs({ docs, downloadingId, onDownload }: GroupedDocsProps) {
                       {mimeLabel(doc.mimeType)}
                     </span>
                     <span>
-                      {doc.filename} &middot; {formatBytes(doc.sizeBytes)}{" "}
-                      &middot; {formatDate(doc.createdAt)}
+                      {doc.filename} &middot;{" "}
+                      <span className="mono">{formatBytes(doc.sizeBytes)}</span>{" "}
+                      &middot;{" "}
+                      <span className="mono">{formatDate(doc.createdAt)}</span>
                       {doc.uploadedBy?.name && (
                         <> &middot; from {doc.uploadedBy.name}</>
                       )}

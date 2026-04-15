@@ -151,6 +151,85 @@ const ACTION_STATUSES: ReadonlySet<SubmissionStatus> = new Set([
   "NEEDS_RESIZING",
 ]);
 
+/** Legend swatch + label used under the Results snapshot progress bar. */
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.35rem",
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          width: "0.55rem",
+          height: "0.55rem",
+          borderRadius: "999px",
+          background: color,
+          flex: "0 0 auto",
+        }}
+      />
+      <span>{label}</span>
+    </span>
+  );
+}
+
+/** Single stat tile used in the Results snapshot grid. */
+function SnapshotStat({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+}) {
+  return (
+    <div
+      style={{
+        padding: "0.75rem 0.9rem",
+        borderRadius: "0.5rem",
+        border: "1px solid rgba(15,23,42,0.1)",
+        background: "var(--color-surface, #fff)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "0.75rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          color: "rgb(107, 114, 128)",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: "0.2rem",
+          fontWeight: 700,
+          fontSize: "1.1rem",
+          lineHeight: 1.2,
+        }}
+      >
+        {value}
+      </div>
+      {sub && (
+        <div
+          style={{
+            fontSize: "0.82rem",
+            color: "rgb(107, 114, 128)",
+            marginTop: "0.15rem",
+          }}
+        >
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Separator used in inline metadata strips. */
 function MetaSep() {
   return (
@@ -527,6 +606,52 @@ export function CampaignDetailPage() {
   const placementsPendingReview = placements.filter(
     (p) => p.clientResponse === "PENDING_CLIENT_REVIEW",
   ).length;
+
+  /** Results snapshot — plan-lifecycle counts + coverage, derived entirely
+   *  from data already on the page. Cancellations are excluded from the
+   *  progress bar (they're not part of forward progress) but still counted
+   *  for transparency below. */
+  const placementLifecycle = (() => {
+    let draft = 0;
+    let booked = 0;
+    let live = 0;
+    let completed = 0;
+    let cancelled = 0;
+    let approved = 0;
+    let billable = 0;
+    for (const p of placements) {
+      if (p.status === "DRAFT") draft += 1;
+      else if (p.status === "BOOKED") booked += 1;
+      else if (p.status === "LIVE") live += 1;
+      else if (p.status === "COMPLETED") completed += 1;
+      else if (p.status === "CANCELLED") cancelled += 1;
+      if (p.status !== "CANCELLED") {
+        billable += 1;
+        if (p.clientResponse === "CLIENT_APPROVED") approved += 1;
+      }
+    }
+    const progressTotal = draft + booked + live + completed;
+    return {
+      draft,
+      booked,
+      live,
+      completed,
+      cancelled,
+      approved,
+      billable,
+      progressTotal,
+    };
+  })();
+
+  const stateCount = new Set(
+    placements
+      .map((p) => p.inventory.publisher.state)
+      .filter((s): s is string => s != null && s.trim().length > 0)
+      .map((s) => s.trim().toUpperCase()),
+  ).size;
+
+  const proofCount = docs.filter((d) => d.category === "PROOF").length;
+  const invoiceCount = docs.filter((d) => d.category === "INVOICE").length;
 
   /** Documents grouped by category in canonical order, empty buckets
    *  dropped. Rendered in the Documents hub section below. */
@@ -1740,6 +1865,164 @@ export function CampaignDetailPage() {
         </section>
       )}
 
+      {/* ── Results snapshot ──
+          Plan-lifecycle progress bar + coverage + approvals + documents on
+          file. Every figure is a count of real rows; no impressions/ROI/
+          delivery-quality metrics are invented. Hidden while placements are
+          still loading so counts don't jump. */}
+      {!placementsLoading && placements.length > 0 && (
+        <section className="section-block">
+          <div
+            className="camp-section-header"
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 className="section-heading" style={{ margin: 0 }}>
+              Results snapshot
+            </h2>
+            <span className="text-muted" style={{ fontSize: "0.85rem" }}>
+              {campaign.status === "COMPLETED"
+                ? "Campaign completed"
+                : dateRange(campaign.startDate, campaign.endDate)}
+            </span>
+          </div>
+
+          {/* Placement lifecycle bar. Each segment is proportional to its
+              share of non-cancelled placements. Labels below for detail. */}
+          {placementLifecycle.progressTotal > 0 && (
+            <div style={{ marginTop: "0.75rem" }}>
+              <div
+                style={{
+                  fontSize: "0.78rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: "rgb(55, 65, 81)",
+                  marginBottom: "0.35rem",
+                }}
+              >
+                Placement progress
+              </div>
+              <div
+                aria-label="Placement lifecycle progress"
+                role="img"
+                style={{
+                  display: "flex",
+                  height: "0.65rem",
+                  borderRadius: "999px",
+                  overflow: "hidden",
+                  background: "rgba(15,23,42,0.08)",
+                }}
+              >
+                {[
+                  {
+                    key: "completed",
+                    count: placementLifecycle.completed,
+                    color: "#16a34a",
+                  },
+                  {
+                    key: "live",
+                    count: placementLifecycle.live,
+                    color: "#2563eb",
+                  },
+                  {
+                    key: "booked",
+                    count: placementLifecycle.booked,
+                    color: "#60a5fa",
+                  },
+                  {
+                    key: "draft",
+                    count: placementLifecycle.draft,
+                    color: "#9ca3af",
+                  },
+                ]
+                  .filter((s) => s.count > 0)
+                  .map((s) => (
+                    <div
+                      key={s.key}
+                      style={{
+                        flex: `${s.count} 0 0`,
+                        background: s.color,
+                      }}
+                    />
+                  ))}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                  marginTop: "0.5rem",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {placementLifecycle.completed > 0 && (
+                  <LegendDot color="#16a34a" label={`${placementLifecycle.completed} completed`} />
+                )}
+                {placementLifecycle.live > 0 && (
+                  <LegendDot color="#2563eb" label={`${placementLifecycle.live} live`} />
+                )}
+                {placementLifecycle.booked > 0 && (
+                  <LegendDot color="#60a5fa" label={`${placementLifecycle.booked} booked`} />
+                )}
+                {placementLifecycle.draft > 0 && (
+                  <LegendDot color="#9ca3af" label={`${placementLifecycle.draft} in preparation`} />
+                )}
+                {placementLifecycle.cancelled > 0 && (
+                  <LegendDot
+                    color="rgba(15,23,42,0.25)"
+                    label={`${placementLifecycle.cancelled} cancelled`}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Compact stat grid */}
+          <dl
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(10rem, 1fr))",
+              gap: "0.6rem",
+              margin: "1rem 0 0",
+            }}
+          >
+            <SnapshotStat
+              label="Coverage"
+              value={`${placements.length} placement${placements.length === 1 ? "" : "s"}`}
+              sub={`${placementPublisherCount} publisher${placementPublisherCount === 1 ? "" : "s"}${stateCount > 0 ? ` · ${stateCount} state${stateCount === 1 ? "" : "s"}` : ""}${placementDmaCount > 0 ? ` · ${placementDmaCount} DMA${placementDmaCount === 1 ? "" : "s"}` : ""}`}
+            />
+            <SnapshotStat
+              label="Your approvals"
+              value={`${placementLifecycle.approved} of ${placementLifecycle.billable}`}
+              sub={
+                placementLifecycle.billable === placementLifecycle.approved
+                  ? "All placements approved"
+                  : `${placementLifecycle.billable - placementLifecycle.approved} awaiting your review`
+              }
+            />
+            <SnapshotStat
+              label="Reports & proofs"
+              value={`${proofCount} proof${proofCount === 1 ? "" : "s"}`}
+              sub={`${invoiceCount} invoice${invoiceCount === 1 ? "" : "s"} on file`}
+            />
+          </dl>
+
+          <p
+            className="text-muted"
+            style={{ marginTop: "0.75rem", fontSize: "0.85rem" }}
+          >
+            Based on current campaign records. Delivery metrics (impressions,
+            clicks) aren't shown here — your agency shares those in the proof
+            and invoice files above as they become available.
+          </p>
+        </section>
+      )}
+
       {/* ── Publisher map (only publishers attached to this campaign) ── */}
       <section className="section-block">
         <div
@@ -1917,8 +2200,9 @@ export function CampaignDetailPage() {
                           className="text-muted"
                           style={{ fontSize: "0.82rem", marginTop: "0.1rem" }}
                         >
-                          {doc.filename} · {formatBytes(doc.sizeBytes)} ·{" "}
-                          {formatDate(doc.createdAt)}
+                          {doc.filename} ·{" "}
+                          <span className="mono">{formatBytes(doc.sizeBytes)}</span>{" "}
+                          · <span className="mono">{formatDate(doc.createdAt)}</span>
                           {doc.uploadedBy?.name && (
                             <> · from {doc.uploadedBy.name}</>
                           )}
@@ -2064,8 +2348,10 @@ export function CampaignDetailPage() {
                     <div className="submission-meta">
                       <span className="doc-type-badge">{s.creativeType}</span>
                       <span>
-                        {s.filename} &middot; {formatBytes(s.sizeBytes)}{" "}
-                        &middot; {formatDate(s.createdAt)}
+                        {s.filename} &middot;{" "}
+                        <span className="mono">{formatBytes(s.sizeBytes)}</span>{" "}
+                        &middot;{" "}
+                        <span className="mono">{formatDate(s.createdAt)}</span>
                       </span>
                     </div>
                     <div
