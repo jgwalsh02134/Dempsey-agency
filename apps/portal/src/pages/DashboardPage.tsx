@@ -49,9 +49,34 @@ function formatDate(iso: string): string {
 function formatCents(cents: number | null): string {
   if (cents == null) return "—";
   return `$${(cents / 100).toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })}`;
+}
+
+/** Consistent money rendering — matches the Money helper on the campaign
+ *  detail page: mono font, tabular nums, tnum feature, shared prominence
+ *  scale (base | sub | lead | total). */
+function Money({
+  cents,
+  size,
+  tone,
+  className,
+}: {
+  cents: number | null;
+  size?: "sub" | "lead" | "total";
+  tone?: "positive" | "negative";
+  className?: string;
+}) {
+  const classes = [
+    "money",
+    size ? `money-${size}` : null,
+    tone ? `money-${tone}` : null,
+    className ?? null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return <span className={classes}>{formatCents(cents)}</span>;
 }
 
 export function DashboardPage() {
@@ -148,14 +173,13 @@ export function DashboardPage() {
 
   const campaignTitleById = new Map(campaigns.map((c) => [c.id, c.title]));
 
-  const headline =
-    loading
-      ? "Loading your dashboard…"
-      : needsAttention.length > 0
-        ? `${needsAttention.length} item${needsAttention.length === 1 ? "" : "s"} need${needsAttention.length === 1 ? "s" : ""} your attention`
-        : activeCampaigns.length > 0
-          ? "You're all caught up — here's what's running"
-          : "Welcome back";
+  const headline = loading
+    ? "Loading your dashboard…"
+    : needsAttention.length > 0
+      ? `You have ${needsAttention.length} creative${needsAttention.length === 1 ? "" : "s"} to fix — start in “Act now” below.`
+      : activeCampaigns.length > 0
+        ? "Nothing needs your action right now. Here's what's running."
+        : "Welcome back.";
 
   return (
     <>
@@ -168,10 +192,15 @@ export function DashboardPage() {
       {!loading && attentionShown.length > 0 && (
         <section className="dash-zone dash-zone-action" aria-label="Items that need your attention">
           <div className="dash-zone-head">
-            <h2 className="dash-zone-title">Act now</h2>
+            <div>
+              <span className="dash-zone-eyebrow">Needs your action</span>
+              <h2 className="dash-zone-title">
+                Fix {attentionItems.length} creative
+                {attentionItems.length === 1 ? "" : "s"}
+              </h2>
+            </div>
             <span className="dash-zone-meta">
-              {attentionItems.length} creative
-              {attentionItems.length === 1 ? "" : "s"} waiting on you
+              Blocked until you re-upload
             </span>
           </div>
           <ul className="dash-activity">
@@ -179,7 +208,7 @@ export function DashboardPage() {
               const campTitle = campaignTitleById.get(s.campaignId) ?? "—";
               const nextStep =
                 s.status === "VALIDATION_FAILED"
-                  ? "Fix validation errors and re-upload"
+                  ? "Fix validation errors, then re-upload"
                   : "Upload a corrected file";
               return (
                 <li key={s.id} className="dash-activity-row">
@@ -198,8 +227,8 @@ export function DashboardPage() {
           </ul>
           <Link to="/creatives" className="dash-zone-cta">
             {attentionItems.length > attentionShown.length
-              ? `Fix all ${attentionItems.length} now →`
-              : "Go fix these now →"}
+              ? `Open Creatives to fix all ${attentionItems.length} →`
+              : "Open Creatives to upload fixes →"}
           </Link>
         </section>
       )}
@@ -216,14 +245,16 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* ── Active work (zone 2) ── */}
+      {/* ── Active campaigns (zone 2) ── */}
       {!loading && activeCampaigns.length > 0 && (
         <section className="section-block">
           <div className="dash-zone-head dash-zone-head-plain">
-            <h2 className="dash-zone-title">Active work</h2>
+            <div>
+              <span className="dash-zone-eyebrow">For your awareness</span>
+              <h2 className="dash-zone-title">Your active campaigns</h2>
+            </div>
             <span className="dash-zone-meta">
-              {activeCampaigns.length} campaign
-              {activeCampaigns.length === 1 ? "" : "s"} running
+              {activeCampaigns.length} running
               {inReview.length > 0 && ` · ${inReview.length} in review`}
               {approved.length > 0 && ` · ${approved.length} approved`}
             </span>
@@ -253,7 +284,9 @@ export function DashboardPage() {
                   state={{ campaign: c }}
                   className="dash-camp-card-link"
                 >
-                  <div className="dash-camp-card">
+                  <div
+                    className={`dash-camp-card${campAttention > 0 ? " dash-camp-card-attention" : ""}`}
+                  >
                     <div className="dash-camp-header">
                       <span className="dash-camp-title">{c.title}</span>
                       <span className={CAMP_STATUS_BADGE[c.status]}>
@@ -263,18 +296,11 @@ export function DashboardPage() {
                     {c.description && (
                       <p className="dash-camp-desc">{c.description}</p>
                     )}
-                    <div
-                      className="dash-activity-meta"
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0.4rem 0.75rem",
-                        marginTop: "0.4rem",
-                        fontSize: "0.85rem",
-                      }}
-                    >
+                    <div className="dash-camp-meta-row">
                       {c.budgetCents != null && (
-                        <span>Budget {formatCents(c.budgetCents)}</span>
+                        <span>
+                          Budget <Money cents={c.budgetCents} />
+                        </span>
                       )}
                       {c.endDate && (
                         <span>Ends {formatDate(c.endDate)}</span>
@@ -285,16 +311,28 @@ export function DashboardPage() {
                       </span>
                     </div>
                     <div className="dash-camp-stats">
-                      <span>{campSubs.length} creative{campSubs.length !== 1 ? "s" : ""}</span>
+                      {campAttention > 0 ? (
+                        <span className="dash-camp-action-pill">
+                          Needs action · {campAttention}
+                        </span>
+                      ) : (
+                        <span className="dash-camp-ok-pill">
+                          On track
+                        </span>
+                      )}
+                      <span className="dash-camp-stats-sep" aria-hidden="true">·</span>
+                      <span>
+                        {campSubs.length} creative
+                        {campSubs.length !== 1 ? "s" : ""}
+                      </span>
                       {campApproved > 0 && (
-                        <span className="dash-stat-good">{campApproved} approved</span>
+                        <span className="dash-stat-good">
+                          {campApproved} approved
+                        </span>
                       )}
                       {campPending > 0 && (
-                        <span className="dash-stat-pending">{campPending} pending</span>
-                      )}
-                      {campAttention > 0 && (
-                        <span className="report-badge badge-overdue">
-                          {campAttention} need attention
+                        <span className="dash-stat-pending">
+                          {campPending} pending
                         </span>
                       )}
                     </div>
@@ -310,7 +348,10 @@ export function DashboardPage() {
       {!loading && recentSubs.length > 0 && (
         <section className="section-block">
           <div className="dash-zone-head dash-zone-head-plain">
-            <h2 className="dash-zone-title">Recent activity</h2>
+            <div>
+              <span className="dash-zone-eyebrow">History</span>
+              <h2 className="dash-zone-title">Recent activity</h2>
+            </div>
           </div>
           <ul className="dash-activity">
             {recentSubs.map((s) => (

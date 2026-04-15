@@ -2788,3 +2788,107 @@ a.portal-nav-link:focus-visible {
   font-weight: 700;
 }
 
+/* ══════════════════════════════════════
+   Dashboard clarity — action vs non-action
+   ══════════════════════════════════════ */
+
+.dash-zone-eyebrow {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+.dash-zone-action .dash-zone-eyebrow {
+  color: #B91C1C;
+}
+
+/* Campaign card — visible attention accent */
+.dash-camp-card-attention {
+  border-color: #FCA5A5;
+  box-shadow: inset 3px 0 0 0 #DC2626, var(--card-shadow);
+}
+
+.dash-camp-card-attention:hover,
+.dash-camp-card-link:hover .dash-camp-card-attention {
+  border-color: #F87171;
+  box-shadow: inset 3px 0 0 0 #DC2626, 0 4px 12px rgba(220, 38, 38, 0.12);
+}
+
+.dash-camp-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+}
+
+.dash-camp-stats {
+  align-items: center;
+}
+
+.dash-camp-stats-sep {
+  color: var(--color-border);
+}
+
+.dash-camp-action-pill {
+  display: inline-block;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #991B1B;
+  background: #FEE2E2;
+  border: 1px solid #FCA5A5;
+}
+
+.dash-camp-ok-pill {
+  display: inline-block;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #166534;
+  background: #DCFCE7;
+  border: 1px solid #BBF7D0;
+}
+
+/* Tighten the welcome body when it's acting as a one-line status headline. */
+.section-welcome .welcome-body {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-midnight);
+}
+
+/* ══════════════════════════════════════
+   Next Steps — more direct presentation
+   ══════════════════════════════════════ */
+
+.next-steps-title {
+  font-size: 1rem;
+  letter-spacing: -0.005em;
+}
+
+.next-step-headline {
+  font-weight: 700;
+}
+
+.next-step-item-action {
+  border-left: 3px solid var(--color-error-text);
+}
+
+.next-step-item-info {
+  border-left: 3px solid var(--color-pending-text);
+}
+
+.next-step-item-positive {
+  border-left: 3px solid var(--color-success-text);
+}
+
+
