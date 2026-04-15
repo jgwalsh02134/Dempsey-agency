@@ -214,6 +214,28 @@ export function PublishersPage() {
   }, [publishers, dmaFilter]);
 
   const activeCount = visiblePublishers.filter((p) => p.isActive).length;
+  const dmaCoverage = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of visiblePublishers) {
+      const key = (p.dmaCode ?? p.dmaName ?? "").trim();
+      if (key) set.add(key);
+    }
+    return set.size;
+  }, [visiblePublishers]);
+  const totalCirculation = useMemo(
+    () =>
+      visiblePublishers.reduce(
+        (sum, p) => sum + (p.circulation ?? 0),
+        0,
+      ),
+    [visiblePublishers],
+  );
+
+  function resetFilters() {
+    setSearch("");
+    setActiveFilter("");
+    setDmaFilter("");
+  }
 
   /* ── CSV import handlers ── */
   function openImport() {
@@ -314,59 +336,133 @@ export function PublishersPage() {
         <div>
           <h1 className="page-title">Publishers</h1>
           {!loading && (
-            <p className="muted" style={{ margin: 0, fontSize: "0.85rem" }}>
-              {visiblePublishers.length} publisher
-              {visiblePublishers.length !== 1 ? "s" : ""}
-              {activeCount > 0 && ` · ${activeCount} active`}
-            </p>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "baseline",
+                gap: "0.25rem 1rem",
+                marginTop: "0.25rem",
+                fontSize: "0.85rem",
+                color: "var(--color-secondary, #475569)",
+              }}
+            >
+              <span>
+                <strong style={{ color: "var(--color-midnight, #0F172A)" }}>
+                  {visiblePublishers.length.toLocaleString()}
+                </strong>{" "}
+                total
+              </span>
+              <span>
+                <strong style={{ color: "var(--color-midnight, #0F172A)" }}>
+                  {activeCount.toLocaleString()}
+                </strong>{" "}
+                active
+              </span>
+              <span>
+                <strong style={{ color: "var(--color-midnight, #0F172A)" }}>
+                  {dmaCoverage.toLocaleString()}
+                </strong>{" "}
+                DMA{dmaCoverage === 1 ? "" : "s"} covered
+              </span>
+              {totalCirculation > 0 && (
+                <span>
+                  <strong
+                    className="mono"
+                    style={{ color: "var(--color-midnight, #0F172A)" }}
+                  >
+                    {totalCirculation.toLocaleString()}
+                  </strong>{" "}
+                  total circulation
+                </span>
+              )}
+            </div>
           )}
         </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <Link to="/publishers/new" className="btn primary">
+            + New publisher
+          </Link>
+          {!importOpen && (
+            <button
+              type="button"
+              className="btn"
+              onClick={openImport}
+              disabled={loading}
+              title="Bulk-create or update publishers from a CSV file"
+            >
+              Import CSV
+            </button>
+          )}
+          <span
+            aria-hidden="true"
+            style={{
+              width: 1,
+              height: "1.5rem",
+              background: "var(--color-border, #E2E8F0)",
+              margin: "0 0.1rem",
+            }}
+          />
+          <Link
+            to="/publishers/explorer"
+            className="btn ghost"
+            title="Open the interactive map explorer"
+          >
+            Open map
+          </Link>
           <button
             type="button"
             className="btn ghost"
             onClick={() => loadPublishers(currentFilters)}
             disabled={loading}
+            title="Reload the publisher list from the server"
+            aria-label="Reload"
           >
-            {loading ? "Refreshing…" : "Refresh"}
+            {loading ? "Reloading…" : "Reload"}
           </button>
-          {!importOpen && (
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={openImport}
-              disabled={loading}
-            >
-              Import CSV
-            </button>
-          )}
-          <Link to="/publishers/explorer" className="btn ghost">
-            Explorer
-          </Link>
-          <Link to="/publishers/new" className="btn primary">
-            + New Publisher
-          </Link>
         </div>
       </div>
 
-      {/* ── Import panel ── */}
+      {/* ── Import panel (3-step workflow: select → preview → import) ── */}
       {importOpen && (
         <section
           className="card"
-          style={{ marginBottom: "1rem" }}
+          style={{
+            marginBottom: "1rem",
+            borderLeft: "3px solid var(--color-primary, #2563EB)",
+          }}
           aria-label="Import publishers CSV"
         >
           <div
             style={{
               display: "flex",
-              alignItems: "center",
+              alignItems: "baseline",
               justifyContent: "space-between",
-              marginBottom: "0.75rem",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+              marginBottom: "0.5rem",
             }}
           >
-            <h2 style={{ margin: 0, fontSize: "1.05rem" }}>
-              Import publishers from CSV
-            </h2>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.05rem" }}>
+                Import publishers from CSV
+              </h2>
+              <p
+                className="muted small"
+                style={{ margin: "0.2rem 0 0", maxWidth: "56ch" }}
+              >
+                Duplicates matched on name + city + state are updated in
+                place. Only the{" "}
+                <code>name</code> column is required.
+              </p>
+            </div>
             <button
               type="button"
               className="btn ghost"
@@ -377,53 +473,129 @@ export function PublishersPage() {
             </button>
           </div>
 
-          <p className="muted small" style={{ marginTop: 0 }}>
-            CSV must include a <code>name</code> column. Supported columns:{" "}
-            {IMPORT_COLUMNS.join(", ")}. Duplicates are matched on
-            case-insensitive name + city + state and updated in place. URL
-            fields and email fields are kept strictly separate.
-          </p>
-
+          {/* Step 1 — select a file */}
           <div
             style={{
-              display: "flex",
-              gap: "0.5rem",
-              alignItems: "center",
-              flexWrap: "wrap",
-              margin: "0.5rem 0 0.75rem",
+              marginTop: "0.75rem",
+              padding: "0.75rem 0.85rem",
+              background: "var(--color-surface-alt, #F8FAFC)",
+              border: "1px solid var(--color-border, #E2E8F0)",
+              borderRadius: "0.4rem",
             }}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              onChange={onFileChange}
-            />
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={downloadTemplate}
+            <div
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--color-secondary, #475569)",
+                marginBottom: "0.4rem",
+              }}
             >
-              Download template
-            </button>
-            {importFilename && (
-              <span className="muted small">{importFilename}</span>
-            )}
+              Step 1 — Select file
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.6rem",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={onFileChange}
+              />
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={downloadTemplate}
+              >
+                Download template
+              </button>
+              {importFilename && (
+                <span className="small" style={{ fontWeight: 500 }}>
+                  {importFilename}
+                </span>
+              )}
+            </div>
+            <details style={{ marginTop: "0.55rem" }}>
+              <summary
+                className="muted small"
+                style={{ cursor: "pointer" }}
+              >
+                Supported columns ({IMPORT_COLUMNS.length})
+              </summary>
+              <p className="muted small" style={{ margin: "0.35rem 0 0" }}>
+                {IMPORT_COLUMNS.join(", ")}. URL fields and email fields are
+                kept strictly separate.
+              </p>
+            </details>
           </div>
 
           {importError && (
-            <p className="error" role="alert">
+            <p className="error" role="alert" style={{ marginTop: "0.75rem" }}>
               {importError}
             </p>
           )}
 
+          {/* Step 2 — preview */}
           {importPreview.length > 0 && !importResult && (
-            <>
-              <p className="small">
-                <strong>{importPreview.length}</strong> row
-                {importPreview.length !== 1 ? "s" : ""} detected. Preview
-                (first 10):
-              </p>
+            <div
+              style={{
+                marginTop: "0.75rem",
+                padding: "0.75rem 0.85rem",
+                border: "1px solid var(--color-border, #E2E8F0)",
+                borderRadius: "0.4rem",
+                background: "#FFFFFF",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: "0.5rem",
+                  flexWrap: "wrap",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--color-secondary, #475569)",
+                    }}
+                  >
+                    Step 2 — Review
+                  </div>
+                  <div className="small" style={{ marginTop: "0.2rem" }}>
+                    <strong>{importPreview.length.toLocaleString()}</strong>{" "}
+                    row{importPreview.length !== 1 ? "s" : ""} detected ·
+                    showing first {Math.min(10, importPreview.length)}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => {
+                    setImportHeaders([]);
+                    setImportPreview([]);
+                    setImportFilename("");
+                    if (fileInputRef.current)
+                      fileInputRef.current.value = "";
+                  }}
+                  disabled={importing}
+                >
+                  Clear file
+                </button>
+              </div>
               <div className="table-wrap" style={{ maxHeight: "14rem" }}>
                 <table className="data-table">
                   <thead>
@@ -438,6 +610,13 @@ export function PublishersPage() {
                               ? undefined
                               : "var(--color-secondary, #888)",
                           }}
+                          title={
+                            IMPORT_COLUMNS.includes(
+                              h as (typeof IMPORT_COLUMNS)[number],
+                            )
+                              ? "Recognized column"
+                              : "Column not recognized — will be ignored"
+                          }
                         >
                           {h}
                         </th>
@@ -457,9 +636,30 @@ export function PublishersPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Step 3 — commit */}
               <div
-                style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}
+                style={{
+                  marginTop: "0.85rem",
+                  paddingTop: "0.75rem",
+                  borderTop: "1px solid var(--color-border, #E2E8F0)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  flexWrap: "wrap",
+                }}
               >
+                <div
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--color-secondary, #475569)",
+                  }}
+                >
+                  Step 3 — Import
+                </div>
                 <button
                   type="button"
                   className="btn primary"
@@ -468,33 +668,52 @@ export function PublishersPage() {
                 >
                   {importing
                     ? "Importing…"
-                    : `Import ${importPreview.length} rows`}
+                    : `Import ${importPreview.length.toLocaleString()} row${importPreview.length !== 1 ? "s" : ""}`}
                 </button>
-                <button
-                  type="button"
-                  className="btn ghost"
-                  onClick={() => {
-                    setImportHeaders([]);
-                    setImportPreview([]);
-                    setImportFilename("");
-                    if (fileInputRef.current)
-                      fileInputRef.current.value = "";
-                  }}
-                  disabled={importing}
-                >
-                  Clear
-                </button>
+                <span className="muted small">
+                  Existing matches will be updated in place.
+                </span>
               </div>
-            </>
+            </div>
           )}
 
           {importResult && (
-            <div style={{ marginTop: "0.75rem" }}>
-              <p className="success" role="status">
-                Import complete. {importResult.created} created ·{" "}
-                {importResult.updated} updated · {importResult.skipped}{" "}
-                skipped (of {importResult.total}).
+            <div
+              style={{
+                marginTop: "0.75rem",
+                padding: "0.75rem 0.85rem",
+                border: "1px solid #BBF7D0",
+                background: "#F0FDF4",
+                borderRadius: "0.4rem",
+              }}
+            >
+              <p
+                className="success"
+                role="status"
+                style={{ margin: 0, fontWeight: 600 }}
+              >
+                Import complete — {importResult.total.toLocaleString()} row
+                {importResult.total !== 1 ? "s" : ""} processed
               </p>
+              <div
+                className="small"
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.25rem 1rem",
+                  marginTop: "0.35rem",
+                }}
+              >
+                <span>
+                  <strong>{importResult.created}</strong> created
+                </span>
+                <span>
+                  <strong>{importResult.updated}</strong> updated
+                </span>
+                <span>
+                  <strong>{importResult.skipped}</strong> skipped
+                </span>
+              </div>
               {importResult.errors.length > 0 && (
                 <details style={{ marginTop: "0.5rem" }}>
                   <summary className="small">
@@ -514,7 +733,11 @@ export function PublishersPage() {
                 </details>
               )}
               <div
-                style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  marginTop: "0.75rem",
+                }}
               >
                 <button
                   type="button"
@@ -530,38 +753,88 @@ export function PublishersPage() {
       )}
 
       {/* ── Filters ── */}
-      <div className="q-filters">
-        <label className="q-filter-field">
-          <span className="small">Search</span>
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name, city, state, parent company…"
-          />
-        </label>
-        <label className="q-filter-field">
-          <span className="small">Filter by DMA</span>
-          <input
-            type="search"
-            value={dmaFilter}
-            onChange={(e) => setDmaFilter(e.target.value)}
-            placeholder="DMA name or code"
-          />
-        </label>
-        <label className="q-filter-field">
-          <span className="small">Status</span>
-          <select
-            value={activeFilter}
-            onChange={(e) =>
-              setActiveFilter(e.target.value as "" | "true" | "false")
-            }
+      <div
+        role="group"
+        aria-label="Publisher filters"
+        style={{
+          marginTop: "0.5rem",
+          padding: "0.75rem 0.9rem",
+          background: "var(--color-surface-alt, #F8FAFC)",
+          border: "1px solid var(--color-border, #E2E8F0)",
+          borderRadius: "0.5rem",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: "0.5rem",
+            flexWrap: "wrap",
+            marginBottom: "0.55rem",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--color-secondary, #475569)",
+            }}
           >
-            <option value="">All</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-        </label>
+            Filters
+          </div>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="btn ghost"
+              style={{ fontSize: "0.78rem", padding: "0.25rem 0.55rem" }}
+            >
+              Reset filters
+            </button>
+          )}
+        </div>
+        <div className="q-filters" style={{ margin: 0 }}>
+          <label className="q-filter-field" style={{ flex: "2 1 18rem" }}>
+            <span className="small" style={{ fontWeight: 600 }}>
+              Search
+            </span>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Name, city, state, parent company…"
+            />
+          </label>
+          <label className="q-filter-field">
+            <span className="small" style={{ fontWeight: 600 }}>
+              DMA
+            </span>
+            <input
+              type="search"
+              value={dmaFilter}
+              onChange={(e) => setDmaFilter(e.target.value)}
+              placeholder="DMA name or code"
+            />
+          </label>
+          <label className="q-filter-field" style={{ flex: "0 1 10rem" }}>
+            <span className="small" style={{ fontWeight: 600 }}>
+              Status
+            </span>
+            <select
+              value={activeFilter}
+              onChange={(e) =>
+                setActiveFilter(e.target.value as "" | "true" | "false")
+              }
+            >
+              <option value="">All</option>
+              <option value="true">Active only</option>
+              <option value="false">Inactive only</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       {listError && (
@@ -586,19 +859,73 @@ export function PublishersPage() {
       )}
 
       {!loading && visiblePublishers.length > 0 && (
-        <div className="table-wrap" style={{ marginTop: "0.75rem" }}>
+        <div
+          className="table-wrap publishers-grid"
+          style={{ marginTop: "0.75rem" }}
+        >
+          <style>{`
+            .publishers-grid table.data-table td,
+            .publishers-grid table.data-table th {
+              padding-top: 0.45rem;
+              padding-bottom: 0.45rem;
+              line-height: 1.3;
+            }
+            .publishers-grid tbody tr:nth-child(even) td {
+              background: rgba(15, 23, 42, 0.02);
+            }
+            .publishers-grid tbody tr:hover td {
+              background: rgba(37, 99, 235, 0.05);
+            }
+            .publishers-grid .col-num {
+              text-align: right;
+              font-variant-numeric: tabular-nums;
+              font-feature-settings: "tnum" 1;
+              white-space: nowrap;
+            }
+            .publishers-grid th.col-num {
+              text-align: right;
+            }
+            .publishers-grid .pub-name-cell a {
+              color: var(--color-midnight, #0F172A);
+              text-decoration: none;
+            }
+            .publishers-grid .pub-name-cell a:hover {
+              color: var(--color-primary, #2563EB);
+              text-decoration: underline;
+            }
+            .publishers-grid .status-pill {
+              display: inline-block;
+              padding: 0.1rem 0.5rem;
+              border-radius: 999px;
+              font-size: 0.72rem;
+              font-weight: 600;
+              letter-spacing: 0.02em;
+            }
+            .publishers-grid .status-pill-active {
+              background: #DCFCE7;
+              color: #15803D;
+            }
+            .publishers-grid .status-pill-inactive {
+              background: #F1F5F9;
+              color: #64748B;
+            }
+            .publishers-grid .circ-strong {
+              font-weight: 600;
+              color: var(--color-midnight, #0F172A);
+            }
+          `}</style>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Publisher</th>
                 <th>Location</th>
                 <th>DMA</th>
                 <th>Type</th>
                 <th>Frequency</th>
-                <th>Circulation</th>
+                <th className="col-num">Circulation</th>
+                <th className="col-num">Inventory</th>
                 <th>Email</th>
                 <th>Website</th>
-                <th>Inventory</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -618,22 +945,32 @@ export function PublishersPage() {
                     ? `${dmaCity} (${p.dmaCode})`
                     : dmaCity
                   : p.dmaCode ?? "—";
+                const hasCirc =
+                  p.circulation != null && p.circulation > 0;
                 return (
                   <tr
                     key={p.id}
-                    style={p.isActive ? undefined : { opacity: 0.55 }}
+                    style={p.isActive ? undefined : { opacity: 0.6 }}
                   >
-                    <td>
-                      <div style={{ fontWeight: 600 }}>
-                        <Link
-                          to={`/publishers/${p.id}`}
-                          style={{ color: "inherit", textDecoration: "none" }}
-                        >
-                          {p.name}
-                        </Link>
-                      </div>
+                    <td className="pub-name-cell">
+                      <Link
+                        to={`/publishers/${p.id}`}
+                        style={{
+                          display: "block",
+                          fontWeight: 600,
+                          fontSize: "0.925rem",
+                          letterSpacing: "-0.005em",
+                        }}
+                      >
+                        {p.name}
+                      </Link>
                       {p.parentCompany && (
-                        <span className="small muted">{p.parentCompany}</span>
+                        <span
+                          className="small muted"
+                          style={{ display: "block", marginTop: "0.05rem" }}
+                        >
+                          {p.parentCompany}
+                        </span>
                       )}
                     </td>
                     <td className="small">{location || "—"}</td>
@@ -642,10 +979,13 @@ export function PublishersPage() {
                     </td>
                     <td className="small">{p.publicationType ?? "—"}</td>
                     <td className="small">{p.frequency ?? "—"}</td>
-                    <td className="small mono" style={{ whiteSpace: "nowrap" }}>
-                      {p.circulation != null
-                        ? p.circulation.toLocaleString()
-                        : "—"}
+                    <td
+                      className={`small mono col-num${hasCirc ? " circ-strong" : ""}`}
+                    >
+                      {hasCirc ? p.circulation!.toLocaleString() : "—"}
+                    </td>
+                    <td className="small mono col-num">
+                      {p._count?.inventory ?? 0}
                     </td>
                     <td className="small">
                       {p.generalEmail ? (
@@ -669,9 +1009,12 @@ export function PublishersPage() {
                         "—"
                       )}
                     </td>
-                    <td className="small">{p._count?.inventory ?? 0}</td>
-                    <td className="small">
-                      {p.isActive ? "Active" : "Inactive"}
+                    <td>
+                      <span
+                        className={`status-pill ${p.isActive ? "status-pill-active" : "status-pill-inactive"}`}
+                      >
+                        {p.isActive ? "Active" : "Inactive"}
+                      </span>
                     </td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <div style={{ display: "flex", gap: "0.35rem" }}>
