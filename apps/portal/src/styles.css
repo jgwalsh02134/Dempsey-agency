@@ -3086,5 +3086,314 @@ a.portal-nav-link:focus-visible {
   color: var(--color-secondary);
 }
 
+/* ══════════════════════════════════════
+   Dashboard — command-center header
+   ══════════════════════════════════════ */
+
+.dash-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+@media (min-width: 760px) {
+  .dash-hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 1.5rem;
+  }
+}
+
+.dash-hero-main {
+  min-width: 0;
+}
+
+.dash-hero-name {
+  margin: 0;
+  font-size: clamp(1.375rem, 3vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-midnight);
+  line-height: 1.15;
+}
+
+.dash-hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.925rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: var(--color-midnight);
+  background: #F1F5F9;
+  border: 1px solid var(--color-border);
+}
+
+.dash-hero-status-dot {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.04);
+}
+
+.dash-hero-status-action {
+  color: #991B1B;
+  background: #FEE2E2;
+  border-color: #FCA5A5;
+  font-weight: 600;
+}
+
+.dash-hero-status-action .dash-hero-status-dot {
+  background: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+
+.dash-hero-status-info {
+  color: #1E3A8A;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+}
+
+.dash-hero-status-info .dash-hero-status-dot {
+  background: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.dash-hero-status-positive {
+  color: #166534;
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+}
+
+.dash-hero-status-positive .dash-hero-status-dot {
+  background: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+}
+
+.dash-hero-status-muted {
+  color: var(--color-secondary);
+}
+
+/* Hero action cluster — sits on the right on desktop, wraps on mobile. */
+.dash-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-self: center;
+}
+
+@media (min-width: 760px) {
+  .dash-hero-actions {
+    justify-content: flex-end;
+    align-self: start;
+    padding-top: 0.25rem;
+  }
+}
+
+.btn-hero {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.45rem;
+  border: 1px solid var(--color-border);
+  background: #FFFFFF;
+  color: var(--color-midnight);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+.btn-hero:hover {
+  border-color: #94A3B8;
+  background: #F8FAFC;
+}
+
+.btn-hero:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.btn-hero-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.btn-hero-primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: #FFFFFF;
+}
+
+/* Section heads (replaces eyebrow-driven zones with a plain title + meta) */
+.dash-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.dash-section-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--color-midnight);
+}
+
+.dash-section-meta {
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+}
+
+/* ══════════════════════════════════════
+   Dashboard — active campaign card: pulse + specs
+   ══════════════════════════════════════ */
+
+/* Tighter gap between elements inside the card, more consistent rhythm. */
+.dash-camp-card {
+  gap: 0.55rem;
+  padding: 1rem 1.15rem 1.1rem;
+}
+
+/* Pulse line: colored dot + one-sentence current state. */
+.dash-camp-pulse {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+}
+
+.dash-camp-pulse-dot {
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.dash-camp-pulse-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-camp-pulse-action {
+  color: #991B1B;
+  background: #FEE2E2;
+  font-weight: 600;
+}
+
+.dash-camp-pulse-action .dash-camp-pulse-dot {
+  background: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+.dash-camp-pulse-info {
+  color: #1E3A8A;
+  background: #EFF6FF;
+}
+
+.dash-camp-pulse-info .dash-camp-pulse-dot {
+  background: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.dash-camp-pulse-positive {
+  color: #166534;
+  background: #F0FDF4;
+}
+
+.dash-camp-pulse-positive .dash-camp-pulse-dot {
+  background: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+}
+
+.dash-camp-pulse-muted {
+  color: var(--color-secondary);
+  background: #F1F5F9;
+}
+
+.dash-camp-pulse-muted .dash-camp-pulse-dot {
+  background: #94A3B8;
+}
+
+/* Specs grid: 2×2 on mobile, 4-col when card is wide enough. */
+.dash-camp-specs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0.25rem 0 0;
+  padding: 0.65rem 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 420px) {
+  .dash-camp-specs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.dash-camp-spec {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dash-camp-spec dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+.dash-camp-spec dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-midnight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-camp-spec dd.mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.dash-camp-spec-sub {
+  font-weight: 500;
+  color: var(--color-secondary);
+  font-size: 0.82rem;
+}
+
+
 
 
