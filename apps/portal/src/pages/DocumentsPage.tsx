@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
+import { fromNow } from "../lib/date";
 import type { Document, DocumentCategory } from "../types";
 
 /** Client-friendly labels for document categories. Invoices are intentionally
@@ -44,13 +45,6 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export function DocumentsPage() {
   const { session } = useAuth();
@@ -115,12 +109,14 @@ export function DocumentsPage() {
 
   return (
     <>
-      <section className="section-welcome">
+      <section className="section-welcome section-welcome-compact">
         <h1 className="welcome-heading">Documents</h1>
-        <p className="welcome-body">
-          Campaign files, media plans, and shared deliverables from your
-          Dempsey Agency team.
-        </p>
+        {!loading && docs.length > 0 && (
+          <p className="welcome-status">
+            {docs.length} file{docs.length === 1 ? "" : "s"} shared with your
+            organization
+          </p>
+        )}
 
         {memberships.length > 1 && (
           <div className="org-selector">
@@ -243,7 +239,12 @@ function GroupedDocs({ docs, downloadingId, onDownload }: GroupedDocsProps) {
                       {doc.filename} &middot;{" "}
                       <span className="mono">{formatBytes(doc.sizeBytes)}</span>{" "}
                       &middot;{" "}
-                      <span className="mono">{formatDate(doc.createdAt)}</span>
+                      <span
+                        className="mono"
+                        title={new Date(doc.createdAt).toLocaleString()}
+                      >
+                        {fromNow(doc.createdAt)}
+                      </span>
                       {doc.uploadedBy?.name && (
                         <> &middot; from {doc.uploadedBy.name}</>
                       )}

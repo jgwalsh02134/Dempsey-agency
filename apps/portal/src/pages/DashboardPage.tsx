@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import * as api from "../api/endpoints";
+import { Money } from "../components/Money";
+import { fromNow, shortDate } from "../lib/date";
 import type {
   Campaign,
   CreativeSubmission,
@@ -40,72 +42,6 @@ const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
   PUSHED: "report-badge badge-completed",
 };
 
-/** Short date: "Apr 10" when in current year, otherwise "Apr 10, 2026". */
-function shortDate(iso: string): string {
-  const d = new Date(iso);
-  const sameYear = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleDateString(
-    undefined,
-    sameYear
-      ? { month: "short", day: "numeric" }
-      : { month: "short", day: "numeric", year: "numeric" },
-  );
-}
-
-/** Signed compact relative time — "now", "21m ago", "4h ago", "2d ago",
- *  "3w ago", "5mo ago", "in 2d", "in 3w". Mirrors the helper on the
- *  campaign detail page so formats match across pages. */
-function fromNow(iso: string, now: number = Date.now()): string {
-  const diffMs = new Date(iso).getTime() - now;
-  const abs = Math.abs(diffMs);
-  const future = diffMs > 0;
-  const minutes = Math.floor(abs / 60_000);
-  if (minutes < 1) return "now";
-  const suffix = (v: string) => (future ? `in ${v}` : `${v} ago`);
-  if (minutes < 60) return suffix(`${minutes}m`);
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return suffix(`${hours}h`);
-  const days = Math.floor(hours / 24);
-  if (days < 7) return suffix(`${days}d`);
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return suffix(`${weeks}w`);
-  const months = Math.floor(days / 30);
-  if (months < 12) return suffix(`${months}mo`);
-  return shortDate(iso);
-}
-
-function formatCents(cents: number | null): string {
-  if (cents == null) return "—";
-  return `$${(cents / 100).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-/** Consistent money rendering — matches the Money helper on the campaign
- *  detail page: mono font, tabular nums, tnum feature, shared prominence
- *  scale (base | sub | lead | total). */
-function Money({
-  cents,
-  size,
-  tone,
-  className,
-}: {
-  cents: number | null;
-  size?: "sub" | "lead" | "total";
-  tone?: "positive" | "negative";
-  className?: string;
-}) {
-  const classes = [
-    "money",
-    size ? `money-${size}` : null,
-    tone ? `money-${tone}` : null,
-    className ?? null,
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return <span className={classes}>{formatCents(cents)}</span>;
-}
 
 export function DashboardPage() {
   const { session } = useAuth();

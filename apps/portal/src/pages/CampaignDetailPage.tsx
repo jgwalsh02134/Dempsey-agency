@@ -3,6 +3,8 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { CampaignMap } from "../components/CampaignMap";
+import { formatMoney, Money } from "../components/Money";
+import { dateRange, fromNow } from "../lib/date";
 import type {
   Campaign,
   CampaignMapPublisher,
@@ -63,42 +65,6 @@ const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
   PUSHED: "report-badge badge-completed",
 };
 
-/** Short date: "Apr 10" when the value is in the current calendar year,
- *  otherwise "Apr 10, 2026". Chosen for scanability in dense rows where
- *  the year is redundant 99% of the time. */
-function shortDate(iso: string): string {
-  const d = new Date(iso);
-  const sameYear = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleDateString(
-    undefined,
-    sameYear
-      ? { month: "short", day: "numeric" }
-      : { month: "short", day: "numeric", year: "numeric" },
-  );
-}
-
-/** Signed relative time, compact units — "now", "21m ago", "4h ago",
- *  "2d ago", "3w ago", "5mo ago" for the past and "in 2d" / "in 3w" for
- *  the future. Falls back to shortDate beyond a year out. */
-function fromNow(iso: string, now: number = Date.now()): string {
-  const diffMs = new Date(iso).getTime() - now;
-  const abs = Math.abs(diffMs);
-  const future = diffMs > 0;
-  const minutes = Math.floor(abs / 60_000);
-  if (minutes < 1) return "now";
-  const suffix = (v: string) => (future ? `in ${v}` : `${v} ago`);
-  if (minutes < 60) return suffix(`${minutes}m`);
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return suffix(`${hours}h`);
-  const days = Math.floor(hours / 24);
-  if (days < 7) return suffix(`${days}d`);
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return suffix(`${weeks}w`);
-  const months = Math.floor(days / 30);
-  if (months < 12) return suffix(`${months}mo`);
-  return shortDate(iso);
-}
-
 /** Legacy wrapper: kept so other callers don't need to rename. Timeline
  *  entries, approvals, and the hero deadline all route through fromNow. */
 function formatRelative(iso: string, now: number = Date.now()): string {
@@ -111,42 +77,6 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatCents(cents: number | null): string {
-  if (cents == null) return "—";
-  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-/** Single rendering path for all currency values on this page so every
- *  dollar amount uses the same mono, tabular-nums, tnum treatment and a
- *  shared prominence scale (sub < base < lead < total). */
-function Money({
-  cents,
-  size,
-  tone,
-  className,
-}: {
-  cents: number | null;
-  size?: "sub" | "lead" | "total";
-  tone?: "positive" | "negative";
-  className?: string;
-}) {
-  const classes = [
-    "money",
-    size ? `money-${size}` : null,
-    tone ? `money-${tone}` : null,
-    className ?? null,
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return <span className={classes}>{formatCents(cents)}</span>;
-}
-
-function dateRange(start: string | null, end: string | null): string {
-  if (start && end) return `${shortDate(start)} – ${shortDate(end)}`;
-  if (start) return `Starts ${shortDate(start)}`;
-  if (end) return `Ends ${shortDate(end)}`;
-  return "Ongoing";
-}
 
 const PLACEMENT_STATUS_LABEL: Record<PlacementStatus, string> = {
   DRAFT: "Draft",
@@ -1206,7 +1136,7 @@ export function CampaignDetailPage() {
                   <dd className="budget-card-sub" style={{ margin: "0.15rem 0 0" }}>
                     {financials.overBudget
                       ? "Planned cost exceeds the campaign budget."
-                      : `of ${formatCents(financials.budget)} campaign budget`}
+                      : `of ${formatMoney(financials.budget)} campaign budget`}
                   </dd>
                 </div>
                 <dd style={{ margin: 0 }}>

@@ -2989,5 +2989,102 @@ a.portal-nav-link:focus-visible {
   font-feature-settings: "tnum" 1;
 }
 
+/* ══════════════════════════════════════
+   Phase 1 — condensed welcome + shared status strips
+   ══════════════════════════════════════ */
+
+/* Condensed variant of .section-welcome — replaces the paragraph-long
+   welcome blurb on Billing / Documents / Campaigns with a single status
+   line plus optional org selector. */
+.section-welcome-compact {
+  padding-bottom: 1rem;
+}
+
+.section-welcome-compact .welcome-heading {
+  font-size: clamp(1.25rem, 2.6vw, 1.5rem);
+}
+
+.welcome-status {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+  letter-spacing: -0.005em;
+}
+
+.welcome-status-alert {
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+/* Billing summary strip — per-currency aggregate tiles. Lead "Outstanding"
+   is the decision-driving value; Overdue + Paid follow. */
+.billing-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.billing-summary-row {
+  margin: 0;
+  padding: 0.95rem 1.1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  box-shadow: var(--card-shadow);
+}
+
+.billing-stat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.billing-stat dt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+.billing-stat dd {
+  margin: 0;
+}
+
+.billing-stat-sub {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+}
+
+.billing-stat-alert dt,
+.billing-stat-overdue dt {
+  color: #B91C1C;
+}
+
+.billing-stat-currency {
+  grid-column: 1 / -1;
+  justify-self: flex-end;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+/* Invoice due-date emphasis: overdue rows paint the relative-time chunk
+   red; paid rows mute it. */
+.invoice-due-overdue {
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+.invoice-due-paid {
+  color: var(--color-secondary);
+}
+
 
 

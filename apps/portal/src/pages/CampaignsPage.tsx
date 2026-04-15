@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
+import { Money } from "../components/Money";
+import { dateRange } from "../lib/date";
 import type { Campaign, CampaignStatus, CreativeSubmission } from "../types";
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
@@ -16,24 +18,6 @@ const STATUS_BADGE: Record<CampaignStatus, string> = {
   PAUSED: "report-badge badge-pending",
   COMPLETED: "report-badge badge-completed",
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric", month: "short", day: "numeric",
-  });
-}
-
-function formatCents(cents: number | null): string {
-  if (cents == null) return "";
-  return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function dateRange(start: string | null, end: string | null): string {
-  if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
-  if (start) return `From ${formatDate(start)}`;
-  if (end) return `Until ${formatDate(end)}`;
-  return "Ongoing";
-}
 
 export function CampaignsPage() {
   const { session } = useAuth();
@@ -86,17 +70,20 @@ export function CampaignsPage() {
   }, [selectedOrgId]);
 
   const active = campaigns.filter((c) => c.status === "ACTIVE");
-  const other = campaigns.filter((c) => c.status !== "ACTIVE");
+  const paused = campaigns.filter((c) => c.status === "PAUSED");
+  const completed = campaigns.filter((c) => c.status === "COMPLETED");
 
   function renderCard(c: Campaign) {
     const subs = subsBycamp[c.id] ?? [];
     const approvedCount = subs.filter(
       (s) => s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED",
     ).length;
-    const pendingCount = subs.filter(
+    const attentionCount = subs.filter(
       (s) =>
-        s.status === "UPLOADED" || s.status === "UNDER_REVIEW" ||
         s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
+    ).length;
+    const pendingCount = subs.filter(
+      (s) => s.status === "UPLOADED" || s.status === "UNDER_REVIEW",
     ).length;
 
     return (
@@ -106,7 +93,9 @@ export function CampaignsPage() {
         state={{ campaign: c }}
         className="dash-camp-card-link"
       >
-        <div className="dash-camp-card">
+        <div
+          className={`dash-camp-card${attentionCount > 0 ? " dash-camp-card-attention" : ""}`}
+        >
           <div className="dash-camp-header">
             <span className="dash-camp-title">{c.title}</span>
             <span className={STATUS_BADGE[c.status]}>{STATUS_LABEL[c.status]}</span>
@@ -118,26 +107,69 @@ export function CampaignsPage() {
           {c.budgetCents != null && (
             <div className="money-block">
               <span className="money-label">Budget</span>
-              <span className="money-value">{formatCents(c.budgetCents)}</span>
+              <Money
+                cents={c.budgetCents}
+                className="money-value money-lead"
+              />
             </div>
           )}
           <div className="dash-camp-stats">
-            <span>{subs.length} creative{subs.length !== 1 ? "s" : ""}</span>
-            {approvedCount > 0 && <span className="dash-stat-good">{approvedCount} approved</span>}
-            {pendingCount > 0 && <span className="dash-stat-pending">{pendingCount} pending</span>}
+            {attentionCount > 0 ? (
+              <span className="dash-camp-action-pill">
+                Needs action · {attentionCount}
+              </span>
+            ) : (
+              <span className="dash-camp-ok-pill">On track</span>
+            )}
+            <span className="dash-camp-stats-sep" aria-hidden="true">·</span>
+            <span>
+              {subs.length} creative{subs.length !== 1 ? "s" : ""}
+            </span>
+            {approvedCount > 0 && (
+              <span className="dash-stat-good">{approvedCount} approved</span>
+            )}
+            {pendingCount > 0 && (
+              <span className="dash-stat-pending">
+                {pendingCount} in review
+              </span>
+            )}
           </div>
         </div>
       </Link>
     );
   }
 
+  const totalAttention = campaigns.reduce((n, c) => {
+    const subs = subsBycamp[c.id] ?? [];
+    return (
+      n +
+      subs.filter(
+        (s) =>
+          s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
+      ).length
+    );
+  }, 0);
+
   return (
     <>
-      <section className="section-welcome">
+      <section className="section-welcome section-welcome-compact">
         <h1 className="welcome-heading">Campaigns</h1>
-        <p className="welcome-body">
-          Active and completed campaigns managed by your Dempsey Agency team.
-        </p>
+        {!loading && campaigns.length > 0 && (
+          <p className="welcome-status">
+            {active.length} active
+            {paused.length > 0 && ` · ${paused.length} paused`}
+            {completed.length > 0 && ` · ${completed.length} completed`}
+            {totalAttention > 0 && (
+              <>
+                {" · "}
+                <span className="welcome-status-alert">
+                  {totalAttention} creative
+                  {totalAttention === 1 ? "" : "s"} need your action
+                </span>
+              </>
+            )}
+          </p>
+        )}
 
         {memberships.length > 1 && (
           <div className="org-selector">
@@ -173,19 +205,28 @@ export function CampaignsPage() {
 
       {!loading && active.length > 0 && (
         <section className="section-block">
-          <h2 className="section-heading">Active Campaigns</h2>
-          <div className="dash-camp-grid">
-            {active.map(renderCard)}
-          </div>
+          <h2 className="section-heading">
+            Active · <span className="mono">{active.length}</span>
+          </h2>
+          <div className="dash-camp-grid">{active.map(renderCard)}</div>
         </section>
       )}
 
-      {!loading && other.length > 0 && (
+      {!loading && paused.length > 0 && (
         <section className="section-block">
-          <h2 className="section-heading">Past Campaigns</h2>
-          <div className="dash-camp-grid">
-            {other.map(renderCard)}
-          </div>
+          <h2 className="section-heading">
+            Paused · <span className="mono">{paused.length}</span>
+          </h2>
+          <div className="dash-camp-grid">{paused.map(renderCard)}</div>
+        </section>
+      )}
+
+      {!loading && completed.length > 0 && (
+        <section className="section-block">
+          <h2 className="section-heading">
+            Completed · <span className="mono">{completed.length}</span>
+          </h2>
+          <div className="dash-camp-grid">{completed.map(renderCard)}</div>
         </section>
       )}
     </>
