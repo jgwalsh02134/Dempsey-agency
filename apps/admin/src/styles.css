@@ -2354,3 +2354,239 @@ input[type="file"]::file-selector-button:hover {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
+
+/* ══════════════════════════════════════
+   Typed inventory system — kind chips
+   ══════════════════════════════════════ */
+
+.kind-chip {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.kind-chip.kind-print-display {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.kind-chip.kind-print-insert {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.kind-chip.kind-digital-display {
+  background: #E9D5FF;
+  color: #6B21A8;
+  border: 1px solid #D8B4FE;
+}
+
+.kind-chip.kind-legacy {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid var(--color-border, #E2E8F0);
+  font-style: italic;
+}
+
+/* ══════════════════════════════════════
+   Add-inventory drawer (right-side panel)
+   ══════════════════════════════════════ */
+
+.inv-drawer-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: flex-end;
+  animation: inv-drawer-fade 0.18s ease-out;
+}
+
+@keyframes inv-drawer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.inv-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.inv-drawer {
+  position: relative;
+  z-index: 1;
+  width: min(36rem, 100vw);
+  max-width: 100vw;
+  height: 100vh;
+  background: #FFFFFF;
+  box-shadow: -20px 0 60px -24px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  animation: inv-drawer-slide 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes inv-drawer-slide {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.inv-drawer-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem 0.85rem;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+}
+
+.inv-drawer-title {
+  margin: 0.15rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-midnight, #0F172A);
+}
+
+.inv-drawer-sub {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-secondary, #475569);
+  max-width: 32ch;
+}
+
+/* Step 1: kind picker — three large tappable cards */
+.inv-kind-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.inv-kind-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 0.6rem;
+  background: #FFFFFF;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.05s,
+    box-shadow 0.15s;
+  font: inherit;
+}
+
+.inv-kind-card:hover {
+  border-color: var(--color-primary, #2563EB);
+  background: rgba(37, 99, 235, 0.04);
+  box-shadow: 0 4px 12px -6px rgba(15, 23, 42, 0.18);
+}
+
+.inv-kind-card:active {
+  transform: translateY(1px);
+}
+
+.inv-kind-card:focus-visible {
+  outline: 2px solid var(--color-primary, #2563EB);
+  outline-offset: 2px;
+}
+
+.inv-kind-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--color-midnight, #0F172A);
+}
+
+.inv-kind-card-sub {
+  font-size: 0.85rem;
+  color: var(--color-secondary, #475569);
+}
+
+.inv-kind-print-display {
+  border-left: 4px solid #1D4ED8;
+}
+.inv-kind-print-insert {
+  border-left: 4px solid #B45309;
+}
+.inv-kind-digital-display {
+  border-left: 4px solid #7C3AED;
+}
+
+/* Step 2: typed form */
+.inv-drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem 1.25rem 0;
+  flex: 1 1 auto;
+}
+
+.inv-drawer-back {
+  align-self: flex-start;
+  padding: 0.25rem 0;
+  background: none;
+  border: none;
+  color: var(--color-primary, #2563EB);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inv-drawer-back:hover {
+  color: var(--color-primary-hover, #1D4ED8);
+  text-decoration: underline;
+}
+
+.inv-drawer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.inv-drawer-form .field-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--color-secondary, #475569);
+}
+
+.inv-drawer-form textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.inv-drawer-footer {
+  position: sticky;
+  bottom: 0;
+  margin: auto -1.25rem 0;
+  padding: 0.85rem 1.25rem;
+  background: #FFFFFF;
+  border-top: 1px solid var(--color-border, #E2E8F0);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .inv-drawer {
+    width: 100vw;
+  }
+  .inv-drawer-row {
+    grid-template-columns: 1fr;
+  }
+}
