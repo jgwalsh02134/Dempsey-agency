@@ -2891,4 +2891,103 @@ a.portal-nav-link:focus-visible {
   border-left: 3px solid var(--color-success-text);
 }
 
+/* ══════════════════════════════════════
+   Dates & deadlines — shorter, scannable, comparable
+   ══════════════════════════════════════ */
+
+/* Single inline metadata row: filename · size · time. Gives every row the
+   same rhythm, ellipsises the filename so size/time never line-wrap. */
+.meta-line {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+  line-height: 1.4;
+}
+
+.meta-line .meta-filename {
+  min-width: 0;
+  max-width: 26ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta-line .meta-sep {
+  flex: 0 0 auto;
+  color: var(--color-border);
+}
+
+.meta-line .mono {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Deadline chip — reused by hero and dashboard campaign cards. Colors
+   shift with proximity so scanning a grid of cards surfaces urgency. */
+.deadline-chip {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.deadline-far {
+  background: #F1F5F9;
+  color: var(--color-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.deadline-soon {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+
+.deadline-past {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+
+/* Timeline: right-align time column with a consistent min-width so the
+   eye compares rows vertically. */
+.campaign-timeline-time {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.005em;
+}
+
+.campaign-timeline-row {
+  gap: 0.9rem;
+}
+
+/* Activity-row meta (dashboard) as tabular mono for cross-row alignment. */
+.dash-activity-meta.mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.005em;
+}
+
+/* Hero meta — align date range + deadline chip on one line. */
+.campaign-hero-meta .mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+
 

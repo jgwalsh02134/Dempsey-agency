@@ -40,10 +40,38 @@ const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
   PUSHED: "report-badge badge-completed",
 };
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric", month: "short", day: "numeric",
-  });
+/** Short date: "Apr 10" when in current year, otherwise "Apr 10, 2026". */
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(
+    undefined,
+    sameYear
+      ? { month: "short", day: "numeric" }
+      : { month: "short", day: "numeric", year: "numeric" },
+  );
+}
+
+/** Signed compact relative time — "now", "21m ago", "4h ago", "2d ago",
+ *  "3w ago", "5mo ago", "in 2d", "in 3w". Mirrors the helper on the
+ *  campaign detail page so formats match across pages. */
+function fromNow(iso: string, now: number = Date.now()): string {
+  const diffMs = new Date(iso).getTime() - now;
+  const abs = Math.abs(diffMs);
+  const future = diffMs > 0;
+  const minutes = Math.floor(abs / 60_000);
+  if (minutes < 1) return "now";
+  const suffix = (v: string) => (future ? `in ${v}` : `${v} ago`);
+  if (minutes < 60) return suffix(`${minutes}m`);
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return suffix(`${hours}h`);
+  const days = Math.floor(hours / 24);
+  if (days < 7) return suffix(`${days}d`);
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return suffix(`${weeks}w`);
+  const months = Math.floor(days / 30);
+  if (months < 12) return suffix(`${months}mo`);
+  return shortDate(iso);
 }
 
 function formatCents(cents: number | null): string {
@@ -302,9 +330,24 @@ export function DashboardPage() {
                           Budget <Money cents={c.budgetCents} />
                         </span>
                       )}
-                      {c.endDate && (
-                        <span>Ends {formatDate(c.endDate)}</span>
-                      )}
+                      {c.endDate && (() => {
+                        const ms =
+                          new Date(c.endDate).getTime() - Date.now();
+                        const past = ms < 0;
+                        const days = Math.floor(Math.abs(ms) / 86_400_000);
+                        const soon = !past && days <= 14;
+                        const tone = past ? "past" : soon ? "soon" : "far";
+                        return (
+                          <span
+                            className={`deadline-chip deadline-${tone}`}
+                            title={new Date(c.endDate).toLocaleDateString()}
+                          >
+                            {past
+                              ? `Ended ${fromNow(c.endDate)}`
+                              : `Ends ${shortDate(c.endDate)} · ${fromNow(c.endDate)}`}
+                          </span>
+                        );
+                      })()}
                       <span>
                         {campPlacements.length} placement
                         {campPlacements.length === 1 ? "" : "s"}
@@ -358,7 +401,12 @@ export function DashboardPage() {
               <li key={s.id} className="dash-activity-row">
                 <div className="dash-activity-info">
                   <span className="dash-activity-title">{s.title}</span>
-                  <span className="dash-activity-meta">{formatDate(s.createdAt)}</span>
+                  <span
+                    className="dash-activity-meta mono"
+                    title={new Date(s.createdAt).toLocaleString()}
+                  >
+                    {fromNow(s.createdAt)}
+                  </span>
                 </div>
                 <span className={SUB_STATUS_BADGE[s.status]}>
                   {SUB_STATUS_LABEL[s.status]}

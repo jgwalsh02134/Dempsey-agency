@@ -63,28 +63,46 @@ const SUB_STATUS_BADGE: Record<SubmissionStatus, string> = {
   PUSHED: "report-badge badge-completed",
 };
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+/** Short date: "Apr 10" when the value is in the current calendar year,
+ *  otherwise "Apr 10, 2026". Chosen for scanability in dense rows where
+ *  the year is redundant 99% of the time. */
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(
+    undefined,
+    sameYear
+      ? { month: "short", day: "numeric" }
+      : { month: "short", day: "numeric", year: "numeric" },
+  );
 }
 
-/** Relative time label for timeline entries. Coarse — days for anything over
- *  a day old — which is appropriate for an activity feed that's read at a
- *  glance, not a precise audit log. */
-function formatRelative(iso: string, now: number = Date.now()): string {
-  const then = new Date(iso).getTime();
-  const diffMs = Math.max(0, now - then);
-  const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+/** Signed relative time, compact units — "now", "21m ago", "4h ago",
+ *  "2d ago", "3w ago", "5mo ago" for the past and "in 2d" / "in 3w" for
+ *  the future. Falls back to shortDate beyond a year out. */
+function fromNow(iso: string, now: number = Date.now()): string {
+  const diffMs = new Date(iso).getTime() - now;
+  const abs = Math.abs(diffMs);
+  const future = diffMs > 0;
+  const minutes = Math.floor(abs / 60_000);
+  if (minutes < 1) return "now";
+  const suffix = (v: string) => (future ? `in ${v}` : `${v} ago`);
+  if (minutes < 60) return suffix(`${minutes}m`);
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return suffix(`${hours}h`);
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
-  return formatDate(iso);
+  if (days < 7) return suffix(`${days}d`);
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return suffix(`${weeks}w`);
+  const months = Math.floor(days / 30);
+  if (months < 12) return suffix(`${months}mo`);
+  return shortDate(iso);
+}
+
+/** Legacy wrapper: kept so other callers don't need to rename. Timeline
+ *  entries, approvals, and the hero deadline all route through fromNow. */
+function formatRelative(iso: string, now: number = Date.now()): string {
+  return fromNow(iso, now);
 }
 
 function formatBytes(bytes: number): string {
@@ -124,9 +142,9 @@ function Money({
 }
 
 function dateRange(start: string | null, end: string | null): string {
-  if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
-  if (start) return `From ${formatDate(start)}`;
-  if (end) return `Until ${formatDate(end)}`;
+  if (start && end) return `${shortDate(start)} – ${shortDate(end)}`;
+  if (start) return `Starts ${shortDate(start)}`;
+  if (end) return `Ends ${shortDate(end)}`;
   return "Ongoing";
 }
 
@@ -1045,7 +1063,23 @@ export function CampaignDetailPage() {
             </p>
           )}
           <div className="campaign-hero-meta">
-            <span>{dateRange(campaign.startDate, campaign.endDate)}</span>
+            <span className="mono">
+              {dateRange(campaign.startDate, campaign.endDate)}
+            </span>
+            {campaign.endDate && campaign.status !== "COMPLETED" && (() => {
+              const ms = new Date(campaign.endDate).getTime() - Date.now();
+              const past = ms < 0;
+              const days = Math.floor(Math.abs(ms) / 86_400_000);
+              const soon = !past && days <= 14;
+              const tone = past ? "past" : soon ? "soon" : "far";
+              return (
+                <span className={`deadline-chip deadline-${tone}`}>
+                  {past
+                    ? `Ended ${fromNow(campaign.endDate)}`
+                    : `Ends ${fromNow(campaign.endDate)}`}
+                </span>
+              );
+            })()}
             {pubs.length > 0 && (
               <>
                 <MetaSep />
@@ -1469,10 +1503,13 @@ export function CampaignDetailPage() {
                               </span>
                               {p.clientRespondedAt && (
                                 <span
-                                  className="text-muted"
-                                  style={{ fontSize: "0.85rem" }}
+                                  className="text-muted mono"
+                                  style={{ fontSize: "0.82rem" }}
+                                  title={new Date(
+                                    p.clientRespondedAt,
+                                  ).toLocaleString()}
                                 >
-                                  {formatDate(p.clientRespondedAt)}
+                                  {fromNow(p.clientRespondedAt)}
                                 </span>
                               )}
                               {p.clientResponseNote && (
@@ -2036,15 +2073,26 @@ export function CampaignDetailPage() {
                         >
                           {doc.title}
                         </div>
-                        <div
-                          className="text-muted"
-                          style={{ fontSize: "0.82rem", marginTop: "0.1rem" }}
-                        >
-                          {doc.filename} ·{" "}
-                          <span className="mono">{formatBytes(doc.sizeBytes)}</span>{" "}
-                          · <span className="mono">{formatDate(doc.createdAt)}</span>
+                        <div className="meta-line">
+                          <span className="meta-filename" title={doc.filename}>
+                            {doc.filename}
+                          </span>
+                          <span className="meta-sep" aria-hidden="true">·</span>
+                          <span className="mono">
+                            {formatBytes(doc.sizeBytes)}
+                          </span>
+                          <span className="meta-sep" aria-hidden="true">·</span>
+                          <span
+                            className="mono"
+                            title={new Date(doc.createdAt).toLocaleString()}
+                          >
+                            {fromNow(doc.createdAt)}
+                          </span>
                           {doc.uploadedBy?.name && (
-                            <> · from {doc.uploadedBy.name}</>
+                            <>
+                              <span className="meta-sep" aria-hidden="true">·</span>
+                              <span>from {doc.uploadedBy.name}</span>
+                            </>
                           )}
                         </div>
                       </div>
@@ -2187,11 +2235,21 @@ export function CampaignDetailPage() {
 
                     <div className="submission-meta">
                       <span className="doc-type-badge">{s.creativeType}</span>
-                      <span>
-                        {s.filename} &middot;{" "}
-                        <span className="mono">{formatBytes(s.sizeBytes)}</span>{" "}
-                        &middot;{" "}
-                        <span className="mono">{formatDate(s.createdAt)}</span>
+                      <span className="meta-line">
+                        <span className="meta-filename" title={s.filename}>
+                          {s.filename}
+                        </span>
+                        <span className="meta-sep" aria-hidden="true">·</span>
+                        <span className="mono">
+                          {formatBytes(s.sizeBytes)}
+                        </span>
+                        <span className="meta-sep" aria-hidden="true">·</span>
+                        <span
+                          className="mono"
+                          title={new Date(s.createdAt).toLocaleString()}
+                        >
+                          {fromNow(s.createdAt)}
+                        </span>
                       </span>
                     </div>
                     <div
@@ -2296,8 +2354,16 @@ export function CampaignDetailPage() {
                                   whiteSpace: "nowrap",
                                 }}
                               >
-                                <strong>v{old.version}</strong> · {old.filename}{" "}
-                                · {formatDate(old.createdAt)}
+                                <strong>v{old.version}</strong> ·{" "}
+                                {old.filename} ·{" "}
+                                <span
+                                  className="mono"
+                                  title={new Date(
+                                    old.createdAt,
+                                  ).toLocaleString()}
+                                >
+                                  {fromNow(old.createdAt)}
+                                </span>
                               </span>
                               <button
                                 type="button"
