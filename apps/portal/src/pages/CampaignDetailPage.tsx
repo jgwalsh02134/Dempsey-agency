@@ -137,12 +137,12 @@ const PRICING_MODEL_LABEL: Record<PricingModel, string> = {
 /** Short, human-readable "next step" for each submission status — rephrased
  *  from the existing enum; no new statuses are invented. */
 const SUB_NEXT_STEP: Record<SubmissionStatus, string> = {
-  UPLOADED: "Awaiting agency review",
-  VALIDATION_FAILED: "Fix issues and re-upload",
-  UNDER_REVIEW: "Agency is reviewing your creative",
-  NEEDS_RESIZING: "Please upload a corrected version",
+  UPLOADED: "In queue for agency review — nothing you need to do right now",
+  VALIDATION_FAILED: "Fix the validation errors below and upload a new version",
+  UNDER_REVIEW: "Agency is reviewing — we'll update you if anything is needed",
+  NEEDS_RESIZING: "Upload a corrected version — see the agency note below",
   READY_FOR_PUBLISHER: "Approved — scheduled to send to publisher",
-  PUSHED: "Sent to publisher",
+  PUSHED: "Sent to publisher — no further action needed",
 };
 
 /** Statuses that require the client to upload a revised file. */
@@ -788,16 +788,16 @@ export function CampaignDetailPage() {
       const parts: string[] = [];
       if (failed)
         parts.push(
-          `${failed} failed validation — fix and re-upload`,
+          `${failed} failed validation`,
         );
       if (resize)
         parts.push(
-          `${resize} need${resize === 1 ? "s" : ""} a corrected size`,
+          `${resize} need${resize === 1 ? "s" : ""} resizing`,
         );
       steps.push({
         level: "action",
-        headline: `Action required: ${actionCount} creative${actionCount === 1 ? "" : "s"} need${actionCount === 1 ? "s" : ""} updates`,
-        detail: parts.join(" · "),
+        headline: `Fix and re-upload ${actionCount} creative${actionCount === 1 ? "" : "s"}`,
+        detail: `${parts.join(" · ")} — open the Assets section below.`,
       });
     }
 
@@ -807,16 +807,16 @@ export function CampaignDetailPage() {
     if (awaiting > 0) {
       steps.push({
         level: "info",
-        headline: `${awaiting} creative${awaiting === 1 ? "" : "s"} awaiting agency review`,
-        detail: "No action needed — we'll reach out if anything's missing.",
+        headline: `${awaiting} creative${awaiting === 1 ? "" : "s"} in review with your agency`,
+        detail: "Nothing to do right now — we'll ping you if something needs changes.",
       });
     }
 
     if (placementsPendingReview > 0) {
       steps.push({
         level: "action",
-        headline: `Action required: ${placementsPendingReview} placement${placementsPendingReview === 1 ? "" : "s"} awaiting your approval`,
-        detail: "Review placements below and click Approve on each to acknowledge.",
+        headline: `Approve ${placementsPendingReview} placement${placementsPendingReview === 1 ? "" : "s"}`,
+        detail: "Scroll to Placements and click Approve on each one to confirm.",
       });
     }
 
@@ -826,9 +826,13 @@ export function CampaignDetailPage() {
     const completed = placements.filter((p) => p.status === "COMPLETED").length;
 
     if (campaign.status === "COMPLETED") {
-      steps.push({ level: "positive", headline: "Campaign completed" });
+      steps.push({ level: "positive", headline: "Campaign complete — no further action" });
     } else if (live > 0) {
-      steps.push({ level: "positive", headline: "Campaign is running" });
+      steps.push({
+        level: "positive",
+        headline: `Campaign is running — ${live} placement${live === 1 ? "" : "s"} live`,
+        detail: "Your agency is monitoring delivery; watch for proofs under Assets.",
+      });
     } else if (placements.length > 0 && booked === placements.length) {
       steps.push({
         level: "positive",
@@ -845,12 +849,13 @@ export function CampaignDetailPage() {
     } else if (draft > 0) {
       steps.push({
         level: "info",
-        headline: "Placements being prepared by your agency",
+        headline: "Your agency is building the media plan",
+        detail: "Placements will appear below once they're ready for you.",
       });
     }
 
     if (steps.length === 0 && !placementsLoading && !subsLoading) {
-      steps.push({ level: "positive", headline: "Everything is on track" });
+      steps.push({ level: "positive", headline: "You're all caught up — no open actions" });
     }
 
     return steps;
@@ -1068,13 +1073,46 @@ export function CampaignDetailPage() {
         </div>
       </section>
 
-      {/* ── Budget summary ──
+      {/* ── CONTROL zone: what to do now ── */}
+      {!placementsLoading && !subsLoading && nextSteps.length > 0 && (
+        <section className="section-block zone-section zone-control">
+          <div className="zone-label">Control · what to do now</div>
+          <div className="next-steps-block">
+            <h2 className="next-steps-title">
+              {hasAction ? "You have open actions" : "What's happening with this campaign"}
+            </h2>
+            <div className="next-steps-list">
+              {nextSteps.map((step, i) => (
+                <div
+                  key={i}
+                  className={`next-step-item next-step-item-${step.level}`}
+                >
+                  <div className="next-step-headline">{step.headline}</div>
+                  {step.detail && (
+                    <div className="next-step-detail">{step.detail}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {hasAction && (
+              <p className="next-steps-cta">
+                <Link to="/creatives" className="inline-text-link">
+                  Go to Creatives to fix these →
+                </Link>
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── FINANCIAL zone: budget ──
           Derived entirely from campaign.budgetCents + placement.grossCostCents
           and placement.clientResponse. Hidden while placements are still
           loading so numbers don't jump, and when there's no budget AND no
           placements to report against. */}
       {!placementsLoading && (financials.budget != null || placements.length > 0) && (
-        <section className="section-block">
+        <section className="section-block zone-section zone-financial">
+          <div className="zone-label">Financial</div>
           <div
             className="camp-section-header"
             style={{
@@ -1085,8 +1123,8 @@ export function CampaignDetailPage() {
               flexWrap: "wrap",
             }}
           >
-            <h2 className="section-heading" style={{ margin: 0 }}>
-              Budget summary
+            <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
+              Budget
             </h2>
             {financials.billableCount > 0 && (
               <span className="text-muted" style={{ fontSize: "0.9rem" }}>
@@ -1270,37 +1308,9 @@ export function CampaignDetailPage() {
         </section>
       )}
 
-      {/* ── Next Steps ── */}
-      {!placementsLoading && !subsLoading && nextSteps.length > 0 && (
-        <section className="section-block">
-          <div className="next-steps-block">
-            <h2 className="next-steps-title">What you need to do next</h2>
-            <div className="next-steps-list">
-              {nextSteps.map((step, i) => (
-                <div
-                  key={i}
-                  className={`next-step-item next-step-item-${step.level}`}
-                >
-                  <div className="next-step-headline">{step.headline}</div>
-                  {step.detail && (
-                    <div className="next-step-detail">{step.detail}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {hasAction && (
-              <p className="next-steps-cta">
-                <Link to="/creatives" className="inline-text-link">
-                  Go to Creatives →
-                </Link>
-              </p>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ── Placements ── */}
-      <section className="section-block">
+      {/* ── EXECUTION zone: placements + map ── */}
+      <section className="section-block zone-section zone-execution">
+        <div className="zone-label">Execution</div>
         <div
           className="camp-section-header"
           style={{
@@ -1311,7 +1321,7 @@ export function CampaignDetailPage() {
             flexWrap: "wrap",
           }}
         >
-          <h2 className="section-heading" style={{ margin: 0 }}>
+          <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
             Placements
           </h2>
           {placements.length > 0 && (
@@ -1682,73 +1692,6 @@ export function CampaignDetailPage() {
         )}
       </section>
 
-      {/* ── Activity timeline ──
-          Read-only feed derived from existing campaign/submission/placement
-          timestamps. Skipped while the dependent lists are still loading to
-          avoid a flicker of "no activity yet" followed by a filled list. */}
-      {!placementsLoading && !subsLoading && (
-        <section className="section-block">
-          <div
-            className="camp-section-header"
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              gap: "0.75rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <h2 className="section-heading" style={{ margin: 0 }}>
-              Activity
-            </h2>
-            {timelineEvents.length > 0 && (
-              <span className="text-muted" style={{ fontSize: "0.9rem" }}>
-                {timelineEvents.length} event
-                {timelineEvents.length === 1 ? "" : "s"}
-              </span>
-            )}
-          </div>
-
-          {timelineEvents.length === 0 ? (
-            <p className="text-muted" style={{ marginTop: "0.5rem" }}>
-              No recent activity yet. Events will appear here as creatives are
-              uploaded and placements are approved.
-            </p>
-          ) : (
-            <ol className="campaign-timeline">
-              {timelineEvents.map((e) => (
-                <li key={e.id} className="campaign-timeline-item">
-                  <span
-                    aria-hidden="true"
-                    className="campaign-timeline-icon"
-                  >
-                    {e.icon}
-                  </span>
-                  <div className="campaign-timeline-body">
-                    <div className="campaign-timeline-row">
-                      <span className="campaign-timeline-title">
-                        {e.title}
-                      </span>
-                      <span
-                        className="campaign-timeline-time mono"
-                        title={new Date(e.at).toLocaleString()}
-                      >
-                        {formatRelative(e.at)}
-                      </span>
-                    </div>
-                    {e.detail && (
-                      <div className="campaign-timeline-detail">
-                        {e.detail}
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      )}
-
       {/* ── Results snapshot ──
           Plan-lifecycle progress bar + coverage + approvals + documents on
           file. Every figure is a count of real rows; no impressions/ROI/
@@ -1766,8 +1709,8 @@ export function CampaignDetailPage() {
               flexWrap: "wrap",
             }}
           >
-            <h2 className="section-heading" style={{ margin: 0 }}>
-              Results snapshot
+            <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
+              Progress snapshot
             </h2>
             <span className="text-muted" style={{ fontSize: "0.85rem" }}>
               {campaign.status === "COMPLETED"
@@ -1919,8 +1862,8 @@ export function CampaignDetailPage() {
             flexWrap: "wrap",
           }}
         >
-          <h2 className="section-heading" style={{ margin: 0 }}>
-            Publisher Map
+          <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
+            Publisher map
           </h2>
           {pubs.length > 0 && (
             <span className="text-muted" style={{ fontSize: "0.9rem" }}>
@@ -1952,13 +1895,84 @@ export function CampaignDetailPage() {
         )}
       </section>
 
+      {/* ── ACTIVITY zone: timeline ── */}
+      {!placementsLoading && !subsLoading && (
+        <section className="section-block zone-section zone-activity">
+          <div className="zone-label">Activity</div>
+          <div
+            className="camp-section-header"
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
+              Recent events
+            </h2>
+            {timelineEvents.length > 0 && (
+              <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+                {timelineEvents.length} event
+                {timelineEvents.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
+
+          {timelineEvents.length === 0 ? (
+            <p className="text-muted" style={{ marginTop: "0.5rem" }}>
+              No recent activity yet. Events will appear here as creatives are
+              uploaded and placements are approved.
+            </p>
+          ) : (
+            <ol className="campaign-timeline">
+              {timelineEvents.map((e) => (
+                <li key={e.id} className="campaign-timeline-item">
+                  <span
+                    aria-hidden="true"
+                    className="campaign-timeline-icon"
+                  >
+                    {e.icon}
+                  </span>
+                  <div className="campaign-timeline-body">
+                    <div className="campaign-timeline-row">
+                      <span className="campaign-timeline-title">
+                        {e.title}
+                      </span>
+                      <span
+                        className="campaign-timeline-time mono"
+                        title={new Date(e.at).toLocaleString()}
+                      >
+                        {formatRelative(e.at)}
+                      </span>
+                    </div>
+                    {e.detail && (
+                      <div className="campaign-timeline-detail">
+                        {e.detail}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
+
+      {/* ── ASSETS zone: creatives (primary) + documents (secondary) ──
+          Source order is Documents then Creatives, but CSS on .zone-assets
+          flips them visually so creative submissions — the action-bearing
+          list — appears first. */}
+      <div className="zone-assets">
+        <div className="zone-label zone-label-assets">Assets</div>
       {/* ── Documents & Billing hub ──
           Docs are org-scoped, so this surfaces the owning organization's
           library categorized for quick scanning. Invoices are promoted to
           their own sub-list; other categories appear as a count strip that
           deep-links into the full Documents library with none-category
           filtering left for a future pass. */}
-      <section className="section-block">
+      <section className="section-block zone-section zone-assets-docs">
         <div
           className="camp-section-header"
           style={{
@@ -1969,7 +1983,7 @@ export function CampaignDetailPage() {
             flexWrap: "wrap",
           }}
         >
-          <h2 className="section-heading" style={{ margin: 0 }}>
+          <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
             Documents &amp; Billing
           </h2>
           <Link to="/documents" className="inline-text-link">
@@ -2123,9 +2137,9 @@ export function CampaignDetailPage() {
       </section>
 
       {/* ── Creative Submissions ── */}
-      <section className="section-block">
+      <section className="section-block zone-section zone-assets-creatives">
         <div className="camp-section-header">
-          <h2 className="section-heading" style={{ margin: 0 }}>Creative Submissions</h2>
+          <h2 className="section-heading zone-heading" style={{ margin: 0 }}>Creative submissions</h2>
           <Link to="/creatives" className="camp-upload-link">Upload creative &rarr;</Link>
         </div>
 
@@ -2379,6 +2393,7 @@ export function CampaignDetailPage() {
           </ul>
         )}
       </section>
+      </div>
     </>
   );
 }

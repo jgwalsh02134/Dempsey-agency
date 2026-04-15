@@ -148,48 +148,38 @@ export function DashboardPage() {
 
   const campaignTitleById = new Map(campaigns.map((c) => [c.id, c.title]));
 
+  const headline =
+    loading
+      ? "Loading your dashboard…"
+      : needsAttention.length > 0
+        ? `${needsAttention.length} item${needsAttention.length === 1 ? "" : "s"} need${needsAttention.length === 1 ? "s" : ""} your attention`
+        : activeCampaigns.length > 0
+          ? "You're all caught up — here's what's running"
+          : "Welcome back";
+
   return (
     <>
       <section className="section-welcome">
-        <h1 className="welcome-heading">Welcome, {displayName}</h1>
-        <p className="welcome-body">
-          Here is a summary of your campaigns and creative activity.
-        </p>
+        <h1 className="welcome-heading">Hi, {displayName}</h1>
+        <p className="welcome-body">{headline}</p>
       </section>
 
-      {/* ── Attention Required (only when there are client-actionable items) ── */}
+      {/* ── Needs your attention (zone 1: act now) ── */}
       {!loading && attentionShown.length > 0 && (
-        <section
-          className="section-block"
-          style={{
-            borderLeft: "3px solid #dc2626",
-            paddingLeft: "0.9rem",
-          }}
-          aria-label="Items that need your attention"
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              gap: "0.75rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <h2 className="section-heading" style={{ margin: 0 }}>
-              Needs your attention
-            </h2>
-            <span className="text-muted" style={{ fontSize: "0.9rem" }}>
-              {attentionItems.length} submission
+        <section className="dash-zone dash-zone-action" aria-label="Items that need your attention">
+          <div className="dash-zone-head">
+            <h2 className="dash-zone-title">Act now</h2>
+            <span className="dash-zone-meta">
+              {attentionItems.length} creative
               {attentionItems.length === 1 ? "" : "s"} waiting on you
             </span>
           </div>
-          <ul className="dash-activity" style={{ marginTop: "0.65rem" }}>
+          <ul className="dash-activity">
             {attentionShown.map((s) => {
               const campTitle = campaignTitleById.get(s.campaignId) ?? "—";
               const nextStep =
                 s.status === "VALIDATION_FAILED"
-                  ? "Fix validation issues and re-upload"
+                  ? "Fix validation errors and re-upload"
                   : "Upload a corrected file";
               return (
                 <li key={s.id} className="dash-activity-row">
@@ -206,57 +196,38 @@ export function DashboardPage() {
               );
             })}
           </ul>
-          <Link to="/creatives" className="dash-view-all">
+          <Link to="/creatives" className="dash-zone-cta">
             {attentionItems.length > attentionShown.length
-              ? `View all ${attentionItems.length} items →`
-              : "Upload creative →"}
+              ? `Fix all ${attentionItems.length} now →`
+              : "Go fix these now →"}
           </Link>
         </section>
       )}
 
-      {/* ── KPI Cards ── */}
-      <div className="dash-kpi-grid">
-        <Link to="/campaigns" className="dash-kpi-link">
-          <div className="dash-kpi">
-            <span className="dash-kpi-value">{loading ? "–" : activeCampaigns.length}</span>
-            <span className="dash-kpi-label">Active campaigns</span>
-          </div>
-        </Link>
-        <Link to="/creatives" className="dash-kpi-link">
-          <div className="dash-kpi">
-            <span className="dash-kpi-value">{loading ? "–" : inReview.length}</span>
-            <span className="dash-kpi-label">In review</span>
-          </div>
-        </Link>
-        <Link to="/creatives" className="dash-kpi-link">
-          <div className="dash-kpi dash-kpi-warn">
-            <span className="dash-kpi-value">{loading ? "–" : needsAttention.length}</span>
-            <span className="dash-kpi-label">Need attention</span>
-          </div>
-        </Link>
-        <Link to="/creatives" className="dash-kpi-link">
-          <div className="dash-kpi dash-kpi-good">
-            <span className="dash-kpi-value">{loading ? "–" : approved.length}</span>
-            <span className="dash-kpi-label">Approved / sent</span>
-          </div>
-        </Link>
-      </div>
-
-      {/* ── Quick Actions ── */}
+      {/* ── Quick actions (always visible, clear next moves) ── */}
       <section className="section-block">
-        <h2 className="section-heading">Quick Actions</h2>
         <div className="dash-actions">
-          <Link to="/creatives" className="dash-action-btn">Upload creative</Link>
+          <Link to="/creatives" className="dash-action-btn dash-action-primary">
+            Upload a creative
+          </Link>
           <Link to="/campaigns" className="dash-action-btn">View campaigns</Link>
           <Link to="/documents" className="dash-action-btn">Documents</Link>
           <Link to="/billing" className="dash-action-btn">Billing</Link>
         </div>
       </section>
 
-      {/* ── Active Campaigns ── */}
+      {/* ── Active work (zone 2) ── */}
       {!loading && activeCampaigns.length > 0 && (
         <section className="section-block">
-          <h2 className="section-heading">Active Campaigns</h2>
+          <div className="dash-zone-head dash-zone-head-plain">
+            <h2 className="dash-zone-title">Active work</h2>
+            <span className="dash-zone-meta">
+              {activeCampaigns.length} campaign
+              {activeCampaigns.length === 1 ? "" : "s"} running
+              {inReview.length > 0 && ` · ${inReview.length} in review`}
+              {approved.length > 0 && ` · ${approved.length} approved`}
+            </span>
+          </div>
           <div className="dash-camp-grid">
             {activeCampaigns.map((c) => {
               const campSubs = allSubs.filter((s) => s.campaignId === c.id);
@@ -335,10 +306,12 @@ export function DashboardPage() {
         </section>
       )}
 
-      {/* ── Recent Creative Activity ── */}
+      {/* ── Recent activity (zone 3: context) ── */}
       {!loading && recentSubs.length > 0 && (
         <section className="section-block">
-          <h2 className="section-heading">Recent Creative Activity</h2>
+          <div className="dash-zone-head dash-zone-head-plain">
+            <h2 className="dash-zone-title">Recent activity</h2>
+          </div>
           <ul className="dash-activity">
             {recentSubs.map((s) => (
               <li key={s.id} className="dash-activity-row">

@@ -2394,3 +2394,243 @@ a.portal-nav-link:focus-visible {
     flex-wrap: wrap;
   }
 }
+
+/* ══════════════════════════════════════
+   Zones (visual hierarchy for grouped sections)
+   ══════════════════════════════════════ */
+
+.zone-label {
+  display: inline-block;
+  margin-bottom: 0.9rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  background: var(--color-midnight);
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.zone-heading {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: var(--color-midnight) !important;
+}
+
+.zone-section {
+  position: relative;
+}
+
+.zone-control .zone-label {
+  background: #DC2626;
+}
+
+.zone-financial .zone-label {
+  background: #0F766E;
+}
+
+.zone-execution .zone-label {
+  background: #1D4ED8;
+}
+
+.zone-activity .zone-label {
+  background: #6B7280;
+}
+
+.zone-label-assets {
+  background: #7C3AED;
+}
+
+/* Assets wrapper: flips visual order so creatives render above docs while
+   keeping docs before creatives in the source. */
+.zone-assets {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.zone-assets > .zone-label-assets {
+  order: 0;
+}
+
+.zone-assets-creatives {
+  order: 1;
+}
+
+.zone-assets-docs {
+  order: 2;
+}
+
+/* ══════════════════════════════════════
+   Dashboard zones
+   ══════════════════════════════════════ */
+
+.dash-zone {
+  margin-bottom: 1.25rem;
+  padding: 1.1rem 1.2rem 1rem;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+}
+
+.dash-zone-action {
+  border-left: 4px solid #DC2626;
+  background: linear-gradient(to right, #FEF2F2 0%, #FFFFFF 40%);
+}
+
+.dash-zone-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.7rem;
+}
+
+.dash-zone-head-plain {
+  margin-bottom: 0.85rem;
+}
+
+.dash-zone-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--color-midnight);
+}
+
+.dash-zone-action .dash-zone-title {
+  color: #991B1B;
+}
+
+.dash-zone-meta {
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+}
+
+.dash-zone-action .dash-zone-meta {
+  color: #B91C1C;
+  font-weight: 500;
+}
+
+.dash-zone-cta {
+  display: inline-block;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.9rem;
+  background: #DC2626;
+  color: #FFFFFF;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.dash-zone-cta:hover {
+  background: #B91C1C;
+}
+
+.dash-action-primary {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.dash-action-primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: #FFFFFF;
+}
+
+/* Section headings — bump prominence from 11px-uppercase-gray to a
+   readable small-caps title. Applies globally since the existing sections
+   all benefit from the bump, and zone-heading overrides still win. */
+.section-heading {
+  font-size: 0.8125rem;
+  color: var(--color-midnight);
+  letter-spacing: 0.08em;
+}
+
+/* ══════════════════════════════════════
+   Creatives page — submissions first, upload collapsible
+   ══════════════════════════════════════ */
+
+.cr-work-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cr-submissions-section {
+  order: 1;
+}
+
+.cr-upload-section {
+  order: 2;
+}
+
+.cr-submissions-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.cr-submissions-meta {
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+}
+
+.cr-upload-disclosure {
+  border: 1px dashed #CBD5E1;
+  border-radius: 0.6rem;
+  background: #F8FAFC;
+}
+
+.cr-upload-disclosure[open] {
+  background: #FFFFFF;
+  border-style: solid;
+  border-color: var(--color-border);
+}
+
+.cr-upload-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.cr-upload-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cr-upload-summary-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-midnight);
+}
+
+.cr-upload-summary-hint {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+}
+
+.cr-upload-disclosure[open] .cr-upload-summary {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cr-upload-disclosure .creative-form {
+  padding: 1rem;
+}

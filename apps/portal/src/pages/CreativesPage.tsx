@@ -39,12 +39,12 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
 };
 
 const STATUS_DESC: Record<SubmissionStatus, string> = {
-  UPLOADED: "Your file has been received and is waiting for agency review.",
-  VALIDATION_FAILED: "The file did not pass automated checks. See details below.",
-  UNDER_REVIEW: "Your agency team is reviewing this submission.",
-  NEEDS_RESIZING: "Changes are needed before this can be approved. See the review note below.",
-  READY_FOR_PUBLISHER: "Approved by your agency team and ready to be sent to the publisher.",
-  PUSHED: "This creative has been sent to the publisher.",
+  UPLOADED: "Received — in queue for agency review. Nothing for you to do right now.",
+  VALIDATION_FAILED: "Automated checks failed. Review the errors below, fix the file, and upload a new version.",
+  UNDER_REVIEW: "Agency is reviewing. We'll reach out if anything needs to change.",
+  NEEDS_RESIZING: "Changes required — read the agency note below, then upload a corrected version.",
+  READY_FOR_PUBLISHER: "Approved. Scheduled to send to the publisher — no action needed from you.",
+  PUSHED: "Sent to the publisher. This submission is closed.",
 };
 
 const STATUS_BADGE: Record<SubmissionStatus, string> = {
@@ -269,11 +269,9 @@ export function CreativesPage() {
   return (
     <>
       <section className="section-welcome">
-        <h1 className="welcome-heading">Creative Submissions</h1>
+        <h1 className="welcome-heading">Creatives</h1>
         <p className="welcome-body">
-          Upload ad creative for your campaigns. Files are validated
-          automatically and reviewed by your Dempsey Agency team before
-          being sent to publishers.
+          Review your submissions, respond to agency feedback, and upload new files when you're ready.
         </p>
 
         {memberships.length > 1 && (
@@ -326,10 +324,17 @@ export function CreativesPage() {
         )}
       </section>
 
-      {/* ── Upload section ── */}
+      {/* Wrapper: CSS flips order so Submissions render before Upload */}
+      <div className="cr-work-area">
+
+      {/* ── Upload section (collapsible, secondary) ── */}
       {selectedCampaignId && (
-        <section className="section-block">
-          <h2 className="section-heading">Upload Creative</h2>
+        <section className="section-block cr-upload-section">
+          <details className="cr-upload-disclosure">
+            <summary className="cr-upload-summary">
+              <span className="cr-upload-summary-label">+ Upload a new creative</span>
+              <span className="cr-upload-summary-hint">Drag &amp; drop, preview, and submit</span>
+            </summary>
 
           <form className="creative-form" onSubmit={onUpload}>
             {/* Creative type selector with contextual help */}
@@ -463,13 +468,35 @@ export function CreativesPage() {
               {uploading ? "Uploading…" : "Submit creative"}
             </button>
           </form>
+          </details>
         </section>
       )}
 
-      {/* ── Submissions ── */}
+      {/* ── Submissions (primary: shows what exists + what needs action) ── */}
       {selectedCampaignId && (
-        <section className="section-block">
-          <h2 className="section-heading">Your Submissions</h2>
+        <section className="section-block cr-submissions-section">
+          <div className="cr-submissions-head">
+            <h2 className="section-heading zone-heading" style={{ margin: 0 }}>Your submissions</h2>
+            {!loading && !error && subs.length > 0 && (() => {
+              const needsAction = subs.filter(
+                (s) => s.status === "VALIDATION_FAILED" || s.status === "NEEDS_RESIZING",
+              ).length;
+              const inReview = subs.filter(
+                (s) => s.status === "UPLOADED" || s.status === "UNDER_REVIEW",
+              ).length;
+              const approved = subs.filter(
+                (s) => s.status === "READY_FOR_PUBLISHER" || s.status === "PUSHED",
+              ).length;
+              return (
+                <span className="cr-submissions-meta">
+                  {subs.length} total
+                  {needsAction > 0 && ` · ${needsAction} need your attention`}
+                  {inReview > 0 && ` · ${inReview} in review`}
+                  {approved > 0 && ` · ${approved} approved`}
+                </span>
+              );
+            })()}
+          </div>
 
           {loading && <p className="text-muted">Loading submissions…</p>}
           {error && <p className="form-error" role="alert">{error}</p>}
@@ -478,14 +505,29 @@ export function CreativesPage() {
           {!loading && !error && subs.length === 0 && (
             <div className="cr-empty">
               <p className="cr-empty-text">
-                No submissions yet for this campaign. Use the form above to upload your first creative.
+                No creatives yet for this campaign. Use the + Upload panel below to submit your first file.
               </p>
             </div>
           )}
 
-          {!loading && subs.length > 0 && (
+          {!loading && subs.length > 0 && (() => {
+            // Sort so action-needed rows surface first, then in-review, then approved.
+            const priority: Record<SubmissionStatus, number> = {
+              VALIDATION_FAILED: 0,
+              NEEDS_RESIZING: 1,
+              UPLOADED: 2,
+              UNDER_REVIEW: 3,
+              READY_FOR_PUBLISHER: 4,
+              PUSHED: 5,
+            };
+            const sorted = [...subs].sort((a, b) => {
+              const d = priority[a.status] - priority[b.status];
+              if (d !== 0) return d;
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+            return (
             <ul className="cr-sub-list">
-              {subs.map((s) => {
+              {sorted.map((s) => {
                 const vs = s.validationSummary as ValidationSummary | null;
                 const expanded = expandedSubId === s.id;
                 const pUrl = previewUrls[s.id];
@@ -586,9 +628,12 @@ export function CreativesPage() {
                 );
               })}
             </ul>
-          )}
+            );
+          })()}
         </section>
       )}
+
+      </div>
     </>
   );
 }
