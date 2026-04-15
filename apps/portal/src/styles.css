@@ -2399,49 +2399,35 @@ a.portal-nav-link:focus-visible {
    Zones (visual hierarchy for grouped sections)
    ══════════════════════════════════════ */
 
+/* Eyebrow label — softer than a pill, reads as a quiet section marker. */
 .zone-label {
-  display: inline-block;
-  margin-bottom: 0.9rem;
-  padding: 0.28rem 0.75rem;
-  border-radius: 999px;
-  background: var(--color-midnight);
-  color: #FFFFFF;
+  display: block;
+  margin-bottom: 0.45rem;
   font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--color-secondary);
 }
 
 .zone-heading {
-  font-size: 0.95rem !important;
+  font-size: 1.0625rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0 !important;
+  letter-spacing: -0.005em !important;
   text-transform: none !important;
   color: var(--color-midnight) !important;
 }
 
 .zone-section {
   position: relative;
+  padding-top: 0.25rem;
 }
 
+/* Subtle left-accent tint by zone intent — replaces the loud colored pills.
+   Only CONTROL (actionable) gets a visible accent so user attention still
+   lands on "what to do" first. */
 .zone-control .zone-label {
-  background: #DC2626;
-}
-
-.zone-financial .zone-label {
-  background: #0F766E;
-}
-
-.zone-execution .zone-label {
-  background: #1D4ED8;
-}
-
-.zone-activity .zone-label {
-  background: #6B7280;
-}
-
-.zone-label-assets {
-  background: #7C3AED;
+  color: #B91C1C;
 }
 
 /* Assets wrapper: flips visual order so creatives render above docs while
@@ -2634,3 +2620,171 @@ a.portal-nav-link:focus-visible {
 .cr-upload-disclosure .creative-form {
   padding: 1rem;
 }
+
+/* ══════════════════════════════════════
+   Money typography — consistent across all currency values
+   ══════════════════════════════════════ */
+
+.money {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  color: var(--color-midnight);
+}
+
+.money-sub {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+}
+
+.money-lead {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.money-total {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.money-positive {
+  color: var(--color-success-text);
+}
+
+.money-negative {
+  color: var(--color-error-text);
+}
+
+/* ══════════════════════════════════════
+   Budget overview grid — clearer hierarchy of totals vs secondary
+   ══════════════════════════════════════ */
+
+.budget-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.budget-card {
+  padding: 0.85rem 1rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--color-border);
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.budget-card-lead {
+  grid-column: 1 / -1;
+  background: var(--color-midnight);
+  border-color: var(--color-midnight);
+  padding: 1rem 1.1rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 0.25rem 0.9rem;
+}
+
+.budget-card-lead .budget-card-label,
+.budget-card-lead .budget-card-sub {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.budget-card-lead .money-total {
+  color: #FFFFFF;
+  text-align: right;
+}
+
+.budget-card-lead.budget-card-lead-over {
+  background: var(--color-error-text);
+  border-color: var(--color-error-text);
+}
+
+.budget-card-lead.budget-card-lead-none {
+  background: #F1F5F9;
+  border-color: var(--color-border);
+}
+
+.budget-card-lead.budget-card-lead-none .budget-card-label,
+.budget-card-lead.budget-card-lead-none .budget-card-sub {
+  color: var(--color-secondary);
+}
+
+.budget-card-lead.budget-card-lead-none .money-total {
+  color: var(--color-midnight);
+}
+
+.budget-card-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+.budget-card-sub {
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .budget-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .budget-card-lead {
+    grid-template-columns: 1fr;
+  }
+  .budget-card-lead .money-total {
+    text-align: left;
+  }
+}
+
+/* ══════════════════════════════════════
+   Section spacing — tighten within, breathe between
+   ══════════════════════════════════════ */
+
+.section-block .camp-section-header {
+  margin-bottom: 0.65rem;
+}
+
+.section-block .zone-label + .camp-section-header {
+  margin-bottom: 0.55rem;
+}
+
+.portal-main > .section-block + .section-block {
+  margin-top: 0.5rem;
+}
+
+/* Placement card interior tightening */
+.placement-card {
+  padding-top: 0.95rem;
+  padding-bottom: 0.95rem;
+}
+
+/* Campaign hero budget — re-anchor as a stat strip instead of a card. */
+.campaign-hero-budget {
+  background: transparent;
+  border: none;
+  padding: 0.65rem 0 0;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.9rem;
+}
+
+.campaign-hero-budget .money-block .money-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.campaign-hero-budget-total .money {
+  font-weight: 700;
+}
+

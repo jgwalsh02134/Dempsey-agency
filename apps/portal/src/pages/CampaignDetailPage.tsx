@@ -98,6 +98,31 @@ function formatCents(cents: number | null): string {
   return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/** Single rendering path for all currency values on this page so every
+ *  dollar amount uses the same mono, tabular-nums, tnum treatment and a
+ *  shared prominence scale (sub < base < lead < total). */
+function Money({
+  cents,
+  size,
+  tone,
+  className,
+}: {
+  cents: number | null;
+  size?: "sub" | "lead" | "total";
+  tone?: "positive" | "negative";
+  className?: string;
+}) {
+  const classes = [
+    "money",
+    size ? `money-${size}` : null,
+    tone ? `money-${tone}` : null,
+    className ?? null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return <span className={classes}>{formatCents(cents)}</span>;
+}
+
 function dateRange(start: string | null, end: string | null): string {
   if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
   if (start) return `From ${formatDate(start)}`;
@@ -786,18 +811,12 @@ export function CampaignDetailPage() {
     const actionCount = failed + resize;
     if (actionCount > 0) {
       const parts: string[] = [];
-      if (failed)
-        parts.push(
-          `${failed} failed validation`,
-        );
-      if (resize)
-        parts.push(
-          `${resize} need${resize === 1 ? "s" : ""} resizing`,
-        );
+      if (failed) parts.push(`${failed} failed validation`);
+      if (resize) parts.push(`${resize} needs resizing`);
       steps.push({
         level: "action",
-        headline: `Fix and re-upload ${actionCount} creative${actionCount === 1 ? "" : "s"}`,
-        detail: `${parts.join(" · ")} — open the Assets section below.`,
+        headline: `Upload fixes for ${actionCount} creative${actionCount === 1 ? "" : "s"}`,
+        detail: `${parts.join(" · ")}. Scroll to Files & creatives and use "Upload revised version".`,
       });
     }
 
@@ -807,16 +826,16 @@ export function CampaignDetailPage() {
     if (awaiting > 0) {
       steps.push({
         level: "info",
-        headline: `${awaiting} creative${awaiting === 1 ? "" : "s"} in review with your agency`,
-        detail: "Nothing to do right now — we'll ping you if something needs changes.",
+        headline: `Wait — ${awaiting} creative${awaiting === 1 ? "" : "s"} in agency review`,
+        detail: "No action from you. We'll message you if anything needs changes.",
       });
     }
 
     if (placementsPendingReview > 0) {
       steps.push({
         level: "action",
-        headline: `Approve ${placementsPendingReview} placement${placementsPendingReview === 1 ? "" : "s"}`,
-        detail: "Scroll to Placements and click Approve on each one to confirm.",
+        headline: `Approve ${placementsPendingReview} placement${placementsPendingReview === 1 ? "" : "s"} in the media plan`,
+        detail: "Scroll to Media plan and click Approve on each one to confirm.",
       });
     }
 
@@ -826,17 +845,20 @@ export function CampaignDetailPage() {
     const completed = placements.filter((p) => p.status === "COMPLETED").length;
 
     if (campaign.status === "COMPLETED") {
-      steps.push({ level: "positive", headline: "Campaign complete — no further action" });
+      steps.push({
+        level: "positive",
+        headline: "Campaign complete — nothing more to do",
+      });
     } else if (live > 0) {
       steps.push({
         level: "positive",
-        headline: `Campaign is running — ${live} placement${live === 1 ? "" : "s"} live`,
-        detail: "Your agency is monitoring delivery; watch for proofs under Assets.",
+        headline: `${live} placement${live === 1 ? "" : "s"} running live`,
+        detail: "Watch for proofs in Files & creatives as they land.",
       });
     } else if (placements.length > 0 && booked === placements.length) {
       steps.push({
         level: "positive",
-        headline: "Placements confirmed — awaiting launch",
+        headline: "All placements confirmed — waiting for launch",
       });
     } else if (
       placements.length > 0 &&
@@ -845,17 +867,23 @@ export function CampaignDetailPage() {
       booked === 0 &&
       draft === 0
     ) {
-      steps.push({ level: "positive", headline: "All placements completed" });
+      steps.push({
+        level: "positive",
+        headline: "All placements completed",
+      });
     } else if (draft > 0) {
       steps.push({
         level: "info",
-        headline: "Your agency is building the media plan",
-        detail: "Placements will appear below once they're ready for you.",
+        headline: "Wait — your agency is still building the media plan",
+        detail: "Placements will appear below when they're ready for your review.",
       });
     }
 
     if (steps.length === 0 && !placementsLoading && !subsLoading) {
-      steps.push({ level: "positive", headline: "You're all caught up — no open actions" });
+      steps.push({
+        level: "positive",
+        headline: "Nothing needs your attention right now",
+      });
     }
 
     return steps;
@@ -1051,19 +1079,18 @@ export function CampaignDetailPage() {
               {campaign.budgetCents != null ? (
                 <div className="money-block">
                   <span className="money-label">Budget</span>
-                  <span className="money-value">
-                    {formatCents(campaign.budgetCents)}
-                  </span>
+                  <Money
+                    cents={campaign.budgetCents}
+                    className="money-value money-lead"
+                  />
                 </div>
               ) : (
                 <span />
               )}
               {placements.length > 0 && (
                 <span className="campaign-hero-budget-total">
-                  Total planned:{" "}
-                  <strong style={{ color: "inherit" }} className="mono">
-                    {formatCents(placementTotalCents)}
-                  </strong>{" "}
+                  Total planned{" "}
+                  <Money cents={placementTotalCents} />{" "}
                   across {placements.length} placement
                   {placements.length === 1 ? "" : "s"}
                 </span>
@@ -1073,13 +1100,17 @@ export function CampaignDetailPage() {
         </div>
       </section>
 
-      {/* ── CONTROL zone: what to do now ── */}
+      {/* ── Control: next-action guidance ── */}
       {!placementsLoading && !subsLoading && nextSteps.length > 0 && (
         <section className="section-block zone-section zone-control">
-          <div className="zone-label">Control · what to do now</div>
+          <div className="zone-label">
+            {hasAction ? "Needs your action" : "Status"}
+          </div>
           <div className="next-steps-block">
             <h2 className="next-steps-title">
-              {hasAction ? "You have open actions" : "What's happening with this campaign"}
+              {hasAction
+                ? `Do this next · ${nextSteps.filter((s) => s.level === "action").length} action${nextSteps.filter((s) => s.level === "action").length === 1 ? "" : "s"} open`
+                : "Nothing needs your attention right now"}
             </h2>
             <div className="next-steps-list">
               {nextSteps.map((step, i) => (
@@ -1112,7 +1143,7 @@ export function CampaignDetailPage() {
           placements to report against. */}
       {!placementsLoading && (financials.budget != null || placements.length > 0) && (
         <section className="section-block zone-section zone-financial">
-          <div className="zone-label">Financial</div>
+          <div className="zone-label">Money</div>
           <div
             className="camp-section-header"
             style={{
@@ -1126,191 +1157,103 @@ export function CampaignDetailPage() {
             <h2 className="section-heading zone-heading" style={{ margin: 0 }}>
               Budget
             </h2>
-            {financials.billableCount > 0 && (
-              <span className="text-muted" style={{ fontSize: "0.9rem" }}>
-                {financials.approvedCount} of {financials.billableCount}{" "}
-                placement{financials.billableCount === 1 ? "" : "s"} approved
-              </span>
-            )}
           </div>
 
-          <dl
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(10rem, 1fr))",
-              gap: "0.75rem",
-              margin: "0.6rem 0 0",
-            }}
-          >
-            {/* Budget */}
-            <div
-              style={{
-                padding: "0.75rem 0.9rem",
-                borderRadius: "0.5rem",
-                border: "1px solid rgba(15,23,42,0.1)",
-                background: "var(--color-surface, #fff)",
-              }}
-            >
-              <dt
-                className="text-muted"
-                style={{
-                  fontSize: "0.78rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                Campaign budget
-              </dt>
-              <dd
-                style={{
-                  margin: "0.25rem 0 0",
-                  fontWeight: 700,
-                  fontSize: "1.2rem",
-                }}
-              >
-                {financials.budget != null
-                  ? formatCents(financials.budget)
-                  : "Not set"}
-              </dd>
-            </div>
-
-            {/* Planned */}
-            <div
-              style={{
-                padding: "0.75rem 0.9rem",
-                borderRadius: "0.5rem",
-                border: `1px solid ${financials.overBudget ? "var(--color-error-border)" : "rgba(15,23,42,0.1)"}`,
-                background: financials.overBudget
-                  ? "var(--color-error-bg)"
-                  : "var(--color-surface, #fff)",
-              }}
-            >
-              <dt
-                className="text-muted"
-                style={{
-                  fontSize: "0.78rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                  color: financials.overBudget
-                    ? "var(--color-error-text)"
-                    : undefined,
-                }}
-              >
-                Total planned
-              </dt>
-              <dd
-                style={{
-                  margin: "0.25rem 0 0",
-                  fontWeight: 700,
-                  fontSize: "1.2rem",
-                  color: financials.overBudget
-                    ? "var(--color-error-text)"
-                    : undefined,
-                }}
-              >
-                {formatCents(financials.planned)}
-              </dd>
-            </div>
-
-            {/* Approved */}
-            <div
-              style={{
-                padding: "0.75rem 0.9rem",
-                borderRadius: "0.5rem",
-                border: "1px solid rgba(15,23,42,0.1)",
-                background: "var(--color-surface, #fff)",
-              }}
-            >
-              <dt
-                className="text-muted"
-                style={{
-                  fontSize: "0.78rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                Approved by you
-              </dt>
-              <dd
-                style={{
-                  margin: "0.25rem 0 0",
-                  fontWeight: 700,
-                  fontSize: "1.2rem",
-                }}
-              >
-                {formatCents(financials.approved)}
-              </dd>
-            </div>
-
-            {/* Remaining (hidden when budget missing) */}
-            {financials.budget != null && (
+          <dl className="budget-grid">
+            {/* Lead tile — the number that drives decisions */}
+            {financials.budget != null ? (
               <div
-                style={{
-                  padding: "0.75rem 0.9rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid rgba(15,23,42,0.1)",
-                  background: "var(--color-surface, #fff)",
-                }}
+                className={`budget-card budget-card-lead${financials.overBudget ? " budget-card-lead-over" : ""}`}
               >
-                <dt
-                  className="text-muted"
-                  style={{
-                    fontSize: "0.78rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {financials.overBudget ? "Over budget by" : "Remaining"}
-                </dt>
-                <dd
-                  style={{
-                    margin: "0.25rem 0 0",
-                    fontWeight: 700,
-                    fontSize: "1.2rem",
-                    color: financials.overBudget
-                      ? "var(--color-error-text)"
-                      : undefined,
-                  }}
-                >
-                  {formatCents(Math.abs(financials.remaining ?? 0))}
+                <div>
+                  <dt className="budget-card-label">
+                    {financials.overBudget ? "Over budget by" : "Remaining to spend"}
+                  </dt>
+                  <dd className="budget-card-sub" style={{ margin: "0.15rem 0 0" }}>
+                    {financials.overBudget
+                      ? "Planned cost exceeds the campaign budget."
+                      : `of ${formatCents(financials.budget)} campaign budget`}
+                  </dd>
+                </div>
+                <dd style={{ margin: 0 }}>
+                  <Money
+                    cents={Math.abs(financials.remaining ?? 0)}
+                    size="total"
+                  />
+                </dd>
+              </div>
+            ) : (
+              <div className="budget-card budget-card-lead budget-card-lead-none">
+                <div>
+                  <dt className="budget-card-label">Campaign budget</dt>
+                  <dd className="budget-card-sub" style={{ margin: "0.15rem 0 0" }}>
+                    Not set yet — your agency can add one at any time.
+                  </dd>
+                </div>
+                <dd style={{ margin: 0 }}>
+                  <span className="money money-total">—</span>
                 </dd>
               </div>
             )}
+
+            {/* Secondary tiles — the components of the total */}
+            <div className="budget-card">
+              <dt className="budget-card-label">Campaign budget</dt>
+              <dd style={{ margin: 0 }}>
+                {financials.budget != null ? (
+                  <Money cents={financials.budget} size="lead" />
+                ) : (
+                  <span className="money money-lead money-sub">Not set</span>
+                )}
+              </dd>
+            </div>
+
+            <div className="budget-card">
+              <dt className="budget-card-label">Total planned</dt>
+              <dd style={{ margin: 0 }}>
+                <Money
+                  cents={financials.planned}
+                  size="lead"
+                  tone={financials.overBudget ? "negative" : undefined}
+                />
+              </dd>
+              <span className="budget-card-sub">
+                across {financials.billableCount} placement
+                {financials.billableCount === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            <div className="budget-card">
+              <dt className="budget-card-label">Approved by you</dt>
+              <dd style={{ margin: 0 }}>
+                <Money cents={financials.approved} size="lead" />
+              </dd>
+              {financials.billableCount > 0 && (
+                <span className="budget-card-sub">
+                  {financials.approvedCount} of {financials.billableCount} approved
+                </span>
+              )}
+            </div>
           </dl>
 
           {financials.overBudget && (
             <p
               role="alert"
               style={{
-                marginTop: "0.6rem",
-                padding: "0.6rem 0.85rem",
-                borderRadius: "0.45rem",
-                background: "var(--color-error-bg)",
+                marginTop: "0.65rem",
+                fontSize: "0.85rem",
                 color: "var(--color-error-text)",
-                border: "1px solid var(--color-error-border)",
-                fontSize: "0.9rem",
               }}
             >
-              Planned cost exceeds the campaign budget. Your agency will
-              reconcile this with you.
-            </p>
-          )}
-
-          {financials.budget == null && placements.length > 0 && (
-            <p
-              className="text-muted"
-              style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}
-            >
-              No campaign budget has been set; your agency can add one at any
-              time.
+              Your agency will reconcile this with you.
             </p>
           )}
         </section>
       )}
 
-      {/* ── EXECUTION zone: placements + map ── */}
+      {/* ── Execution: placements + publisher map ── */}
       <section className="section-block zone-section zone-execution">
-        <div className="zone-label">Execution</div>
+        <div className="zone-label">Media plan</div>
         <div
           className="camp-section-header"
           style={{
@@ -1329,9 +1272,7 @@ export function CampaignDetailPage() {
               {placements.length} placement
               {placements.length === 1 ? "" : "s"} · {placementPublisherCount}{" "}
               publisher{placementPublisherCount === 1 ? "" : "s"} · Total{" "}
-              <strong style={{ color: "inherit" }}>
-                {formatCents(placementTotalCents)}
-              </strong>
+              <Money cents={placementTotalCents} />
               {placementsPendingReview > 0 && (
                 <>
                   {" "}· {placementsPendingReview} awaiting your review
@@ -1406,7 +1347,7 @@ export function CampaignDetailPage() {
                       >
                         Subtotal
                       </span>{" "}
-                      <strong>{formatCents(group.subtotalCents)}</strong>
+                      <Money cents={group.subtotalCents} size="lead" />
                     </div>
                   </div>
 
@@ -1477,9 +1418,10 @@ export function CampaignDetailPage() {
                             minWidth: "6rem",
                           }}
                         >
-                          <span className="placement-card-price">
-                            {formatCents(p.grossCostCents)}
-                          </span>
+                          <Money
+                            cents={p.grossCostCents}
+                            className="placement-card-price"
+                          />
                           <span
                             className={PLACEMENT_STATUS_BADGE[p.status]}
                             style={{
@@ -1898,7 +1840,7 @@ export function CampaignDetailPage() {
       {/* ── ACTIVITY zone: timeline ── */}
       {!placementsLoading && !subsLoading && (
         <section className="section-block zone-section zone-activity">
-          <div className="zone-label">Activity</div>
+          <div className="zone-label">Activity log</div>
           <div
             className="camp-section-header"
             style={{
@@ -1965,7 +1907,7 @@ export function CampaignDetailPage() {
           flips them visually so creative submissions — the action-bearing
           list — appears first. */}
       <div className="zone-assets">
-        <div className="zone-label zone-label-assets">Assets</div>
+        <div className="zone-label zone-label-assets">Files &amp; creatives</div>
       {/* ── Documents & Billing hub ──
           Docs are org-scoped, so this surfaces the owning organization's
           library categorized for quick scanning. Invoices are promoted to
