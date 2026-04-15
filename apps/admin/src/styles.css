@@ -1964,3 +1964,393 @@ input[type="file"]::file-selector-button:hover {
     flex-wrap: wrap;
   }
 }
+
+/* ══════════════════════════════════════
+   Publisher detail — data-management layout
+   ══════════════════════════════════════ */
+
+/* Compact hero: name + status + actions on one row, quick-facts strip under */
+.pub-hero {
+  padding-bottom: 0.9rem;
+}
+
+.pub-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pub-hero-identity {
+  min-width: 0;
+  flex: 1 1 18rem;
+}
+
+.pub-hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.pub-hero-name {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--color-midnight, #0F172A);
+}
+
+.pub-hero-parent {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-secondary, #475569);
+}
+
+.pub-hero-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pub-hero-inactive .pub-hero-name {
+  color: var(--color-secondary, #475569);
+}
+
+/* Quick facts strip: tight horizontal stat row under the hero */
+.pub-quick-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.6rem 1.1rem;
+  margin: 0.85rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid var(--color-border, #E2E8F0);
+}
+
+.pub-quick-fact {
+  min-width: 0;
+}
+
+.pub-quick-fact dt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-secondary, #475569);
+}
+
+.pub-quick-fact dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-midnight, #0F172A);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inventory card — primary focus */
+.pub-inventory {
+  margin-top: 1.25rem;
+  border-top: 3px solid var(--color-primary, #2563EB);
+}
+
+.pub-inventory-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.pub-inventory-title {
+  margin: 0.15rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+
+.pub-inventory-count {
+  display: inline-block;
+  min-width: 1.75rem;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary, #2563EB);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.pub-section-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-secondary, #475569);
+}
+
+/* Add inventory: presented as a purposeful action panel, not a form blob */
+.pub-inventory-add {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--color-primary, #2563EB);
+  border-radius: 0.55rem;
+  background: linear-gradient(
+    180deg,
+    rgba(37, 99, 235, 0.04) 0%,
+    rgba(255, 255, 255, 1) 60%
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pub-inventory-add-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pub-inventory-add-title {
+  margin: 0.15rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--color-midnight, #0F172A);
+}
+
+.pub-inventory-add-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 0.85rem;
+}
+
+@media (min-width: 720px) {
+  .pub-inventory-add-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pub-inventory-add-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.25rem;
+}
+
+.pub-inventory-edit-row > td {
+  padding: 0 !important;
+  background: rgba(37, 99, 235, 0.04) !important;
+}
+
+.pub-inventory-edit-form {
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pub-inventory-empty {
+  padding: 1.25rem 1rem;
+  border: 1px dashed var(--color-border, #E2E8F0);
+  border-radius: 0.5rem;
+  background: var(--color-surface-alt, #F8FAFC);
+  text-align: center;
+}
+
+/* Dense spreadsheet-style grid table — shared with PublishersPage */
+.grid-table table.data-table td,
+.grid-table table.data-table th {
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  line-height: 1.3;
+}
+
+.grid-table tbody tr:nth-child(even) td {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.grid-table tbody tr:hover td {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.grid-table .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
+}
+
+.grid-table th.col-num {
+  text-align: right;
+}
+
+.grid-table .money-strong {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo,
+    Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--color-midnight, #0F172A);
+}
+
+/* Inventory-specific cell: name emphasized, description underneath */
+.pub-inventory-name-cell .pub-inventory-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-midnight, #0F172A);
+  letter-spacing: -0.005em;
+}
+
+.pub-inventory-name-cell .pub-inventory-desc {
+  display: block;
+  margin-top: 0.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 36ch;
+}
+
+/* Channel chip — small media-type badge for density */
+.channel-chip {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  background: var(--color-surface-alt, #F1F5F9);
+  color: var(--color-secondary, #475569);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Status pills — success/neutral variants used across admin */
+.status-pill-active {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #DCFCE7;
+  color: #15803D;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-pill-inactive {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #F1F5F9;
+  color: #64748B;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Collapsible full-details panel (secondary) */
+.pub-details {
+  margin-top: 1.25rem;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: 0.6rem;
+  background: #FFFFFF;
+}
+
+.pub-details[open] {
+  background: var(--color-surface-alt, #F8FAFC);
+}
+
+.pub-details-summary {
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pub-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.pub-details[open] .pub-details-summary {
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  background: #FFFFFF;
+  border-radius: 0.6rem 0.6rem 0 0;
+}
+
+.pub-details-summary-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-midnight, #0F172A);
+}
+
+.pub-details-summary-label::before {
+  content: "▸ ";
+  display: inline-block;
+  margin-right: 0.25rem;
+  color: var(--color-secondary, #475569);
+  transition: transform 0.15s;
+}
+
+.pub-details[open] .pub-details-summary-label::before {
+  content: "▾ ";
+}
+
+.pub-details-summary-hint {
+  font-size: 0.8rem;
+  color: var(--color-secondary, #475569);
+}
+
+.pub-details .pub-sections {
+  padding: 1rem;
+  margin: 0;
+}
+
+/* Publishers list header stats — label/value pair tiles */
+.pub-list-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.pub-list-stat {
+  min-width: 0;
+}
+
+.pub-list-stat dt {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-secondary, #475569);
+  margin: 0;
+}
+
+.pub-list-stat dd {
+  margin: 0.05rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-midnight, #0F172A);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}

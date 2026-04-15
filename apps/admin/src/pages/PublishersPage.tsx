@@ -336,47 +336,30 @@ export function PublishersPage() {
         <div>
           <h1 className="page-title">Publishers</h1>
           {!loading && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "baseline",
-                gap: "0.25rem 1rem",
-                marginTop: "0.25rem",
-                fontSize: "0.85rem",
-                color: "var(--color-secondary, #475569)",
-              }}
-            >
-              <span>
-                <strong style={{ color: "var(--color-midnight, #0F172A)" }}>
+            <dl className="pub-list-stats">
+              <div className="pub-list-stat">
+                <dt>Total</dt>
+                <dd className="mono">
                   {visiblePublishers.length.toLocaleString()}
-                </strong>{" "}
-                total
-              </span>
-              <span>
-                <strong style={{ color: "var(--color-midnight, #0F172A)" }}>
-                  {activeCount.toLocaleString()}
-                </strong>{" "}
-                active
-              </span>
-              <span>
-                <strong style={{ color: "var(--color-midnight, #0F172A)" }}>
-                  {dmaCoverage.toLocaleString()}
-                </strong>{" "}
-                DMA{dmaCoverage === 1 ? "" : "s"} covered
-              </span>
+                </dd>
+              </div>
+              <div className="pub-list-stat">
+                <dt>Active</dt>
+                <dd className="mono">{activeCount.toLocaleString()}</dd>
+              </div>
+              <div className="pub-list-stat">
+                <dt>DMAs covered</dt>
+                <dd className="mono">{dmaCoverage.toLocaleString()}</dd>
+              </div>
               {totalCirculation > 0 && (
-                <span>
-                  <strong
-                    className="mono"
-                    style={{ color: "var(--color-midnight, #0F172A)" }}
-                  >
+                <div className="pub-list-stat">
+                  <dt>Total circulation</dt>
+                  <dd className="mono">
                     {totalCirculation.toLocaleString()}
-                  </strong>{" "}
-                  total circulation
-                </span>
+                  </dd>
+                </div>
               )}
-            </div>
+            </dl>
           )}
         </div>
         <div
