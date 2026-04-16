@@ -31,3 +31,12 @@ export function VisionDataMark({ className }: { className?: string }) {
       : "/brand/vdata-wordmark.svg";
   return <img src={src} alt="Vision Data" className={className} />;
 }
+
+export function AdSellMark({ className }: { className?: string }) {
+  const { theme } = useTheme();
+  const src =
+    theme === "dark"
+      ? "/brand/adsell-wordmark-light.svg"
+      : "/brand/adsell-wordmark.svg";
+  return <img src={src} alt="AdSell.ai" className={className} />;
+}

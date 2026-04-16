@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
-import { BrandMark, VisionDataMark } from "../components/brand/BrandMark";
+import { AdSellMark, BrandMark, VisionDataMark } from "../components/brand/BrandMark";
 
 type LocationState = { from?: string } | null;
 
@@ -51,9 +51,9 @@ export function LoginPage() {
       <main className="auth-main" role="main">
         <section className="auth-card" aria-labelledby="auth-heading">
           <header className="auth-card-header">
-            <span className="page-header-eyebrow">Internal workspace</span>
+            <span className="page-header-eyebrow">Team workspace</span>
             <h1 id="auth-heading">Sign in</h1>
-            <p>Access the Dempsey planning and research workspace.</p>
+            <p>Access the agency planning and research workspace.</p>
           </header>
 
           <form className="auth-form" onSubmit={onSubmit} noValidate>
@@ -119,10 +119,11 @@ export function LoginPage() {
       </main>
 
       <footer className="auth-footer">
-        <span className="auth-powered-by">
-          Powered by
-          <VisionDataMark className="auth-powered-mark" />
-        </span>
+        <div className="auth-platforms" aria-label="Platform">
+          <AdSellMark className="auth-platform-mark" />
+          <span className="auth-platform-sep" aria-hidden="true">·</span>
+          <VisionDataMark className="auth-platform-mark" />
+        </div>
       </footer>
     </div>
   );

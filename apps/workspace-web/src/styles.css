@@ -877,11 +877,16 @@ tbody tr:last-child td {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  padding: 1.25rem;
+  padding: 1.5rem 1.25rem;
   background:
     radial-gradient(
-      1200px 600px at 50% -200px,
+      900px 520px at 50% -160px,
       var(--action-primary-tint),
+      transparent 72%
+    ),
+    radial-gradient(
+      720px 520px at 100% 100%,
+      color-mix(in oklab, var(--action-secondary) 10%, transparent),
       transparent 70%
     ),
     var(--bg-app);
@@ -890,31 +895,31 @@ tbody tr:last-child td {
 .auth-brand {
   display: flex;
   justify-content: center;
-  padding: 0.5rem 0 1.5rem;
+  padding: 1rem 0 2rem;
 }
 
 .auth-lockup {
   display: block;
-  height: 28px;
+  height: 30px;
   width: auto;
-  max-width: 220px;
+  max-width: 240px;
 }
 
 .auth-main {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 424px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
-  padding: 2rem 1.75rem;
-  box-shadow: var(--shadow-lg);
+  padding: 2.25rem 1.75rem 2rem;
+  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in oklab, var(--border-subtle) 60%, transparent);
   position: relative;
   overflow: hidden;
 }
@@ -928,32 +933,58 @@ tbody tr:last-child td {
   height: 3px;
   background: linear-gradient(
     90deg,
-    var(--action-primary),
-    var(--brand-teal)
+    var(--action-primary) 0%,
+    var(--action-primary) 55%,
+    var(--action-secondary) 100%
   );
 }
 
 .auth-card-header {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  margin-bottom: 1.5rem;
+  gap: 0.4375rem;
+  margin-bottom: 1.75rem;
 }
 
 .auth-card-header h1 {
-  font-size: 1.5rem;
-  letter-spacing: -0.015em;
+  font-size: 1.625rem;
+  letter-spacing: -0.02em;
 }
 
 .auth-card-header p {
   margin: 0;
   color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.125rem;
+}
+
+.auth-form input {
+  min-height: 44px;
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-form .btn-primary {
+  min-height: 46px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08),
+    0 8px 20px color-mix(in oklab, var(--action-primary) 28%, transparent);
+  margin-top: 0.25rem;
+}
+
+.auth-form .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1),
+    0 10px 26px color-mix(in oklab, var(--action-primary) 38%, transparent);
+}
+
+.auth-form .btn-primary:disabled {
+  box-shadow: var(--shadow-sm);
 }
 
 .auth-row {
@@ -977,25 +1008,27 @@ tbody tr:last-child td {
 .auth-footer {
   display: flex;
   justify-content: center;
-  padding: 1.5rem 0 0.5rem;
+  padding: 2rem 0 0.5rem;
 }
 
-.auth-powered-by {
+.auth-platforms {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-heading);
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
+  gap: 0.75rem;
+  opacity: 0.85;
 }
 
-.auth-powered-mark {
+.auth-platform-mark {
   display: inline-block;
   width: auto;
-  height: 14px;
-  opacity: 0.8;
+  height: 13px;
+}
+
+.auth-platform-sep {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  user-select: none;
 }
 
 /* ==================================================================
@@ -1043,15 +1076,19 @@ tbody tr:last-child td {
   }
 
   .auth-shell {
-    padding: 2rem;
+    padding: 2.5rem;
   }
 
   .auth-card {
-    padding: 2.5rem 2.25rem;
+    padding: 2.5rem 2.25rem 2.25rem;
+  }
+
+  .auth-card-header h1 {
+    font-size: 1.75rem;
   }
 
   .auth-lockup {
-    height: 32px;
+    height: 34px;
   }
 }
 
