@@ -1,14 +1,19 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
-import { AdSellMark, BrandMark, VisionDataMark } from "../components/brand/BrandMark";
+import { ApiError } from "../lib/api";
+import {
+  AdSellMark,
+  BrandMark,
+  VisionDataMark,
+} from "../components/brand/BrandMark";
 
 type LocationState = { from?: string } | null;
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, signIn } = useAuth();
+  const { isAuthenticated, isLoading, signIn } = useAuth();
   const redirectTo = (location.state as LocationState)?.from ?? "/";
 
   const [email, setEmail] = useState("");
@@ -18,12 +23,12 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       navigate(redirectTo, { replace: true });
     }
-  }, [isAuthenticated, navigate, redirectTo]);
+  }, [isAuthenticated, isLoading, navigate, redirectTo]);
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -33,13 +38,20 @@ export function LoginPage() {
     }
 
     setSubmitting(true);
-    // Temporary client-only session flag — replace with a real call to
-    // workspace-api when backend auth is wired up. See AuthProvider.tsx.
-    window.setTimeout(() => {
-      signIn(email);
-      setSubmitting(false);
+    try {
+      await signIn(email, password);
       navigate(redirectTo, { replace: true });
-    }, 250);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message || "Sign-in failed. Please try again.");
+      } else {
+        setError("Sign-in failed. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -114,6 +126,10 @@ export function LoginPage() {
             >
               {submitting ? "Signing in…" : "Sign in"}
             </button>
+
+            <p className="auth-admin-note">
+              Accounts are provisioned by your administrator.
+            </p>
           </form>
         </section>
       </main>

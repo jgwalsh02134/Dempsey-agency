@@ -6,16 +6,21 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "migrate": "tsx src/migrate.ts",
+    "bootstrap:admin": "tsx src/bootstrap.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.0.0",
     "@fastify/cors": "^11.0.0",
+    "bcryptjs": "^3.0.2",
     "fastify": "^5.0.0",
     "fastify-plugin": "^5.1.0",
     "pg": "^8.13.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.0.0",
     "@types/pg": "^8.11.10",
     "tsx": "^4.0.0",

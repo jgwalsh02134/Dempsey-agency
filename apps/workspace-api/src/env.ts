@@ -9,11 +9,35 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   CORS_ORIGINS: z.string().optional(),
+
+  // Session / cookie
+  SESSION_COOKIE_NAME: z.string().default("workspace_session"),
+  SESSION_COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
+  // If unset, defaults to true in production and false in development.
+  SESSION_COOKIE_SECURE: z.enum(["true", "false"]).optional(),
+  SESSION_TTL_DAYS: z.coerce.number().int().positive().default(14),
+
+  // Admin bootstrap inputs (only read by scripts/bootstrap.ts)
+  ADMIN_EMAIL: z.string().optional(),
+  ADMIN_PASSWORD: z.string().optional(),
+  ADMIN_NAME: z.string().optional(),
 });
 
-export type Env = z.infer<typeof envSchema>;
+type RawEnv = z.infer<typeof envSchema>;
 
-export const env = envSchema.parse(process.env);
+const parsed: RawEnv = envSchema.parse(process.env);
+
+const cookieSecure =
+  parsed.SESSION_COOKIE_SECURE === undefined
+    ? parsed.NODE_ENV !== "development"
+    : parsed.SESSION_COOKIE_SECURE === "true";
+
+export const env = {
+  ...parsed,
+  SESSION_COOKIE_SECURE: cookieSecure,
+};
+
+export type Env = typeof env;
 
 export const allowedOrigins = (env.CORS_ORIGINS ?? "")
   .split(",")

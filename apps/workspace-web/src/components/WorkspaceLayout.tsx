@@ -18,15 +18,21 @@ const FOCUSABLE_SELECTOR =
 
 export function WorkspaceLayout() {
   const [navOpen, setNavOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { session, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const sidebarRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const handleSignOut = () => {
-    signOut();
-    navigate("/login", { replace: true });
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+      navigate("/login", { replace: true });
+    }
   };
 
   useEffect(() => {
@@ -113,19 +119,20 @@ export function WorkspaceLayout() {
         </nav>
         <div className="sidebar-footer">
           <ThemeToggle />
-          {session && (
+          {user && (
             <button
               type="button"
               className="btn btn-ghost btn-sm btn-block"
               onClick={handleSignOut}
+              disabled={signingOut}
             >
-              Sign out
+              {signingOut ? "Signing out…" : "Sign out"}
             </button>
           )}
           <span className="sidebar-meta">
-            {session ? (
-              <span className="mono" title={session.email}>
-                {session.email}
+            {user ? (
+              <span className="mono" title={user.email}>
+                {user.name ?? user.email}
               </span>
             ) : (
               <>

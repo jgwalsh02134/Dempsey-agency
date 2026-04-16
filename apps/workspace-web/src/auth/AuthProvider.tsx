@@ -1,15 +1,3 @@
-/**
- * TEMPORARY CLIENT-ONLY AUTH GATE.
- *
- * This is a placeholder front-end session flag — NOT real authentication.
- * It exists so we can wire up /login routing behavior before the backend
- * workspace-api auth endpoints land. It stores a single identifier in
- * localStorage and trusts it. Do NOT treat this as a security boundary.
- *
- * Replace this module when real auth is wired through workspace-api
- * (JWT, cookie session, or equivalent).
- */
-
 import {
   createContext,
   useCallback,
@@ -19,81 +7,91 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { apiFetch, apiJson, ApiError } from "../lib/api";
 
-const STORAGE_KEY = "workspace-session-temp";
-
-type Session = {
+export type WorkspaceUser = {
+  id: string;
   email: string;
+  name: string | null;
+  role: string;
+  mustResetPassword: boolean;
 };
 
+type MeResponse = { user: WorkspaceUser };
+
 type AuthContextValue = {
-  session: Session | null;
+  user: WorkspaceUser | null;
   isAuthenticated: boolean;
-  signIn: (email: string) => void;
-  signOut: () => void;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<WorkspaceUser>;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readStoredSession(): Session | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      "email" in parsed &&
-      typeof (parsed as { email: unknown }).email === "string"
-    ) {
-      return { email: (parsed as { email: string }).email };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
+const ME_ENDPOINT = "/api/workspace/auth/me";
+const LOGIN_ENDPOINT = "/api/workspace/auth/login";
+const LOGOUT_ENDPOINT = "/api/workspace/auth/logout";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(readStoredSession);
+  const [user, setUser] = useState<WorkspaceUser | null>(null);
+  const [isLoading, setLoading] = useState(true);
 
-  const signIn = useCallback((email: string) => {
-    const next: Session = { email };
-    setSession(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // storage unavailable — in-memory session still works for the tab
-    }
-  }, []);
-
-  const signOut = useCallback(() => {
-    setSession(null);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Cross-tab sync so signing out in one tab propagates.
+  // On mount, check for an existing session via GET /auth/me.
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key !== STORAGE_KEY) return;
-      setSession(readStoredSession());
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiJson<MeResponse>(ME_ENDPOINT);
+        if (!cancelled) setUser(res.user);
+      } catch (err) {
+        if (!cancelled) {
+          if (err instanceof ApiError && err.status !== 401) {
+            // Unexpected network/server error — log but treat as signed out
+            console.warn("auth/me check failed:", err.message);
+          }
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<WorkspaceUser> => {
+      const res = await apiJson<MeResponse>(LOGIN_ENDPOINT, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      setUser(res.user);
+      return res.user;
+    },
+    [],
+  );
+
+  const signOut = useCallback(async () => {
+    try {
+      await apiFetch(LOGOUT_ENDPOINT, { method: "POST" });
+    } catch {
+      // swallow — we still clear client state below
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      session,
-      isAuthenticated: session !== null,
+      user,
+      isAuthenticated: user !== null,
+      isLoading,
       signIn,
       signOut,
     }),
-    [session, signIn, signOut],
+    [user, isLoading, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

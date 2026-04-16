@@ -1031,6 +1031,18 @@ tbody tr:last-child td {
   user-select: none;
 }
 
+.auth-admin-note {
+  margin: 0.5rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.auth-loader {
+  min-height: 100vh;
+  background: var(--bg-app);
+}
+
 /* ==================================================================
    Breakpoints
 ================================================================== */
