@@ -1,14 +1,27 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider";
 import { BrandMark, VisionDataMark } from "../components/brand/BrandMark";
+
+type LocationState = { from?: string } | null;
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, signIn } = useAuth();
+  const redirectTo = (location.state as LocationState)?.from ?? "/";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [isAuthenticated, navigate, redirectTo]);
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,10 +33,12 @@ export function LoginPage() {
     }
 
     setSubmitting(true);
-    // Placeholder — real auth will wire through workspace-api.
+    // Temporary client-only session flag — replace with a real call to
+    // workspace-api when backend auth is wired up. See AuthProvider.tsx.
     window.setTimeout(() => {
+      signIn(email);
       setSubmitting(false);
-      navigate("/", { replace: true });
+      navigate(redirectTo, { replace: true });
     }, 250);
   };
 
@@ -107,7 +122,6 @@ export function LoginPage() {
         <span className="auth-powered-by">
           Powered by
           <VisionDataMark className="auth-powered-mark" />
-          <span className="auth-powered-label">Vision Data</span>
         </span>
       </footer>
     </div>

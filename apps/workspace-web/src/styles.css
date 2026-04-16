@@ -988,14 +988,9 @@ tbody tr:last-child td {
 
 .auth-powered-mark {
   display: inline-block;
-  width: 14px;
+  width: auto;
   height: 14px;
-  opacity: 0.75;
-}
-
-.auth-powered-label {
-  color: var(--text-secondary);
-  font-weight: 600;
+  opacity: 0.8;
 }
 
 /* ==================================================================

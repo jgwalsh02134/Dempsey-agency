@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider";
 import { BrandMark } from "./brand/BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -18,8 +19,15 @@ const FOCUSABLE_SELECTOR =
 export function WorkspaceLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session, signOut } = useAuth();
   const sidebarRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const handleSignOut = () => {
+    signOut();
+    navigate("/login", { replace: true });
+  };
 
   useEffect(() => {
     setNavOpen(false);
@@ -106,8 +114,25 @@ export function WorkspaceLayout() {
         </nav>
         <div className="sidebar-footer">
           <ThemeToggle />
+          {session && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm btn-block"
+              onClick={handleSignOut}
+            >
+              Sign out
+            </button>
+          )}
           <span className="sidebar-meta">
-            Workspace <span className="mono">v0.1</span>
+            {session ? (
+              <span className="mono" title={session.email}>
+                {session.email}
+              </span>
+            ) : (
+              <>
+                Workspace <span className="mono">v0.1</span>
+              </>
+            )}
           </span>
         </div>
       </aside>

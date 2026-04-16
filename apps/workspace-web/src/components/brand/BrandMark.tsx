@@ -24,5 +24,10 @@ export function BrandMark({ variant, className, alt = "Dempsey" }: BrandMarkProp
 }
 
 export function VisionDataMark({ className }: { className?: string }) {
-  return <img src="/brand/vdata-v.svg" alt="Vision Data" className={className} />;
+  const { theme } = useTheme();
+  const src =
+    theme === "dark"
+      ? "/brand/vdata-wordmark-light.svg"
+      : "/brand/vdata-wordmark.svg";
+  return <img src={src} alt="Vision Data" className={className} />;
 }

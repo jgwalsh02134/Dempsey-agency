@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { RequireAuth } from "./auth/RequireAuth";
 import { WorkspaceLayout } from "./components/WorkspaceLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
@@ -12,7 +13,13 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route element={<WorkspaceLayout />}>
+      <Route
+        element={
+          <RequireAuth>
+            <WorkspaceLayout />
+          </RequireAuth>
+        }
+      >
         <Route index element={<OverviewPage />} />
         <Route path="publishers" element={<PublishersPage />} />
         <Route path="markets" element={<MarketsPage />} />
