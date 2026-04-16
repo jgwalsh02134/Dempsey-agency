@@ -7,8 +7,13 @@
   --text-muted: #8b93a7;
   --accent: #7aa2ff;
   --radius: 8px;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
+
+  --font-heading: "neue-haas-grotesk-display", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "neue-haas-grotesk-text", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "degular-mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
 }
 
 * {
@@ -25,7 +30,7 @@ body,
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -38,9 +43,36 @@ a {
 
 h1,
 h2,
-h3 {
+h3,
+h4,
+h5,
+h6 {
   margin: 0;
+  font-family: var(--font-heading);
   font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+button,
+.btn {
+  font-family: var(--font-heading);
+  font-weight: 500;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
+code,
+kbd,
+pre,
+samp,
+time,
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
 }
 
 .muted {
@@ -70,6 +102,7 @@ h3 {
 }
 
 .sidebar-title {
+  font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -105,6 +138,8 @@ h3 {
 .sidebar-link.active {
   background: var(--surface-2);
   color: var(--text);
+  font-family: var(--font-heading);
+  font-weight: 600;
 }
 
 .workspace-content {
