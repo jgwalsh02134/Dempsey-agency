@@ -1,4 +1,3 @@
-import { env } from "./env.js";
 import { buildApp } from "./app.js";
 
 async function main() {
@@ -18,8 +17,10 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
 
+  const port = Number(process.env.PORT) || 8080;
+
   try {
-    await app.listen({ host: "0.0.0.0", port: env.PORT });
+    await app.listen({ host: "0.0.0.0", port });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
