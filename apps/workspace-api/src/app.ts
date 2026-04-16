@@ -10,6 +10,16 @@ import { eventsRoutes } from "./routes/events.js";
 import { strategiesRoutes } from "./routes/strategies.js";
 import { projectsRoutes } from "./routes/projects.js";
 
+function extractStatusCode(error: unknown): number {
+  if (typeof error === "object" && error !== null && "statusCode" in error) {
+    const code = (error as { statusCode: unknown }).statusCode;
+    if (typeof code === "number" && code >= 400 && code < 600) {
+      return code;
+    }
+  }
+  return 500;
+}
+
 export async function buildApp() {
   const app = Fastify({ logger: true });
 
@@ -23,14 +33,13 @@ export async function buildApp() {
 
     request.log.error(error);
 
-    const statusCode =
-      "statusCode" in error &&
-      typeof (error as { statusCode?: number }).statusCode === "number" &&
-      (error as { statusCode: number }).statusCode >= 400
-        ? (error as { statusCode: number }).statusCode
-        : 500;
+    const statusCode = extractStatusCode(error);
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Internal Server Error";
 
-    reply.code(statusCode).send({ error: error.message || "Internal Server Error" });
+    reply.code(statusCode).send({ error: message });
   });
 
   await app.register(cors, {
