@@ -1,6 +1,13 @@
 import type { FastifyInstance } from "fastify";
 
 export async function healthRoutes(app: FastifyInstance) {
+  app.get("/", async () => {
+    return {
+      service: "workspace-api",
+      status: "ok",
+    };
+  });
+
   app.get("/healthz", async () => {
     return { status: "ok" };
   });
