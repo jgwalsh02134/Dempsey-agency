@@ -94,8 +94,7 @@ export function WorkspaceLayout() {
         <div className="sidebar-brand">
           <BrandMark variant="mark" className="sidebar-brand-mark" alt="Dempsey" />
           <div className="sidebar-brand-text">
-            <span className="sidebar-title">Workspace</span>
-            <span className="sidebar-subtitle">Dempsey · Internal</span>
+            <span className="sidebar-title">Team Workspace</span>
           </div>
         </div>
         <nav className="sidebar-nav" aria-label="Sections">

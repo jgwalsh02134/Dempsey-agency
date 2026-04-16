@@ -146,7 +146,7 @@ a {
 }
 
 a:hover {
-  color: var(--action-primary);
+  color: var(--action-secondary);
 }
 
 h1,
@@ -300,14 +300,14 @@ button.btn {
 }
 
 .link {
-  color: var(--action-primary);
+  color: var(--action-secondary);
   font-family: var(--font-heading);
   font-size: 0.8125rem;
   font-weight: 500;
 }
 
 .link:hover {
-  color: var(--action-primary-hover);
+  color: var(--action-secondary-hover);
   text-decoration: underline;
 }
 
@@ -448,6 +448,11 @@ label {
   color: var(--info);
   border-color: color-mix(in oklab, var(--info) 40%, transparent);
   background: color-mix(in oklab, var(--info) 10%, transparent);
+}
+.pill-neutral {
+  color: var(--action-secondary);
+  border-color: color-mix(in oklab, var(--action-secondary) 40%, transparent);
+  background: color-mix(in oklab, var(--action-secondary) 10%, transparent);
 }
 
 /* ==================================================================
@@ -762,7 +767,7 @@ tbody tr:last-child td {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--action-primary);
+  color: var(--action-secondary);
 }
 
 .page-header h1 {
