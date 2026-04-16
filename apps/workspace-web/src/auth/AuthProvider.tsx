@@ -25,6 +25,11 @@ type AuthContextValue = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<WorkspaceUser>;
   signOut: () => Promise<void>;
+  acceptInvite: (
+    token: string,
+    password: string,
+    name?: string,
+  ) => Promise<WorkspaceUser>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,6 +37,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const ME_ENDPOINT = "/api/workspace/auth/me";
 const LOGIN_ENDPOINT = "/api/workspace/auth/login";
 const LOGOUT_ENDPOINT = "/api/workspace/auth/logout";
+const ACCEPT_INVITE_ENDPOINT = "/api/workspace/auth/invite/accept";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<WorkspaceUser | null>(null);
@@ -83,6 +89,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const acceptInvite = useCallback(
+    async (
+      token: string,
+      password: string,
+      name?: string,
+    ): Promise<WorkspaceUser> => {
+      const body: Record<string, string> = { token, password };
+      if (name !== undefined) body.name = name;
+      const res = await apiJson<MeResponse>(ACCEPT_INVITE_ENDPOINT, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      setUser(res.user);
+      return res.user;
+    },
+    [],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -90,8 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       signIn,
       signOut,
+      acceptInvite,
     }),
-    [user, isLoading, signIn, signOut],
+    [user, isLoading, signIn, signOut, acceptInvite],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -9,7 +9,20 @@ declare module "fastify" {
   }
   interface FastifyInstance {
     requireUser: (request: FastifyRequest) => SessionUser;
+    requireAdmin: (request: FastifyRequest) => SessionUser;
   }
+}
+
+function unauthorized(): Error & { statusCode: number } {
+  const err = new Error("Unauthorized") as Error & { statusCode: number };
+  err.statusCode = 401;
+  return err;
+}
+
+function forbidden(message = "Forbidden"): Error & { statusCode: number } {
+  const err = new Error(message) as Error & { statusCode: number };
+  err.statusCode = 403;
+  return err;
 }
 
 export const authPlugin = fp(async (app: FastifyInstance) => {
@@ -30,10 +43,14 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
   });
 
   app.decorate("requireUser", (request: FastifyRequest): SessionUser => {
-    if (!request.user) {
-      const err = new Error("Unauthorized") as Error & { statusCode?: number };
-      err.statusCode = 401;
-      throw err;
+    if (!request.user) throw unauthorized();
+    return request.user;
+  });
+
+  app.decorate("requireAdmin", (request: FastifyRequest): SessionUser => {
+    if (!request.user) throw unauthorized();
+    if (request.user.role !== "admin") {
+      throw forbidden("Admin privileges required.");
     }
     return request.user;
   });

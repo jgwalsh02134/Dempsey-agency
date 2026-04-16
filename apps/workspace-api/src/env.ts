@@ -17,6 +17,14 @@ const envSchema = z.object({
   SESSION_COOKIE_SECURE: z.enum(["true", "false"]).optional(),
   SESSION_TTL_DAYS: z.coerce.number().int().positive().default(14),
 
+  // Invite lifetime in days.
+  INVITE_TTL_DAYS: z.coerce.number().int().positive().default(7),
+
+  // Public URL of workspace-web. Used to construct invite acceptance links
+  // returned from POST /auth/invite. If unset, the URL is derived from the
+  // request origin, which works in dev but should be set explicitly in prod.
+  APP_WORKSPACE_URL: z.string().url().optional(),
+
   // Admin bootstrap inputs (only read by scripts/bootstrap.ts)
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PASSWORD: z.string().optional(),
