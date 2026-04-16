@@ -1,15 +1,14 @@
 import { EmptyState } from "../components/EmptyState";
+import { PageHeader } from "../components/PageHeader";
 
 export function MarketsPage() {
   return (
     <section className="page">
-      <header className="page-header">
-        <h1>Markets</h1>
-        <p>
-          Vertical and geographic market studies. Captured here for internal
-          reuse across pitches and strategies.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Research"
+        title="Markets"
+        description="Vertical and geographic market studies. Captured here for internal reuse across pitches and strategies."
+      />
       <EmptyState
         initial="M"
         title="No market studies yet"

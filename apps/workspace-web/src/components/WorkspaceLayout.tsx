@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { BrandMark } from "./brand/BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_ITEMS = [
@@ -11,9 +12,14 @@ const NAV_ITEMS = [
   { to: "/projects", label: "Projects" },
 ] as const;
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export function WorkspaceLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const location = useLocation();
+  const sidebarRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setNavOpen(false);
@@ -21,23 +27,68 @@ export function WorkspaceLayout() {
 
   useEffect(() => {
     if (!navOpen) return;
+
+    const mq = window.matchMedia("(max-width: 767.98px)");
+    if (!mq.matches) return;
+
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const getFocusables = () =>
+      Array.from(
+        sidebar.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((el) => el.offsetParent !== null);
+
+    const initial = getFocusables();
+    initial[0]?.focus();
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setNavOpen(false);
+      if (e.key === "Escape") {
+        setNavOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = getFocusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (active === first || !sidebar.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last || !sidebar.contains(active)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      (previouslyFocused ?? triggerRef.current)?.focus();
+    };
   }, [navOpen]);
 
   return (
     <div className="workspace-shell" data-nav-open={navOpen}>
       <aside
         id="workspace-sidebar"
+        ref={sidebarRef}
         className="workspace-sidebar"
         aria-label="Primary navigation"
       >
         <div className="sidebar-brand">
-          <span className="sidebar-title">Workspace</span>
-          <span className="sidebar-subtitle">Internal</span>
+          <BrandMark variant="mark" className="sidebar-brand-mark" alt="Dempsey" />
+          <div className="sidebar-brand-text">
+            <span className="sidebar-title">Workspace</span>
+            <span className="sidebar-subtitle">Dempsey · Internal</span>
+          </div>
         </div>
         <nav className="sidebar-nav" aria-label="Sections">
           {NAV_ITEMS.map((item) => (
@@ -55,6 +106,9 @@ export function WorkspaceLayout() {
         </nav>
         <div className="sidebar-footer">
           <ThemeToggle />
+          <span className="sidebar-meta">
+            Workspace <span className="mono">v0.1</span>
+          </span>
         </div>
       </aside>
 
@@ -71,6 +125,7 @@ export function WorkspaceLayout() {
         <header className="workspace-topbar">
           <button
             type="button"
+            ref={triggerRef}
             className="nav-toggle"
             onClick={() => setNavOpen((v) => !v)}
             aria-label={navOpen ? "Close navigation" : "Open navigation"}
@@ -81,6 +136,7 @@ export function WorkspaceLayout() {
             <span className="nav-toggle-bar" />
             <span className="nav-toggle-bar" />
           </button>
+          <BrandMark variant="mark" className="topbar-mark" alt="Dempsey" />
           <span className="topbar-title">Workspace</span>
           <ThemeToggle />
         </header>

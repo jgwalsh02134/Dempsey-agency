@@ -1,15 +1,14 @@
 import { EmptyState } from "../components/EmptyState";
+import { PageHeader } from "../components/PageHeader";
 
 export function EventsPage() {
   return (
     <section className="page">
-      <header className="page-header">
-        <h1>Events</h1>
-        <p>
-          Industry events, pitch calendars, and internal milestones relevant to
-          planning work.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Planning"
+        title="Events"
+        description="Industry events, pitch calendars, and internal milestones relevant to planning work."
+      />
       <EmptyState
         initial="E"
         title="No events tracked yet"

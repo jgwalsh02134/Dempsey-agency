@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { WorkspaceLayout } from "./components/WorkspaceLayout";
+import { LoginPage } from "./pages/LoginPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PublishersPage } from "./pages/PublishersPage";
 import { MarketsPage } from "./pages/MarketsPage";
@@ -10,6 +11,7 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 export function App() {
   return (
     <Routes>
+      <Route path="/login" element={<LoginPage />} />
       <Route element={<WorkspaceLayout />}>
         <Route index element={<OverviewPage />} />
         <Route path="publishers" element={<PublishersPage />} />

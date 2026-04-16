@@ -1,15 +1,14 @@
 import { EmptyState } from "../components/EmptyState";
+import { PageHeader } from "../components/PageHeader";
 
 export function StrategiesPage() {
   return (
     <section className="page">
-      <header className="page-header">
-        <h1>Strategies</h1>
-        <p>
-          Hypotheses, positioning drafts, and strategic frameworks the team is
-          developing. Pre-client, pre-commitment.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Planning"
+        title="Strategies"
+        description="Hypotheses, positioning drafts, and strategic frameworks the team is developing. Pre-client, pre-commitment."
+      />
       <EmptyState
         initial="S"
         title="No strategies drafted yet"

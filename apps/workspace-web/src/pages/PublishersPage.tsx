@@ -1,15 +1,14 @@
 import { EmptyState } from "../components/EmptyState";
+import { PageHeader } from "../components/PageHeader";
 
 export function PublishersPage() {
   return (
     <section className="page">
-      <header className="page-header">
-        <h1>Publishers</h1>
-        <p>
-          Research notes and snapshots on publishers the team is evaluating.
-          Independent of operational publisher records.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Research"
+        title="Publishers"
+        description="Research notes and snapshots on publishers the team is evaluating. Independent of operational publisher records."
+      />
       <EmptyState
         initial="P"
         title="No publisher snapshots yet"
