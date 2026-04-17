@@ -1,23 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { MarkerClusterer, type Cluster } from "@googlemaps/markerclusterer";
+import type { Publisher } from "../../data/publishers";
+import { formatCirc } from "../../data/publishers";
 import { loadGoogleMaps } from "./loadGoogleMaps";
 
-export type PublisherMarker = {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  url: string;
-  lat: number;
-  lng: number;
-};
+export type PublisherMarker = Publisher;
 
 type PublisherMapProps = {
-  markers?: PublisherMarker[];
+  markers?: Publisher[];
   center?: { lat: number; lng: number };
   zoom?: number;
   height?: string;
-  onMarkerClick?: (marker: PublisherMarker) => void;
+  onMarkerClick?: (marker: Publisher) => void;
 };
 
 const DEFAULT_CENTER = { lat: 39.5, lng: -98.35 };
@@ -118,7 +112,11 @@ export function PublisherMap({
     });
     markersRef.current = built;
 
-    clustererRef.current = new MarkerClusterer({ map, markers: built });
+    clustererRef.current = new MarkerClusterer({
+      map,
+      markers: built,
+      renderer: tealClusterRenderer,
+    });
 
     return () => {
       clustererRef.current?.clearMarkers();
@@ -139,7 +137,12 @@ export function PublisherMap({
 
   return (
     <div className="map-container" style={{ height }}>
-      <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+      <div
+        ref={containerRef}
+        style={{ width: "100%", height: "100%" }}
+        role="application"
+        aria-label="Publisher map"
+      />
     </div>
   );
 }
@@ -153,19 +156,64 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function buildPopupHtml(pub: PublisherMarker): string {
+function buildPopupHtml(pub: Publisher): string {
   const name = escapeHtml(pub.name);
-  const address = escapeHtml(pub.address);
+  const addrLine = pub.addr ? `<div>${escapeHtml(pub.addr)}</div>` : "";
   const city = escapeHtml(pub.city);
-  const state = escapeHtml(pub.state);
+  const stateAbbr = escapeHtml(pub.state);
+  const zip = pub.zip ? ` ${escapeHtml(pub.zip)}` : "";
+  const dma = escapeHtml(pub.dma);
+  const dmaCode = escapeHtml(pub.dma_code);
+  const circ = escapeHtml(formatCirc(pub.circ));
   const url = escapeHtml(pub.url);
   return `<div class="publisher-popup">
     <strong>${name}</strong>
-    <div>${address}</div>
-    <div>${city}, ${state}</div>
+    ${addrLine}
+    <div>${city}, ${stateAbbr}${zip}</div>
+    <div class="publisher-popup-meta">DMA ${dma} (${dmaCode}) · Circ ${circ}</div>
     <a href="${url}" target="_blank" rel="noopener noreferrer">Visit site →</a>
   </div>`;
 }
+
+type Bucket = "sm" | "md" | "lg";
+
+function bucketFor(count: number): Bucket {
+  if (count <= 5) return "sm";
+  if (count <= 20) return "md";
+  return "lg";
+}
+
+const BUCKET_RADIUS: Record<Bucket, number> = { sm: 20, md: 28, lg: 36 };
+const BUCKET_OPACITY: Record<Bucket, number> = { sm: 0.55, md: 0.75, lg: 0.9 };
+
+const tealClusterRenderer = {
+  render: ({ count, position }: Cluster): google.maps.Marker => {
+    const bucket = bucketFor(count);
+    const r = BUCKET_RADIUS[bucket];
+    const opacity = BUCKET_OPACITY[bucket];
+    const svg = `<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${r * 2}" height="${r * 2}" viewBox="0 0 ${r * 2} ${r * 2}">
+  <circle cx="${r}" cy="${r}" r="${r - 2}" fill="#0f766e" fill-opacity="${opacity}" stroke="#ffffff" stroke-width="2"/>
+</svg>`;
+    return new google.maps.Marker({
+      position,
+      icon: {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        size: new google.maps.Size(r * 2, r * 2),
+        scaledSize: new google.maps.Size(r * 2, r * 2),
+        anchor: new google.maps.Point(r, r),
+      },
+      label: {
+        text: String(count),
+        color: "#ffffff",
+        fontSize: "12px",
+        fontWeight: "600",
+      },
+      title: `${count} publishers`,
+      zIndex: 1000 + count,
+    });
+  },
+};
 
 function getMapStyles(): google.maps.MapTypeStyle[] {
   const isDark =
