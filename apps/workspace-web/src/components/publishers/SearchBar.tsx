@@ -11,7 +11,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
     <input
       type="search"
       className="publishers-search"
-      placeholder="Search publishers, cities, DMAs…"
+      placeholder="Search publishers, cities, ZIP, or DMA"
       aria-label="Search publishers"
       value={value}
       onChange={onInput}

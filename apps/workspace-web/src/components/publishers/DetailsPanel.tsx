@@ -6,6 +6,7 @@ export type Selection =
   | { kind: "dma"; code: string; name: string }
   | { kind: "state"; state: string }
   | { kind: "publisher"; name: string }
+  | { kind: "cluster"; names: string[] }
   | null;
 
 type DetailsPanelProps = {
@@ -22,6 +23,8 @@ function headline(selection: Selection, searchActive: boolean): string {
   }
   if (selection.kind === "dma") return `${selection.name} DMA (${selection.code})`;
   if (selection.kind === "state") return selection.state;
+  if (selection.kind === "cluster")
+    return `Cluster · ${selection.names.length} publishers`;
   return selection.name;
 }
 
@@ -64,30 +67,38 @@ export function DetailsPanel({
         <>
           <ul className="details-list">
             {visible.map((p) => (
-              <li key={`${p.name}-${p.city}-${p.state}`} className="details-list-item">
-                <div className="details-list-main">
-                  <span className="details-list-name">{p.name}</span>
-                  <span className="details-list-meta">
+              <li
+                key={`${p.name}-${p.city}-${p.state}`}
+                className="details-list-item"
+              >
+                <div className="details-row-main">
+                  <div className="details-row-name">{p.name}</div>
+                  <div className="details-row-loc">
                     {p.city}, {p.state}
                     {p.zip ? ` · ${p.zip}` : ""}
-                  </span>
+                  </div>
+                  {p.circ !== null && (
+                    <div className="details-row-circ">
+                      Circ. {formatCirc(p.circ)}
+                    </div>
+                  )}
                 </div>
-                <div className="details-list-secondary">
-                  <span className="details-list-circ">
-                    Circ {formatCirc(p.circ)}
+                <div className="details-row-aside">
+                  <span
+                    className="pill pill-neutral details-row-dma"
+                    title={p.dma}
+                  >
+                    {p.dma_code}
                   </span>
-                  <span className="details-list-dma">
-                    DMA {p.dma} ({p.dma_code})
-                  </span>
+                  <a
+                    className="btn btn-ghost btn-sm"
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Visit site →
+                  </a>
                 </div>
-                <a
-                  className="details-list-link"
-                  href={p.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Visit site →
-                </a>
               </li>
             ))}
           </ul>

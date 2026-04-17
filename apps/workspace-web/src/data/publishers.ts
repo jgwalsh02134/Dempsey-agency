@@ -85,6 +85,23 @@ export function totalCirculation(pubs: Publisher[]): number {
 }
 
 const MIN_SEARCH_LEN = 3;
+const ZIP_MIN = 3;
+const ZIP_MAX = 5;
+
+export type SearchInterpretation = "text" | "dma-code" | "zip";
+
+export function interpretQuery(
+  pubs: Publisher[],
+  query: string,
+): SearchInterpretation {
+  const q = query.trim();
+  if (q.length < MIN_SEARCH_LEN) return "text";
+  if (!/^\d+$/.test(q)) return "text";
+  // Only classify as dma-code when there's at least one matching publisher.
+  if (q.length === 3 && pubs.some((p) => p.dma_code === q)) return "dma-code";
+  if (q.length >= ZIP_MIN && q.length <= ZIP_MAX) return "zip";
+  return "text";
+}
 
 export function searchPublishers(
   pubs: Publisher[],
@@ -92,13 +109,23 @@ export function searchPublishers(
 ): Publisher[] {
   const q = query.trim().toLowerCase();
   if (q.length < MIN_SEARCH_LEN) return pubs;
+
+  const interp = interpretQuery(pubs, q);
+
+  if (interp === "dma-code") {
+    return pubs.filter((p) => p.dma_code === q);
+  }
+  if (interp === "zip") {
+    return pubs.filter((p) => p.zip.startsWith(q));
+  }
   return pubs.filter(
     (p) =>
       p.name.toLowerCase().includes(q) ||
       p.city.toLowerCase().includes(q) ||
       p.state.toLowerCase().includes(q) ||
       p.dma.toLowerCase().includes(q) ||
-      p.dma_code.includes(q),
+      p.dma_code.includes(q) ||
+      p.zip.includes(q),
   );
 }
 
