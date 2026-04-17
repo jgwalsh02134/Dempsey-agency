@@ -43,13 +43,36 @@ export const authPlugin = fp(async (app: FastifyInstance) => {
   });
 
   app.decorate("requireUser", (request: FastifyRequest): SessionUser => {
-    if (!request.user) throw unauthorized();
+    if (!request.user) {
+      request.log.warn(
+        { path: request.url, method: request.method, reason: "no_session" },
+        "auth: requireUser rejected",
+      );
+      throw unauthorized();
+    }
     return request.user;
   });
 
   app.decorate("requireAdmin", (request: FastifyRequest): SessionUser => {
-    if (!request.user) throw unauthorized();
+    if (!request.user) {
+      request.log.warn(
+        { path: request.url, method: request.method, reason: "no_session" },
+        "auth: requireAdmin rejected",
+      );
+      throw unauthorized();
+    }
     if (request.user.role !== "admin") {
+      request.log.warn(
+        {
+          path: request.url,
+          method: request.method,
+          reason: "not_admin",
+          userId: request.user.id,
+          userEmail: request.user.email,
+          actualRole: request.user.role,
+        },
+        "auth: requireAdmin rejected",
+      );
       throw forbidden("Admin privileges required.");
     }
     return request.user;

@@ -1,10 +1,19 @@
 /**
- * bootstrap.ts — create the first internal admin user.
+ * bootstrap.ts — ensure a workspace admin user exists.
  *
  * Read-only CLI. Does NOT accept HTTP input and does NOT mount a route.
  * Invoked explicitly: `npm run bootstrap:admin` with ADMIN_EMAIL +
- * ADMIN_PASSWORD in the environment. Idempotent: running it again with the
- * same email is a no-op.
+ * ADMIN_PASSWORD in the environment.
+ *
+ * Semantics on re-run for the same email:
+ *   - If no row exists        → create with role='admin', is_active=TRUE.
+ *   - If row exists            → ensure role='admin' AND is_active=TRUE.
+ *                                Password is NEVER overwritten; to reset a
+ *                                password, use a separate credential flow.
+ *                                This promotes a pre-existing non-admin
+ *                                (e.g. a row created via invite-accept or
+ *                                an earlier bootstrap that did not set role)
+ *                                without touching their credentials.
  */
 
 import pg from "pg";
@@ -47,28 +56,56 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: env.WORKSPACE_DATABASE_URL });
   try {
-    const result = await pool.query<{
+    const existing = await pool.query<{
       id: string;
-      email: string;
       role: string;
-      created_at: Date;
+      is_active: boolean;
     }>(
-      `INSERT INTO workspace_user (email, password_hash, name, role, is_active)
-       VALUES ($1, $2, $3, 'admin', TRUE)
-       ON CONFLICT (email) DO NOTHING
-       RETURNING id, email, role, created_at`,
-      [email, passwordHash, name],
+      "SELECT id, role, is_active FROM workspace_user WHERE email = $1 LIMIT 1",
+      [email],
     );
 
-    if (result.rowCount === 0) {
-      console.log(`[bootstrap] user already exists: ${email} (no change)`);
-    } else {
-      const user = result.rows[0];
+    if (existing.rowCount === 0) {
+      const { rows } = await pool.query<{ id: string; email: string; role: string }>(
+        `INSERT INTO workspace_user (email, password_hash, name, role, is_active)
+         VALUES ($1, $2, $3, 'admin', TRUE)
+         RETURNING id, email, role`,
+        [email, passwordHash, name],
+      );
+      const user = rows[0];
       console.log("[bootstrap] admin user created:");
       console.log(`  id:    ${user.id}`);
       console.log(`  email: ${user.email}`);
       console.log(`  role:  ${user.role}`);
+      return;
     }
+
+    const prior = existing.rows[0];
+    const needsPromote = prior.role !== "admin" || prior.is_active !== true;
+
+    if (!needsPromote) {
+      console.log(
+        `[bootstrap] user already admin and active: ${email} (no change)`,
+      );
+      return;
+    }
+
+    await pool.query(
+      `UPDATE workspace_user
+          SET role = 'admin',
+              is_active = TRUE,
+              updated_at = NOW()
+        WHERE id = $1`,
+      [prior.id],
+    );
+    console.log("[bootstrap] existing user promoted to admin:");
+    console.log(`  id:            ${prior.id}`);
+    console.log(`  email:         ${email}`);
+    console.log(`  previous role: ${prior.role}`);
+    console.log(`  previous active: ${prior.is_active}`);
+    console.log(`  new role:      admin`);
+    console.log(`  new active:    true`);
+    console.log("  (password was NOT modified)");
   } finally {
     await pool.end();
   }
