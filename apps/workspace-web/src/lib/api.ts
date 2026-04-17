@@ -7,6 +7,22 @@ export class ApiError extends Error {
   }
 }
 
+// Base origin of the workspace-api. When unset (local dev), requests stay
+// relative and hit the Vite dev-server proxy defined in vite.config.ts.
+// In production this MUST be set to the real API origin, e.g.
+//   https://workspace-api.dempsey.agency
+// Trailing slashes are stripped so callers can safely pass "/api/...".
+const API_BASE_URL = (
+  (import.meta.env.VITE_WORKSPACE_API_URL as string | undefined) ?? ""
+).replace(/\/+$/, "");
+
+export function resolveApiUrl(path: string): string {
+  // Allow fully-qualified URLs to pass through untouched.
+  if (/^https?:\/\//i.test(path)) return path;
+  if (!API_BASE_URL) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 async function parseErrorMessage(res: Response): Promise<string> {
   try {
     const body = (await res.json()) as { error?: unknown };
@@ -23,7 +39,7 @@ export async function apiFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return fetch(path, {
+  return fetch(resolveApiUrl(path), {
     credentials: "include",
     ...init,
     headers: {
