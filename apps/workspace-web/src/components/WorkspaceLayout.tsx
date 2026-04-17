@@ -13,6 +13,10 @@ const NAV_ITEMS = [
   { to: "/projects", label: "Projects" },
 ] as const;
 
+const ADMIN_NAV_ITEMS = [
+  { to: "/admin/invites", label: "Invites" },
+] as const;
+
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -116,6 +120,24 @@ export function WorkspaceLayout() {
               <span className="nav-label">{item.label}</span>
             </NavLink>
           ))}
+          {user?.role === "admin" && (
+            <>
+              <div className="sidebar-section-header" aria-hidden="true">
+                Admin
+              </div>
+              {ADMIN_NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `sidebar-link${isActive ? " active" : ""}`
+                  }
+                >
+                  <span className="nav-label">{item.label}</span>
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
         <div className="sidebar-footer">
           <ThemeToggle />

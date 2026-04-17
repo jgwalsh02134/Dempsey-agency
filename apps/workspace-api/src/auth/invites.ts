@@ -15,7 +15,14 @@ export type InviteRow = {
   accepted_by_user_id: string | null;
 };
 
+// Internal status. Wire-facing admin APIs map "valid" → "pending".
 export type InviteStatus = "valid" | "accepted" | "revoked" | "expired";
+export type InviteWireStatus = "pending" | "accepted" | "revoked" | "expired";
+
+export type InviteListRow = InviteRow & {
+  invited_by_email: string | null;
+  invited_by_name: string | null;
+};
 
 export const ALLOWED_INVITE_ROLES = ["member", "admin"] as const;
 export type InviteRole = (typeof ALLOWED_INVITE_ROLES)[number];
@@ -68,4 +75,42 @@ export async function revokeOutstandingInvitesForEmail(
     [email],
   );
   return rowCount ?? 0;
+}
+
+export function toWireStatus(status: InviteStatus): InviteWireStatus {
+  return status === "valid" ? "pending" : status;
+}
+
+export async function listInvites(
+  db: Pool | PoolClient,
+  opts: { limit: number },
+): Promise<InviteListRow[]> {
+  const { rows } = await db.query<InviteListRow>(
+    `SELECT
+        i.id, i.token, i.email, i.name, i.role, i.invited_by, i.created_at,
+        i.expires_at, i.accepted_at, i.revoked_at, i.accepted_by_user_id,
+        u.email AS invited_by_email,
+        u.name  AS invited_by_name
+       FROM workspace_invite i
+       LEFT JOIN workspace_user u ON u.id = i.invited_by
+      ORDER BY i.created_at DESC
+      LIMIT $1`,
+    [opts.limit],
+  );
+  return rows;
+}
+
+export async function findInviteById(
+  db: Pool | PoolClient,
+  id: string,
+): Promise<InviteRow | null> {
+  const { rows } = await db.query<InviteRow>(
+    `SELECT id, token, email, name, role, invited_by, created_at,
+            expires_at, accepted_at, revoked_at, accepted_by_user_id
+       FROM workspace_invite
+      WHERE id = $1
+      LIMIT 1`,
+    [id],
+  );
+  return rows[0] ?? null;
 }

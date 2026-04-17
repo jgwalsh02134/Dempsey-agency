@@ -9,10 +9,14 @@ import {
 } from "../auth/cookies.js";
 import {
   ALLOWED_INVITE_ROLES,
+  findInviteById,
   findInviteByToken,
   generateInviteToken,
   inviteStatus,
+  listInvites,
   revokeOutstandingInvitesForEmail,
+  toWireStatus,
+  type InviteListRow,
   type InviteRow,
 } from "../auth/invites.js";
 
@@ -29,6 +33,14 @@ const inviteBody = z.object({
 
 const inviteTokenParam = z.object({
   token: z.string().min(1).max(256),
+});
+
+const inviteIdParam = z.object({
+  id: z.string().uuid(),
+});
+
+const inviteListQuery = z.object({
+  limit: z.coerce.number().int().positive().max(500).default(100),
 });
 
 const acceptInviteBody = z.object({
@@ -81,6 +93,47 @@ function deriveWorkspaceUrl(request: FastifyRequest): string {
 
 function buildAcceptUrl(baseUrl: string, token: string): string {
   return `${baseUrl}/accept-invite?token=${encodeURIComponent(token)}`;
+}
+
+function publicInvite(
+  row: InviteListRow,
+  baseUrl: string,
+): {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  status: "pending" | "accepted" | "revoked" | "expired";
+  createdAt: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  revokedAt: string | null;
+  invitedBy: { id: string; email: string | null; name: string | null } | null;
+  acceptUrl: string | null;
+} {
+  const status = toWireStatus(inviteStatus(row));
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    status,
+    createdAt: row.created_at.toISOString(),
+    expiresAt: row.expires_at.toISOString(),
+    acceptedAt: row.accepted_at?.toISOString() ?? null,
+    revokedAt: row.revoked_at?.toISOString() ?? null,
+    invitedBy: row.invited_by
+      ? {
+          id: row.invited_by,
+          email: row.invited_by_email,
+          name: row.invited_by_name,
+        }
+      : null,
+    // Only hand back an acceptance URL while the invite is still usable.
+    // Accepted / revoked / expired invites omit it so an accidental copy
+    // can't be mistaken for a live link.
+    acceptUrl: status === "pending" ? buildAcceptUrl(baseUrl, row.token) : null,
+  };
 }
 
 export async function authRoutes(app: FastifyInstance) {
@@ -442,5 +495,119 @@ export async function authRoutes(app: FastifyInstance) {
     );
 
     return reply.code(201).send({ user: createdUser });
+  });
+
+  // ================================================================
+  // GET /invite — ADMIN ONLY
+  //
+  // List invites for the admin management surface, newest first. Returns
+  // safe metadata with a derived status. acceptUrl is included ONLY for
+  // pending invites; accepted / revoked / expired have acceptUrl: null.
+  // ================================================================
+  app.get("/invite", async (request, reply) => {
+    app.requireAdmin(request);
+
+    const parsedQuery = inviteListQuery.safeParse(request.query);
+    if (!parsedQuery.success) {
+      return reply.code(400).send({ error: "Invalid query." });
+    }
+
+    const rows = await listInvites(app.db, { limit: parsedQuery.data.limit });
+    const baseUrl = deriveWorkspaceUrl(request);
+
+    return reply.send({
+      invites: rows.map((row) => publicInvite(row, baseUrl)),
+    });
+  });
+
+  // ================================================================
+  // POST /invite/:id/revoke — ADMIN ONLY
+  //
+  // Revoke a still-pending invite. Semantics:
+  //   - pending        → 200, row is marked revoked
+  //   - already revoked → 200 idempotent (returns current row)
+  //   - accepted       → 409 (user already has an account)
+  //   - expired        → 409 (terminal state; re-invite to re-issue)
+  // ================================================================
+  app.post("/invite/:id/revoke", async (request, reply) => {
+    app.requireAdmin(request);
+
+    const params = inviteIdParam.safeParse(request.params);
+    if (!params.success) {
+      return reply.code(400).send({ error: "Invalid invite id." });
+    }
+
+    const client = await app.db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const { rows } = await client.query<InviteRow>(
+        `SELECT id, token, email, name, role, invited_by, created_at,
+                expires_at, accepted_at, revoked_at, accepted_by_user_id
+           FROM workspace_invite
+          WHERE id = $1
+          FOR UPDATE
+          LIMIT 1`,
+        [params.data.id],
+      );
+
+      if (rows.length === 0) {
+        await client.query("ROLLBACK");
+        return reply.code(404).send({ error: "Invite not found." });
+      }
+
+      const invite = rows[0];
+      const status = inviteStatus(invite);
+
+      if (status === "accepted") {
+        await client.query("ROLLBACK");
+        return reply.code(409).send({
+          error: "Cannot revoke an invite that has already been accepted.",
+        });
+      }
+      if (status === "expired") {
+        await client.query("ROLLBACK");
+        return reply.code(409).send({
+          error: "This invite has already expired. Create a new invite instead.",
+        });
+      }
+      if (status === "revoked") {
+        // Idempotent: already revoked → return the existing state.
+        await client.query("COMMIT");
+      } else {
+        await client.query(
+          `UPDATE workspace_invite
+              SET revoked_at = NOW()
+            WHERE id = $1`,
+          [params.data.id],
+        );
+        await client.query("COMMIT");
+      }
+    } catch (err) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    // Re-fetch via the list query shape so we return the same wire format
+    // as GET /invite entries.
+    const refreshed = await findInviteById(app.db, params.data.id);
+    if (!refreshed) {
+      // Race: the row existed inside the txn but is gone now. Treat as 404.
+      return reply.code(404).send({ error: "Invite not found." });
+    }
+
+    const baseUrl = deriveWorkspaceUrl(request);
+    const asList: InviteListRow = {
+      ...refreshed,
+      invited_by_email: null,
+      invited_by_name: null,
+    };
+    return reply.send({ invite: publicInvite(asList, baseUrl) });
   });
 }
