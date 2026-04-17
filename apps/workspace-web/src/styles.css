@@ -1258,6 +1258,31 @@ tbody tr:last-child td {
   margin-bottom: 0.875rem;
 }
 
+.publisher-popup {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  max-width: 240px;
+  line-height: 1.45;
+}
+
+.publisher-popup strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.publisher-popup a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--action-primary);
+  text-decoration: none;
+}
+
+.publisher-popup a:hover {
+  text-decoration: underline;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

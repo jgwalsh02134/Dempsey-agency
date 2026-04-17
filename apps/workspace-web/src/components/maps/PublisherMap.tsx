@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { loadGoogleMaps } from "./loadGoogleMaps";
 
 export type PublisherMarker = {
-  id: string | number;
   name: string;
+  address: string;
+  city: string;
+  state: string;
+  url: string;
   lat: number;
   lng: number;
 };
@@ -35,6 +39,8 @@ export function PublisherMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [state, setState] = useState<MapState>({ status: "loading" });
 
   if (!API_KEY) {
@@ -87,23 +93,40 @@ export function PublisherMap({
     const map = mapRef.current;
     if (!map) return;
 
-    // Clear previous markers.
+    clustererRef.current?.clearMarkers();
     for (const m of markersRef.current) m.setMap(null);
     markersRef.current = [];
 
-    for (const pub of markers) {
+    if (!infoWindowRef.current) {
+      infoWindowRef.current = new google.maps.InfoWindow();
+    }
+    const infoWindow = infoWindowRef.current;
+
+    const built = markers.map((pub) => {
       const marker = new google.maps.Marker({
         position: { lat: pub.lat, lng: pub.lng },
-        map,
         title: pub.name,
       });
 
-      if (onMarkerClick) {
-        marker.addListener("click", () => onMarkerClick(pub));
-      }
+      marker.addListener("click", () => {
+        infoWindow.setContent(buildPopupHtml(pub));
+        infoWindow.open({ map, anchor: marker });
+        onMarkerClick?.(pub);
+      });
 
-      markersRef.current.push(marker);
-    }
+      return marker;
+    });
+    markersRef.current = built;
+
+    clustererRef.current = new MarkerClusterer({ map, markers: built });
+
+    return () => {
+      clustererRef.current?.clearMarkers();
+      clustererRef.current = null;
+      for (const m of markersRef.current) m.setMap(null);
+      markersRef.current = [];
+      infoWindow.close();
+    };
   }, [markers, onMarkerClick]);
 
   if (state.status === "error") {
@@ -119,6 +142,29 @@ export function PublisherMap({
       <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
     </div>
   );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildPopupHtml(pub: PublisherMarker): string {
+  const name = escapeHtml(pub.name);
+  const address = escapeHtml(pub.address);
+  const city = escapeHtml(pub.city);
+  const state = escapeHtml(pub.state);
+  const url = escapeHtml(pub.url);
+  return `<div class="publisher-popup">
+    <strong>${name}</strong>
+    <div>${address}</div>
+    <div>${city}, ${state}</div>
+    <a href="${url}" target="_blank" rel="noopener noreferrer">Visit site →</a>
+  </div>`;
 }
 
 function getMapStyles(): google.maps.MapTypeStyle[] {
