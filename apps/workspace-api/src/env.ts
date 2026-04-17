@@ -12,7 +12,10 @@ const envSchema = z.object({
 
   // Session / cookie
   SESSION_COOKIE_NAME: z.string().default("workspace_session"),
-  SESSION_COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
+  // If unset, defaults to "none" in production (required when the web app
+  // and API are served from different eTLD+1s, e.g. workspace.dempsey.agency
+  // ↔ *.up.railway.app) and "lax" in development.
+  SESSION_COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).optional(),
   // If unset, defaults to true in production and false in development.
   SESSION_COOKIE_SECURE: z.enum(["true", "false"]).optional(),
   SESSION_TTL_DAYS: z.coerce.number().int().positive().default(14),
@@ -40,9 +43,14 @@ const cookieSecure =
     ? parsed.NODE_ENV !== "development"
     : parsed.SESSION_COOKIE_SECURE === "true";
 
+const cookieSameSite: "lax" | "strict" | "none" =
+  parsed.SESSION_COOKIE_SAMESITE ??
+  (parsed.NODE_ENV === "production" ? "none" : "lax");
+
 export const env = {
   ...parsed,
   SESSION_COOKIE_SECURE: cookieSecure,
+  SESSION_COOKIE_SAMESITE: cookieSameSite,
 };
 
 export type Env = typeof env;

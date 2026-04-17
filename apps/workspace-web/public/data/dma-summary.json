@@ -1,0 +1,972 @@
+[
+  {
+    "dma_code": "602",
+    "dma": "CHICAGO",
+    "count": 15,
+    "total_circulation": 154000,
+    "states": [
+      "IL"
+    ],
+    "centroid_lat": 41.7729,
+    "centroid_lng": -88.387
+  },
+  {
+    "dma_code": "524",
+    "dma": "ATLANTA",
+    "count": 13,
+    "total_circulation": 153451,
+    "states": [
+      "GA"
+    ],
+    "centroid_lat": 34.2287,
+    "centroid_lng": -84.0652
+  },
+  {
+    "dma_code": "789",
+    "dma": "TUCSON (SIERRA VISTA)",
+    "count": 13,
+    "total_circulation": null,
+    "states": [
+      "AZ"
+    ],
+    "centroid_lat": 31.9115,
+    "centroid_lng": -110.2849
+  },
+  {
+    "dma_code": "679",
+    "dma": "DES MOINES - AMES",
+    "count": 11,
+    "total_circulation": 25223,
+    "states": [
+      "IA"
+    ],
+    "centroid_lat": 41.1177,
+    "centroid_lng": -93.5228
+  },
+  {
+    "dma_code": "521",
+    "dma": "PROVIDENCE - NEW BEDFORD",
+    "count": 10,
+    "total_circulation": 37572,
+    "states": [
+      "MA",
+      "RI"
+    ],
+    "centroid_lat": 41.5974,
+    "centroid_lng": -71.52
+  },
+  {
+    "dma_code": "506",
+    "dma": "BOSTON (MANCHESTER)",
+    "count": 9,
+    "total_circulation": 102057,
+    "states": [
+      "MA",
+      "NH"
+    ],
+    "centroid_lat": 42.8352,
+    "centroid_lng": -71.3538
+  },
+  {
+    "dma_code": "682",
+    "dma": "DAVENPORT - R.ISLAND - MOLINE",
+    "count": 8,
+    "total_circulation": 36500,
+    "states": [
+      "IA",
+      "IL"
+    ],
+    "centroid_lat": 41.738,
+    "centroid_lng": -89.3225
+  },
+  {
+    "dma_code": "501",
+    "dma": "NEW YORK",
+    "count": 8,
+    "total_circulation": 475502,
+    "states": [
+      "CT",
+      "NJ",
+      "NY"
+    ],
+    "centroid_lat": 41.04,
+    "centroid_lng": -73.7395
+  },
+  {
+    "dma_code": "647",
+    "dma": "GREENWOOD - GREENVILLE",
+    "count": 7,
+    "total_circulation": 7000,
+    "states": [
+      "MS"
+    ],
+    "centroid_lat": 33.6877,
+    "centroid_lng": -90.2944
+  },
+  {
+    "dma_code": "675",
+    "dma": "PEORIA - BLOOMINGTON",
+    "count": 7,
+    "total_circulation": 73862,
+    "states": [
+      "IL"
+    ],
+    "centroid_lat": 41.4162,
+    "centroid_lng": -86.6017
+  },
+  {
+    "dma_code": "532",
+    "dma": "ALBANY - SCHENECTADY - TROY",
+    "count": 6,
+    "total_circulation": 146000,
+    "states": [
+      "NY"
+    ],
+    "centroid_lat": 42.8239,
+    "centroid_lng": -74.0063
+  },
+  {
+    "dma_code": "718",
+    "dma": "JACKSON, MS",
+    "count": 6,
+    "total_circulation": 4300,
+    "states": [
+      "MS"
+    ],
+    "centroid_lat": 32.2924,
+    "centroid_lng": -89.9704
+  },
+  {
+    "dma_code": "628",
+    "dma": "MONROE - EL DORADO",
+    "count": 6,
+    "total_circulation": 16000,
+    "states": [
+      "AR",
+      "LA"
+    ],
+    "centroid_lat": 33.194,
+    "centroid_lng": -91.6287
+  },
+  {
+    "dma_code": "610",
+    "dma": "ROCKFORD",
+    "count": 6,
+    "total_circulation": 15000,
+    "states": [
+      "IL"
+    ],
+    "centroid_lat": 41.9834,
+    "centroid_lng": -89.4023
+  },
+  {
+    "dma_code": "588",
+    "dma": "SOUTH BEND - ELKHART",
+    "count": 6,
+    "total_circulation": 5185,
+    "states": [
+      "IN"
+    ],
+    "centroid_lat": 41.2446,
+    "centroid_lng": -86.4915
+  },
+  {
+    "dma_code": "637",
+    "dma": "CEDAR RAPIDS - WTRLOO - IWC & DUB",
+    "count": 5,
+    "total_circulation": 33844,
+    "states": [
+      "IA"
+    ],
+    "centroid_lat": 42.4571,
+    "centroid_lng": -91.5003
+  },
+  {
+    "dma_code": "564",
+    "dma": "CHARLESTON - HUNTINGTON",
+    "count": 5,
+    "total_circulation": 18200,
+    "states": [
+      "KY",
+      "WV"
+    ],
+    "centroid_lat": 37.8223,
+    "centroid_lng": -82.6025
+  },
+  {
+    "dma_code": "510",
+    "dma": "CLEVELAND - AKRON (CANTON)",
+    "count": 5,
+    "total_circulation": 7000,
+    "states": [
+      "OH"
+    ],
+    "centroid_lat": 41.3247,
+    "centroid_lng": -81.9072
+  },
+  {
+    "dma_code": "533",
+    "dma": "HARTFORD & NEW HAVEN",
+    "count": 5,
+    "total_circulation": 36529,
+    "states": [
+      "CT"
+    ],
+    "centroid_lat": 41.5521,
+    "centroid_lng": -72.428
+  },
+  {
+    "dma_code": "561",
+    "dma": "JACKSONVILLE",
+    "count": 5,
+    "total_circulation": 20000,
+    "states": [
+      "FL",
+      "GA"
+    ],
+    "centroid_lat": 30.6584,
+    "centroid_lng": -81.7916
+  },
+  {
+    "dma_code": "669",
+    "dma": "MADISON",
+    "count": 5,
+    "total_circulation": 26787,
+    "states": [
+      "WI"
+    ],
+    "centroid_lat": 43.0238,
+    "centroid_lng": -89.8929
+  },
+  {
+    "dma_code": "555",
+    "dma": "SYRACUSE",
+    "count": 5,
+    "total_circulation": 26500,
+    "states": [
+      "NY"
+    ],
+    "centroid_lat": 43.2601,
+    "centroid_lng": -76.3611
+  },
+  {
+    "dma_code": "523",
+    "dma": "BURLINGTON - PLATTSBURGH",
+    "count": 4,
+    "total_circulation": 77132,
+    "states": [
+      "NH",
+      "NY",
+      "VT"
+    ],
+    "centroid_lat": 44.4103,
+    "centroid_lng": -72.7073
+  },
+  {
+    "dma_code": "567",
+    "dma": "GREENVILLE - SPART. - ASHEVILLE - AND.",
+    "count": 4,
+    "total_circulation": 23000,
+    "states": [
+      "GA",
+      "NC"
+    ],
+    "centroid_lat": 34.7179,
+    "centroid_lng": -83.0819
+  },
+  {
+    "dma_code": "541",
+    "dma": "LEXINGTON",
+    "count": 4,
+    "total_circulation": 14125,
+    "states": [
+      "KY"
+    ],
+    "centroid_lat": 37.5748,
+    "centroid_lng": -84.1627
+  },
+  {
+    "dma_code": "753",
+    "dma": "PHOENIX (PRESCOTT)",
+    "count": 4,
+    "total_circulation": 25712,
+    "states": [
+      "AZ"
+    ],
+    "centroid_lat": 34.1781,
+    "centroid_lng": -113.0051
+  },
+  {
+    "dma_code": "725",
+    "dma": "SIOUX FALLS (MITCHELL)",
+    "count": 4,
+    "total_circulation": 28150,
+    "states": [
+      "SD"
+    ],
+    "centroid_lat": 43.5292,
+    "centroid_lng": -98.0625
+  },
+  {
+    "dma_code": "565",
+    "dma": "ELMIRA (CORNING)",
+    "count": 3,
+    "total_circulation": 16000,
+    "states": [
+      "PA"
+    ],
+    "centroid_lat": 41.8375,
+    "centroid_lng": -76.4673
+  },
+  {
+    "dma_code": "710",
+    "dma": "HATTIESBURG - LAUREL",
+    "count": 3,
+    "total_circulation": 4000,
+    "states": [
+      "MS"
+    ],
+    "centroid_lat": 31.1473,
+    "centroid_lng": -89.4192
+  },
+  {
+    "dma_code": "619",
+    "dma": "SPRINGFIELD, MO",
+    "count": 3,
+    "total_circulation": 8800,
+    "states": [
+      "MO"
+    ],
+    "centroid_lat": 36.9701,
+    "centroid_lng": -92.77
+  },
+  {
+    "dma_code": "790",
+    "dma": "ALBUQUERQUE - SANTA FE",
+    "count": 2,
+    "total_circulation": 14100,
+    "states": [
+      "NM"
+    ],
+    "centroid_lat": 34.4048,
+    "centroid_lng": -103.2052
+  },
+  {
+    "dma_code": "634",
+    "dma": "AMARILLO",
+    "count": 2,
+    "total_circulation": 5435,
+    "states": [
+      "TX"
+    ],
+    "centroid_lat": 35.7631,
+    "centroid_lng": -101.6853
+  },
+  {
+    "dma_code": "743",
+    "dma": "ANCHORAGE",
+    "count": 2,
+    "total_circulation": 8500,
+    "states": [
+      "AK"
+    ],
+    "centroid_lat": 61.3997,
+    "centroid_lng": -149.6698
+  },
+  {
+    "dma_code": "559",
+    "dma": "BLUEFIELD - BECKLEY - OAK HILL",
+    "count": 2,
+    "total_circulation": 48000,
+    "states": [
+      "WV"
+    ],
+    "centroid_lat": 37.524,
+    "centroid_lng": -81.2054
+  },
+  {
+    "dma_code": "598",
+    "dma": "CLARKSBURG - WESTON",
+    "count": 2,
+    "total_circulation": 20000,
+    "states": [
+      "WV"
+    ],
+    "centroid_lat": 39.5573,
+    "centroid_lng": -80.0494
+  },
+  {
+    "dma_code": "623",
+    "dma": "DALLAS - FT. WORTH",
+    "count": 2,
+    "total_circulation": 3780,
+    "states": [
+      "TX"
+    ],
+    "centroid_lat": 32.987,
+    "centroid_lng": -97.4651
+  },
+  {
+    "dma_code": "670",
+    "dma": "FT. SMITH - FAY.- SPRNGDL. - ROGERS",
+    "count": 2,
+    "total_circulation": 5000,
+    "states": [
+      "AR",
+      "OK"
+    ],
+    "centroid_lat": 34.8198,
+    "centroid_lng": -94.4316
+  },
+  {
+    "dma_code": "527",
+    "dma": "INDIANAPOLIS",
+    "count": 2,
+    "total_circulation": 46000,
+    "states": [
+      "IN"
+    ],
+    "centroid_lat": 40.2959,
+    "centroid_lng": -85.9069
+  },
+  {
+    "dma_code": "558",
+    "dma": "LIMA",
+    "count": 2,
+    "total_circulation": 5000,
+    "states": [
+      "OH"
+    ],
+    "centroid_lat": 40.5549,
+    "centroid_lng": -84.2914
+  },
+  {
+    "dma_code": "693",
+    "dma": "LITTLE ROCK - PINE BLUFF",
+    "count": 2,
+    "total_circulation": null,
+    "states": [
+      "AR"
+    ],
+    "centroid_lat": 34.4634,
+    "centroid_lng": -92.6982
+  },
+  {
+    "dma_code": "711",
+    "dma": "MERIDIAN",
+    "count": 2,
+    "total_circulation": null,
+    "states": [
+      "MS"
+    ],
+    "centroid_lat": 32.306,
+    "centroid_lng": -88.9218
+  },
+  {
+    "dma_code": "613",
+    "dma": "MINNEAPOLIS - ST. PAUL",
+    "count": 2,
+    "total_circulation": 54000,
+    "states": [
+      "MN"
+    ],
+    "centroid_lat": 45.0541,
+    "centroid_lng": -93.1928
+  },
+  {
+    "dma_code": "687",
+    "dma": "MINOT - BISMARCK - DICKINSON",
+    "count": 2,
+    "total_circulation": 4686,
+    "states": [
+      "MT",
+      "ND"
+    ],
+    "centroid_lat": 47.94,
+    "centroid_lng": -103.9015
+  },
+  {
+    "dma_code": "862",
+    "dma": "SACRAMENTO - STOCKTON - MODESTO",
+    "count": 2,
+    "total_circulation": 6000,
+    "states": [
+      "CA"
+    ],
+    "centroid_lat": 38.5392,
+    "centroid_lng": -120.7863
+  },
+  {
+    "dma_code": "609",
+    "dma": "ST. LOUIS",
+    "count": 2,
+    "total_circulation": 20100,
+    "states": [
+      "MO"
+    ],
+    "centroid_lat": 38.5581,
+    "centroid_lng": -91.0118
+  },
+  {
+    "dma_code": "577",
+    "dma": "WILKES BARRE - SCRANTON - HZTN",
+    "count": 2,
+    "total_circulation": 32251,
+    "states": [
+      "PA"
+    ],
+    "centroid_lat": 41.0987,
+    "centroid_lng": -76.1106
+  },
+  {
+    "dma_code": "662",
+    "dma": "ABILENE - SWEETWATER",
+    "count": 1,
+    "total_circulation": 735,
+    "states": [
+      "TX"
+    ],
+    "centroid_lat": 32.4735,
+    "centroid_lng": -100.4059
+  },
+  {
+    "dma_code": "525",
+    "dma": "ALBANY, GA",
+    "count": 1,
+    "total_circulation": 14717,
+    "states": [
+      "GA"
+    ],
+    "centroid_lat": 31.5785,
+    "centroid_lng": -84.1557
+  },
+  {
+    "dma_code": "520",
+    "dma": "AUGUSTA - AIKEN",
+    "count": 1,
+    "total_circulation": 5000,
+    "states": [
+      "GA"
+    ],
+    "centroid_lat": 33.4737,
+    "centroid_lng": -82.1318
+  },
+  {
+    "dma_code": "757",
+    "dma": "BOISE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "OR"
+    ],
+    "centroid_lat": 43.9749,
+    "centroid_lng": -116.9629
+  },
+  {
+    "dma_code": "514",
+    "dma": "BUFFALO",
+    "count": 1,
+    "total_circulation": 9666,
+    "states": [
+      "NY"
+    ],
+    "centroid_lat": 43.0942,
+    "centroid_lng": -79.0567
+  },
+  {
+    "dma_code": "673",
+    "dma": "COLUMBUS - TUPELO - WEST POINT",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "MS"
+    ],
+    "centroid_lat": 33.1237,
+    "centroid_lng": -89.0551
+  },
+  {
+    "dma_code": "542",
+    "dma": "DAYTON",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "OH"
+    ],
+    "centroid_lat": 40.3931,
+    "centroid_lng": -84.3761
+  },
+  {
+    "dma_code": "676",
+    "dma": "DULUTH - SUPERIOR",
+    "count": 1,
+    "total_circulation": 3000,
+    "states": [
+      "MI"
+    ],
+    "centroid_lat": 46.4555,
+    "centroid_lng": -90.1712
+  },
+  {
+    "dma_code": "801",
+    "dma": "EUGENE",
+    "count": 1,
+    "total_circulation": 7615,
+    "states": [
+      "OR"
+    ],
+    "centroid_lat": 43.2165,
+    "centroid_lng": -123.3417
+  },
+  {
+    "dma_code": "724",
+    "dma": "FARGO - VALLEY CITY",
+    "count": 1,
+    "total_circulation": 1446,
+    "states": [
+      "ND"
+    ],
+    "centroid_lat": 46.0652,
+    "centroid_lng": -96.6059
+  },
+  {
+    "dma_code": "866",
+    "dma": "FRESNO - VISALIA",
+    "count": 1,
+    "total_circulation": 5000,
+    "states": [
+      "CA"
+    ],
+    "centroid_lat": 36.9613,
+    "centroid_lng": -120.0607
+  },
+  {
+    "dma_code": "773",
+    "dma": "GRAND JUNCTION - MONTROSE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "CO"
+    ],
+    "centroid_lat": 38.4783,
+    "centroid_lng": -107.8762
+  },
+  {
+    "dma_code": "618",
+    "dma": "HOUSTON",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "TX"
+    ],
+    "centroid_lat": 30.7235,
+    "centroid_lng": -95.5508
+  },
+  {
+    "dma_code": "574",
+    "dma": "JOHNSTOWN - ALTOONA - ST COLGE",
+    "count": 1,
+    "total_circulation": 41000,
+    "states": [
+      "PA"
+    ],
+    "centroid_lat": 40.3268,
+    "centroid_lng": -78.922
+  },
+  {
+    "dma_code": "603",
+    "dma": "JOPLIN - PITTSBURG",
+    "count": 1,
+    "total_circulation": 30000,
+    "states": [
+      "MO"
+    ],
+    "centroid_lat": 37.0842,
+    "centroid_lng": -94.5133
+  },
+  {
+    "dma_code": "702",
+    "dma": "LA CROSSE - EAU CLAIRE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "WI"
+    ],
+    "centroid_lat": 43.0513,
+    "centroid_lng": -91.1412
+  },
+  {
+    "dma_code": "642",
+    "dma": "LAFAYETTE, LA",
+    "count": 1,
+    "total_circulation": 6500,
+    "states": [
+      "LA"
+    ],
+    "centroid_lat": 30.0044,
+    "centroid_lng": -91.8187
+  },
+  {
+    "dma_code": "529",
+    "dma": "LOUISVILLE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "IN"
+    ],
+    "centroid_lat": 38.2776,
+    "centroid_lng": -85.7368
+  },
+  {
+    "dma_code": "737",
+    "dma": "MANKATO",
+    "count": 1,
+    "total_circulation": 22000,
+    "states": [
+      "MN"
+    ],
+    "centroid_lat": 44.1686,
+    "centroid_lng": -93.9788
+  },
+  {
+    "dma_code": "640",
+    "dma": "MEMPHIS",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "MS"
+    ],
+    "centroid_lat": 34.6173,
+    "centroid_lng": -89.9688
+  },
+  {
+    "dma_code": "659",
+    "dma": "NASHVILLE",
+    "count": 1,
+    "total_circulation": 10000,
+    "states": [
+      "TN"
+    ],
+    "centroid_lat": 36.3048,
+    "centroid_lng": -86.62
+  },
+  {
+    "dma_code": "622",
+    "dma": "NEW ORLEANS",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "LA"
+    ],
+    "centroid_lat": 30.7843,
+    "centroid_lng": -90.1534
+  },
+  {
+    "dma_code": "740",
+    "dma": "NORTH PLATTE",
+    "count": 1,
+    "total_circulation": 3424,
+    "states": [
+      "NE"
+    ],
+    "centroid_lat": 41.4019,
+    "centroid_lng": -99.6437
+  },
+  {
+    "dma_code": "633",
+    "dma": "ODESSA - MIDLAND",
+    "count": 1,
+    "total_circulation": 1401,
+    "states": [
+      "TX"
+    ],
+    "centroid_lat": 32.2504,
+    "centroid_lng": -101.4787
+  },
+  {
+    "dma_code": "650",
+    "dma": "OKLAHOMA CITY",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "OK"
+    ],
+    "centroid_lat": 36.3956,
+    "centroid_lng": -97.8784
+  },
+  {
+    "dma_code": "631",
+    "dma": "OTTUMWA - KIRKSVILLE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "IA"
+    ],
+    "centroid_lat": 41.0177,
+    "centroid_lng": -92.4113
+  },
+  {
+    "dma_code": "632",
+    "dma": "PADUCAH - CAPE GIRARD. - HARRISBURG",
+    "count": 1,
+    "total_circulation": 10000,
+    "states": [
+      "KY"
+    ],
+    "centroid_lat": 36.6103,
+    "centroid_lng": -88.3148
+  },
+  {
+    "dma_code": "504",
+    "dma": "PHILADELPHIA",
+    "count": 1,
+    "total_circulation": 9000,
+    "states": [
+      "DE"
+    ],
+    "centroid_lat": 39.1582,
+    "centroid_lng": -75.5244
+  },
+  {
+    "dma_code": "508",
+    "dma": "PITTSBURGH",
+    "count": 1,
+    "total_circulation": 18000,
+    "states": [
+      "PA"
+    ],
+    "centroid_lat": 40.8612,
+    "centroid_lng": -79.8953
+  },
+  {
+    "dma_code": "500",
+    "dma": "PORTLAND - AUBURN",
+    "count": 1,
+    "total_circulation": 13500,
+    "states": [
+      "NH"
+    ],
+    "centroid_lat": 44.0537,
+    "centroid_lng": -71.1284
+  },
+  {
+    "dma_code": "560",
+    "dma": "RALEIGH - DURHAM (FAYETTEVILLE)",
+    "count": 1,
+    "total_circulation": 20000,
+    "states": [
+      "NC"
+    ],
+    "centroid_lat": 36.4615,
+    "centroid_lng": -77.6541
+  },
+  {
+    "dma_code": "573",
+    "dma": "ROANOKE - LYNCHBURG",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "VA"
+    ],
+    "centroid_lat": 36.826,
+    "centroid_lng": -79.3981
+  },
+  {
+    "dma_code": "807",
+    "dma": "SAN FRANCISCO - OAK. - SAN JOSE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "CA"
+    ],
+    "centroid_lat": 37.4636,
+    "centroid_lng": -122.4286
+  },
+  {
+    "dma_code": "507",
+    "dma": "SAVANNAH",
+    "count": 1,
+    "total_circulation": 5000,
+    "states": [
+      "GA"
+    ],
+    "centroid_lat": 31.5985,
+    "centroid_lng": -81.8826
+  },
+  {
+    "dma_code": "881",
+    "dma": "SPOKANE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "WA"
+    ],
+    "centroid_lat": 47.4235,
+    "centroid_lng": -120.3103
+  },
+  {
+    "dma_code": "581",
+    "dma": "TERRE HAUTE",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "IL"
+    ],
+    "centroid_lat": 40.1245,
+    "centroid_lng": -87.63
+  },
+  {
+    "dma_code": "540",
+    "dma": "TRAVERSE CITY - CADILLAC",
+    "count": 1,
+    "total_circulation": null,
+    "states": [
+      "MI"
+    ],
+    "centroid_lat": 44.7631,
+    "centroid_lng": -85.6206
+  },
+  {
+    "dma_code": "511",
+    "dma": "WASHINGTON, DC (HAGERSTOWN)",
+    "count": 1,
+    "total_circulation": 30000,
+    "states": [
+      "MD"
+    ],
+    "centroid_lat": 39.6529,
+    "centroid_lng": -78.7625
+  },
+  {
+    "dma_code": "705",
+    "dma": "WAUSAU - RHINELANDER",
+    "count": 1,
+    "total_circulation": 5061,
+    "states": [
+      "WI"
+    ],
+    "centroid_lat": 45.871,
+    "centroid_lng": -89.7123
+  },
+  {
+    "dma_code": "678",
+    "dma": "WICHITA - HUTCHINSON PLUS",
+    "count": 1,
+    "total_circulation": 2800,
+    "states": [
+      "OK"
+    ],
+    "centroid_lat": 36.6861,
+    "centroid_lng": -101.4784
+  },
+  {
+    "dma_code": "536",
+    "dma": "YOUNGSTOWN",
+    "count": 1,
+    "total_circulation": 20000,
+    "states": [
+      "PA"
+    ],
+    "centroid_lat": 41.2292,
+    "centroid_lng": -80.5009
+  }
+]
