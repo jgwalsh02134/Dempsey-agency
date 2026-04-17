@@ -1224,6 +1224,40 @@ tbody tr:last-child td {
   }
 }
 
+/* ==================================================================
+   Maps
+================================================================== */
+
+.map-container {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.map-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.publisher-map-card {
+  margin-bottom: 1.5rem;
+}
+
+.publisher-map-title {
+  font-size: 1rem;
+  margin-bottom: 0.875rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
