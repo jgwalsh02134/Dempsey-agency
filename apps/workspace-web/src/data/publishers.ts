@@ -133,3 +133,13 @@ export function formatCirc(n: number | null): string {
   if (n === null) return "—";
   return n.toLocaleString("en-US");
 }
+
+export function formatPublisherForClipboard(p: Publisher): string {
+  const lines: string[] = [p.name];
+  if (p.addr && p.addr.trim()) lines.push(p.addr.trim());
+  lines.push(`${p.city}, ${p.state}${p.zip ? ` ${p.zip}` : ""}`);
+  lines.push(`DMA: ${p.dma} (${p.dma_code})`);
+  if (p.circ !== null) lines.push(`Circulation: ${formatCirc(p.circ)}`);
+  lines.push(p.url);
+  return lines.join("\n");
+}

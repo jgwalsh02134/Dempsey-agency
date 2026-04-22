@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import type { Publisher } from "../../data/publishers";
-import { formatCirc } from "../../data/publishers";
+import { formatCirc, formatPublisherForClipboard } from "../../data/publishers";
 import { ApiError } from "../../lib/api";
 import {
   fetchPublisherSummary,
@@ -28,10 +28,20 @@ type SummaryState =
   | { status: "ok"; data: PublisherSummary }
   | { status: "error"; message: string };
 
+type CopyState = "success" | "error";
+type CopyKey = `row:${string}` | `summary:${string}`;
+
 const TRUNCATE_AT = 10;
+const COPY_FEEDBACK_MS = 2000;
 
 function rowKey(p: Publisher): string {
   return `${p.name}|${p.city}|${p.state}`;
+}
+
+function copyLabel(state: CopyState | undefined, idle: string): string {
+  if (state === "success") return "Copied ✓";
+  if (state === "error") return "Copy failed";
+  return idle;
 }
 
 function headline(selection: Selection, searchActive: boolean): string {
@@ -52,12 +62,32 @@ export function DetailsPanel({
 }: DetailsPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const [summaries, setSummaries] = useState<Record<string, SummaryState>>({});
+  const [copyStates, setCopyStates] = useState<
+    Partial<Record<CopyKey, CopyState>>
+  >({});
 
   // Clear all summaries when the selection changes — spec: "cleared on
   // selection change".
   useEffect(() => {
     setSummaries({});
   }, [selection]);
+
+  async function copy(key: CopyKey, text: string) {
+    let outcome: CopyState;
+    try {
+      await navigator.clipboard.writeText(text);
+      outcome = "success";
+    } catch {
+      outcome = "error";
+    }
+    setCopyStates((prev) => ({ ...prev, [key]: outcome }));
+    window.setTimeout(() => {
+      setCopyStates((prev) => {
+        const { [key]: _discard, ...rest } = prev;
+        return rest;
+      });
+    }, COPY_FEEDBACK_MS);
+  }
 
   async function runSummary(p: Publisher, force: boolean) {
     const key = rowKey(p);
@@ -152,6 +182,17 @@ export function DetailsPanel({
                       >
                         Visit site →
                       </a>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() =>
+                          copy(`row:${key}`, formatPublisherForClipboard(p))
+                        }
+                        aria-live="polite"
+                        aria-label={`Copy ${p.name} details`}
+                      >
+                        {copyLabel(copyStates[`row:${key}`], "Copy")}
+                      </button>
                       {state.status === "idle" && (
                         <button
                           type="button"
@@ -191,6 +232,19 @@ export function DetailsPanel({
                         <span>
                           Generated {formatRelativeTime(state.data.generated_at)}
                         </span>
+                        <span aria-hidden="true">·</span>
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() =>
+                            copy(`summary:${key}`, state.data.summary)
+                          }
+                          aria-live="polite"
+                          aria-label={`Copy summary of ${p.name}`}
+                        >
+                          {copyLabel(copyStates[`summary:${key}`], "Copy")}
+                        </button>
+                        <span aria-hidden="true">·</span>
                         <button
                           type="button"
                           className="btn-link"
