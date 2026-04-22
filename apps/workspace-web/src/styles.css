@@ -7,42 +7,128 @@
   --font-mono: "degular-mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
     monospace;
 
+  /*
+   * Color tokens — HSL channel system.
+   * Each color is declared as three channels (-h, -s, -l) and one composed
+   * hsl(...) value. Manipulate channels directly for derived states, e.g.:
+   *   .btn:hover { background: hsl(var(--h) var(--s) calc(var(--l) - 8%)); }
+   *
+   * Note: 4 ad-hoc color literals remain at use-sites, intentionally out
+   * of scope for this token refactor. Candidates for a future pass:
+   *   .btn-secondary              { color: #ffffff }
+   *   .nav-overlay                { background: rgba(2, 6, 23, 0.55) }
+   *   .auth-form .btn-primary     { box-shadow: ... rgba(15, 23, 42, ...) }
+   *   .publisher-sheet-backdrop   { background: color-mix(... #000 45%, ...) }
+   */
+
   /* Raw brand (reference — rarely used directly) */
-  --brand-teal: #14b8a6;
-  --brand-teal-deep: #0f766e;
-  --brand-indigo: #6366f1;
-  --brand-dempsey-navy: #10233f;
+  --brand-teal-h: 173;
+  --brand-teal-s: 80%;
+  --brand-teal-l: 40%;
+  --brand-teal: hsl(var(--brand-teal-h) var(--brand-teal-s) var(--brand-teal-l));
+  --brand-teal-deep-h: 175;
+  --brand-teal-deep-s: 77%;
+  --brand-teal-deep-l: 26%;
+  --brand-teal-deep: hsl(var(--brand-teal-deep-h) var(--brand-teal-deep-s) var(--brand-teal-deep-l));
+  --brand-indigo-h: 239;
+  --brand-indigo-s: 84%;
+  --brand-indigo-l: 67%;
+  --brand-indigo: hsl(var(--brand-indigo-h) var(--brand-indigo-s) var(--brand-indigo-l));
+  --brand-dempsey-navy-h: 216;
+  --brand-dempsey-navy-s: 59%;
+  --brand-dempsey-navy-l: 15%;
+  --brand-dempsey-navy: hsl(var(--brand-dempsey-navy-h) var(--brand-dempsey-navy-s) var(--brand-dempsey-navy-l));
 
   /* Surfaces — light */
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-elevated: #ffffff;
+  --bg-app-h: 210;
+  --bg-app-s: 40%;
+  --bg-app-l: 98%;
+  --bg-app: hsl(var(--bg-app-h) var(--bg-app-s) var(--bg-app-l));
+  --bg-surface-h: 0;
+  --bg-surface-s: 0%;
+  --bg-surface-l: 100%;
+  --bg-surface: hsl(var(--bg-surface-h) var(--bg-surface-s) var(--bg-surface-l));
+  --bg-elevated-h: 0;
+  --bg-elevated-s: 0%;
+  --bg-elevated-l: 100%;
+  --bg-elevated: hsl(var(--bg-elevated-h) var(--bg-elevated-s) var(--bg-elevated-l));
 
   /* Text — light */
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #52606e;
+  --text-primary-h: 222;
+  --text-primary-s: 47%;
+  --text-primary-l: 11%;
+  --text-primary: hsl(var(--text-primary-h) var(--text-primary-s) var(--text-primary-l));
+  --text-secondary-h: 215;
+  --text-secondary-s: 25%;
+  --text-secondary-l: 27%;
+  --text-secondary: hsl(var(--text-secondary-h) var(--text-secondary-s) var(--text-secondary-l));
+  --text-muted-h: 210;
+  --text-muted-s: 15%;
+  --text-muted-l: 38%;
+  --text-muted: hsl(var(--text-muted-h) var(--text-muted-s) var(--text-muted-l));
 
   /* Borders — light */
-  --border-subtle: #e2e8f0;
-  --border-strong: #64748b;
+  --border-subtle-h: 214;
+  --border-subtle-s: 32%;
+  --border-subtle-l: 91%;
+  --border-subtle: hsl(var(--border-subtle-h) var(--border-subtle-s) var(--border-subtle-l));
+  --border-strong-h: 215;
+  --border-strong-s: 16%;
+  --border-strong-l: 47%;
+  --border-strong: hsl(var(--border-strong-h) var(--border-strong-s) var(--border-strong-l));
 
   /* Actions — light (tuned for WCAG AA on white) */
-  --action-primary: #0f766e;
-  --action-primary-hover: #115e59;
-  --action-primary-text: #ffffff;
-  --action-primary-tint: rgba(20, 184, 166, 0.14);
-  --action-primary-tint-strong: rgba(20, 184, 166, 0.22);
-  --action-secondary: #4f46e5;
-  --action-secondary-hover: #4338ca;
+  --action-primary-h: 175;
+  --action-primary-s: 77%;
+  --action-primary-l: 26%;
+  --action-primary: hsl(var(--action-primary-h) var(--action-primary-s) var(--action-primary-l));
+  --action-primary-hover-h: 176;
+  --action-primary-hover-s: 69%;
+  --action-primary-hover-l: 22%;
+  --action-primary-hover: hsl(var(--action-primary-hover-h) var(--action-primary-hover-s) var(--action-primary-hover-l));
+  --action-primary-text-h: 0;
+  --action-primary-text-s: 0%;
+  --action-primary-text-l: 100%;
+  --action-primary-text: hsl(var(--action-primary-text-h) var(--action-primary-text-s) var(--action-primary-text-l));
+  --action-primary-tint-h: 173;
+  --action-primary-tint-s: 80%;
+  --action-primary-tint-l: 40%;
+  --action-primary-tint: hsl(var(--action-primary-tint-h) var(--action-primary-tint-s) var(--action-primary-tint-l) / 0.14);
+  --action-primary-tint-strong-h: 173;
+  --action-primary-tint-strong-s: 80%;
+  --action-primary-tint-strong-l: 40%;
+  --action-primary-tint-strong: hsl(var(--action-primary-tint-strong-h) var(--action-primary-tint-strong-s) var(--action-primary-tint-strong-l) / 0.22);
+  --action-secondary-h: 243;
+  --action-secondary-s: 75%;
+  --action-secondary-l: 59%;
+  --action-secondary: hsl(var(--action-secondary-h) var(--action-secondary-s) var(--action-secondary-l));
+  --action-secondary-hover-h: 245;
+  --action-secondary-hover-s: 58%;
+  --action-secondary-hover-l: 51%;
+  --action-secondary-hover: hsl(var(--action-secondary-hover-h) var(--action-secondary-hover-s) var(--action-secondary-hover-l));
 
-  --focus-ring: #0f766e;
+  --focus-ring-h: 175;
+  --focus-ring-s: 77%;
+  --focus-ring-l: 26%;
+  --focus-ring: hsl(var(--focus-ring-h) var(--focus-ring-s) var(--focus-ring-l));
 
   /* Status — light */
-  --success: #15803d;
-  --warning: #b45309;
-  --error: #b91c1c;
-  --info: #0369a1;
+  --success-h: 142;
+  --success-s: 72%;
+  --success-l: 29%;
+  --success: hsl(var(--success-h) var(--success-s) var(--success-l));
+  --warning-h: 26;
+  --warning-s: 90%;
+  --warning-l: 37%;
+  --warning: hsl(var(--warning-h) var(--warning-s) var(--warning-l));
+  --error-h: 0;
+  --error-s: 74%;
+  --error-l: 42%;
+  --error: hsl(var(--error-h) var(--error-s) var(--error-l));
+  --info-h: 201;
+  --info-s: 96%;
+  --info-l: 32%;
+  --info: hsl(var(--info-h) var(--info-s) var(--info-l));
 
   /* Shape */
   --radius-sm: 4px;
@@ -69,35 +155,95 @@
   color-scheme: dark;
 
   /* Surfaces — dark, stepped for clear layering */
-  --bg-app: #020617;
-  --bg-surface: #0b1322;
-  --bg-elevated: #111c33;
+  --bg-app-h: 229;
+  --bg-app-s: 84%;
+  --bg-app-l: 5%;
+  --bg-app: hsl(var(--bg-app-h) var(--bg-app-s) var(--bg-app-l));
+  --bg-surface-h: 219;
+  --bg-surface-s: 51%;
+  --bg-surface-l: 9%;
+  --bg-surface: hsl(var(--bg-surface-h) var(--bg-surface-s) var(--bg-surface-l));
+  --bg-elevated-h: 221;
+  --bg-elevated-s: 50%;
+  --bg-elevated-l: 13%;
+  --bg-elevated: hsl(var(--bg-elevated-h) var(--bg-elevated-s) var(--bg-elevated-l));
 
   /* Text — dark */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
+  --text-primary-h: 210;
+  --text-primary-s: 40%;
+  --text-primary-l: 98%;
+  --text-primary: hsl(var(--text-primary-h) var(--text-primary-s) var(--text-primary-l));
+  --text-secondary-h: 213;
+  --text-secondary-s: 27%;
+  --text-secondary-l: 84%;
+  --text-secondary: hsl(var(--text-secondary-h) var(--text-secondary-s) var(--text-secondary-l));
+  --text-muted-h: 215;
+  --text-muted-s: 20%;
+  --text-muted-l: 65%;
+  --text-muted: hsl(var(--text-muted-h) var(--text-muted-s) var(--text-muted-l));
 
   /* Borders — dark */
-  --border-subtle: #1e293b;
-  --border-strong: #64748b;
+  --border-subtle-h: 217;
+  --border-subtle-s: 33%;
+  --border-subtle-l: 17%;
+  --border-subtle: hsl(var(--border-subtle-h) var(--border-subtle-s) var(--border-subtle-l));
+  --border-strong-h: 215;
+  --border-strong-s: 16%;
+  --border-strong-l: 47%;
+  --border-strong: hsl(var(--border-strong-h) var(--border-strong-s) var(--border-strong-l));
 
   /* Actions — dark (teal brightens on dark) */
-  --action-primary: #14b8a6;
-  --action-primary-hover: #2dd4bf;
-  --action-primary-text: #042f2e;
-  --action-primary-tint: rgba(20, 184, 166, 0.18);
-  --action-primary-tint-strong: rgba(20, 184, 166, 0.28);
-  --action-secondary: #818cf8;
-  --action-secondary-hover: #a5b4fc;
+  --action-primary-h: 173;
+  --action-primary-s: 80%;
+  --action-primary-l: 40%;
+  --action-primary: hsl(var(--action-primary-h) var(--action-primary-s) var(--action-primary-l));
+  --action-primary-hover-h: 172;
+  --action-primary-hover-s: 66%;
+  --action-primary-hover-l: 50%;
+  --action-primary-hover: hsl(var(--action-primary-hover-h) var(--action-primary-hover-s) var(--action-primary-hover-l));
+  --action-primary-text-h: 179;
+  --action-primary-text-s: 84%;
+  --action-primary-text-l: 10%;
+  --action-primary-text: hsl(var(--action-primary-text-h) var(--action-primary-text-s) var(--action-primary-text-l));
+  --action-primary-tint-h: 173;
+  --action-primary-tint-s: 80%;
+  --action-primary-tint-l: 40%;
+  --action-primary-tint: hsl(var(--action-primary-tint-h) var(--action-primary-tint-s) var(--action-primary-tint-l) / 0.18);
+  --action-primary-tint-strong-h: 173;
+  --action-primary-tint-strong-s: 80%;
+  --action-primary-tint-strong-l: 40%;
+  --action-primary-tint-strong: hsl(var(--action-primary-tint-strong-h) var(--action-primary-tint-strong-s) var(--action-primary-tint-strong-l) / 0.28);
+  --action-secondary-h: 234;
+  --action-secondary-s: 89%;
+  --action-secondary-l: 74%;
+  --action-secondary: hsl(var(--action-secondary-h) var(--action-secondary-s) var(--action-secondary-l));
+  --action-secondary-hover-h: 230;
+  --action-secondary-hover-s: 94%;
+  --action-secondary-hover-l: 82%;
+  --action-secondary-hover: hsl(var(--action-secondary-hover-h) var(--action-secondary-hover-s) var(--action-secondary-hover-l));
 
-  --focus-ring: #5eead4;
+  --focus-ring-h: 171;
+  --focus-ring-s: 77%;
+  --focus-ring-l: 64%;
+  --focus-ring: hsl(var(--focus-ring-h) var(--focus-ring-s) var(--focus-ring-l));
 
   /* Status — dark */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --error: #f87171;
-  --info: #38bdf8;
+  --success-h: 142;
+  --success-s: 71%;
+  --success-l: 45%;
+  --success: hsl(var(--success-h) var(--success-s) var(--success-l));
+  --warning-h: 38;
+  --warning-s: 92%;
+  --warning-l: 50%;
+  --warning: hsl(var(--warning-h) var(--warning-s) var(--warning-l));
+  --error-h: 0;
+  --error-s: 91%;
+  --error-l: 71%;
+  --error: hsl(var(--error-h) var(--error-s) var(--error-l));
+  --info-h: 198;
+  --info-s: 93%;
+  --info-l: 60%;
+  --info: hsl(var(--info-h) var(--info-s) var(--info-l));
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
