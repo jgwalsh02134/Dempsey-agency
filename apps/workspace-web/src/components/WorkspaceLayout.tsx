@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { FocusModeProvider, useFocusMode } from "../focus/FocusModeProvider";
 import { AIStatusIndicator } from "./AIStatusIndicator";
 import { BrandMark } from "./brand/BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
@@ -21,12 +22,31 @@ const ADMIN_NAV_ITEMS = [
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const IS_MAC =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const SHORTCUT_LABEL = IS_MAC ? "⌘." : "Ctrl+.";
+
 export function WorkspaceLayout() {
+  return (
+    <FocusModeProvider>
+      <WorkspaceShell />
+    </FocusModeProvider>
+  );
+}
+
+function WorkspaceShell() {
   const [navOpen, setNavOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 768px)").matches
+      : true,
+  );
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { focusMode, toggle, setFocusMode } = useFocusMode();
   const sidebarRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -43,6 +63,13 @@ export function WorkspaceLayout() {
   useEffect(() => {
     setNavOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (!navOpen) return;
@@ -94,13 +121,20 @@ export function WorkspaceLayout() {
     };
   }, [navOpen]);
 
+  const sidebarInert = focusMode && isDesktop;
+
   return (
-    <div className="workspace-shell" data-nav-open={navOpen}>
+    <div
+      className="workspace-shell"
+      data-nav-open={navOpen}
+      data-focus-mode={focusMode}
+    >
       <aside
         id="workspace-sidebar"
         ref={sidebarRef}
         className="workspace-sidebar"
         aria-label="Primary navigation"
+        inert={sidebarInert}
       >
         <div className="sidebar-brand">
           <BrandMark variant="mark" className="sidebar-brand-mark" alt="Dempsey" />
@@ -142,6 +176,20 @@ export function WorkspaceLayout() {
         </nav>
         <div className="sidebar-footer">
           <ThemeToggle />
+          {user && (
+            <button
+              type="button"
+              className="focus-toggle-btn"
+              onClick={toggle}
+              aria-pressed={focusMode}
+              aria-keyshortcuts="Meta+Period Control+Period"
+              aria-label={focusMode ? "Exit focus mode" : "Enter focus mode"}
+              title={`${focusMode ? "Exit focus mode" : "Focus mode"} (${SHORTCUT_LABEL})`}
+            >
+              <FocusIcon />
+              <span>{focusMode ? "Exit focus mode" : "Focus mode"}</span>
+            </button>
+          )}
           {user && (
             <button
               type="button"
@@ -200,6 +248,40 @@ export function WorkspaceLayout() {
           <Outlet />
         </main>
       </div>
+
+      {focusMode && (
+        <button
+          type="button"
+          className="focus-exit-pill"
+          onClick={() => setFocusMode(false)}
+          aria-label="Exit focus mode"
+        >
+          <FocusIcon />
+          <span>Exit focus mode</span>
+          <kbd>{SHORTCUT_LABEL}</kbd>
+        </button>
+      )}
     </div>
+  );
+}
+
+function FocusIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6V3H6" />
+      <path d="M13 6V3H10" />
+      <path d="M3 10V13H6" />
+      <path d="M13 10V13H10" />
+    </svg>
   );
 }

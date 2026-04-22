@@ -931,6 +931,94 @@ tbody tr:last-child td {
 }
 
 /* ==================================================================
+   Focus mode — toggle button + floating exit pill
+================================================================== */
+
+.focus-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  min-height: 32px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out),
+    border-color var(--motion-duration-fast) var(--motion-ease-out);
+  align-self: flex-start;
+}
+
+.focus-toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.focus-toggle-btn[aria-pressed="true"] {
+  background: var(--action-primary-tint);
+  color: var(--text-primary);
+  border-color: color-mix(in oklab, var(--action-primary) 30%, transparent);
+}
+
+@media (max-width: 767.98px) {
+  .focus-toggle-btn {
+    display: none;
+  }
+}
+
+.focus-exit-pill {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  min-height: 44px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-heading);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out),
+    border-color var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.focus-exit-pill:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.focus-exit-pill kbd {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-app);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 767.98px) {
+  .focus-exit-pill {
+    display: none;
+  }
+}
+
+/* ==================================================================
    Login / auth
 ================================================================== */
 
@@ -1212,6 +1300,24 @@ tbody tr:last-child td {
     transform: none;
     box-shadow: none;
     padding: 1.5rem 1rem;
+    transition:
+      width var(--motion-duration-base) var(--motion-ease),
+      padding var(--motion-duration-base) var(--motion-ease),
+      opacity var(--motion-duration-base) var(--motion-ease);
+  }
+
+  .workspace-shell[data-focus-mode="true"] .workspace-sidebar {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+    border-right-width: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .workspace-shell[data-focus-mode="true"] .workspace-content {
+    padding-top: 1rem;
   }
 
   .nav-overlay {
