@@ -28,6 +28,9 @@ const envSchema = z.object({
   // request origin, which works in dev but should be set explicitly in prod.
   APP_WORKSPACE_URL: z.string().url().optional(),
 
+  // OpenAI key for AI-generated publisher summaries.
+  OPENAI_API_KEY: z.string().min(1).optional(),
+
   // Admin bootstrap inputs (only read by scripts/bootstrap.ts)
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PASSWORD: z.string().optional(),
