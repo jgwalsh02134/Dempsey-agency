@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: "/events", label: "Events" },
   { to: "/strategies", label: "Strategies" },
   { to: "/projects", label: "Projects" },
+  { to: "/integrations", label: "Integrations" },
 ] as const;
 
 const ADMIN_NAV_ITEMS = [

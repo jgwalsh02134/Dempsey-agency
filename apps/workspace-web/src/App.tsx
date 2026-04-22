@@ -9,6 +9,7 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { PublishersPage } from "./pages/PublishersPage";
 import { MarketsPage } from "./pages/MarketsPage";
 import { EventsPage } from "./pages/EventsPage";
+import { IntegrationsPage } from "./pages/IntegrationsPage";
 import { StrategiesPage } from "./pages/StrategiesPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 
@@ -30,6 +31,7 @@ export function App() {
         <Route path="events" element={<EventsPage />} />
         <Route path="strategies" element={<StrategiesPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="integrations" element={<IntegrationsPage />} />
         <Route
           path="admin/invites"
           element={

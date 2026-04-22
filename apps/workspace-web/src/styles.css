@@ -2591,6 +2591,140 @@ tbody tr:last-child td {
   }
 }
 
+/* ==================================================================
+   Integrations page
+================================================================== */
+
+.integrations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.integration-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.integration-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+}
+
+.integration-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.integration-card-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--bg-app);
+  padding: 3px;
+}
+
+.integration-card-name {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.integration-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+}
+
+.integration-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+
+.integration-status-connected .integration-status-dot {
+  background: var(--success);
+}
+
+.integration-status-not-connected .integration-status-dot {
+  background: var(--text-muted);
+}
+
+.integration-card-description {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.integration-card-meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.integration-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Fitts's Law: primary action earns a 44×44 touch target. */
+.integration-card-actions .btn {
+  min-height: 44px;
+}
+
+.integration-result-region {
+  /* Reserve a live region even when empty so aria-live has a stable host. */
+  min-height: 0;
+}
+
+.integration-result {
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.integration-result-success {
+  color: var(--success);
+  background: color-mix(in oklab, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--success) 40%, transparent);
+}
+
+.integration-result-warning {
+  color: var(--warning);
+  background: color-mix(in oklab, var(--warning) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--warning) 40%, transparent);
+}
+
+.integration-result-error {
+  color: var(--error);
+  background: color-mix(in oklab, var(--error) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--error) 40%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
