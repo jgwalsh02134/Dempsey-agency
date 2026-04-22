@@ -31,6 +31,10 @@ const envSchema = z.object({
   // OpenAI key for AI-generated publisher summaries.
   OPENAI_API_KEY: z.string().min(1).optional(),
 
+  // Slack incoming webhook for outbound workspace notifications.
+  // If unset, the notifications endpoints return 503.
+  SLACK_WEBHOOK_URL: z.string().url().optional(),
+
   // Admin bootstrap inputs (only read by scripts/bootstrap.ts)
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PASSWORD: z.string().optional(),

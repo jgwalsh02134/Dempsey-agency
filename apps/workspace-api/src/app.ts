@@ -8,6 +8,7 @@ import { authPlugin } from "./auth/plugin.js";
 import { healthRoutes } from "./routes/health.js";
 import { authRoutes } from "./routes/auth.js";
 import { publishersRoutes } from "./routes/publishers.js";
+import { notificationsRoutes } from "./routes/notifications.js";
 import { marketsRoutes } from "./routes/markets.js";
 import { eventsRoutes } from "./routes/events.js";
 import { strategiesRoutes } from "./routes/strategies.js";
@@ -66,6 +67,7 @@ export async function buildApp() {
   await app.register(healthRoutes);
   await app.register(authRoutes, { prefix: "/api/workspace/auth" });
   await app.register(publishersRoutes, { prefix: "/api/workspace/publishers" });
+  await app.register(notificationsRoutes, { prefix: "/api/workspace/notifications" });
   await app.register(marketsRoutes, { prefix: "/api/workspace/markets" });
   await app.register(eventsRoutes, { prefix: "/api/workspace/events" });
   await app.register(strategiesRoutes, { prefix: "/api/workspace/strategies" });
