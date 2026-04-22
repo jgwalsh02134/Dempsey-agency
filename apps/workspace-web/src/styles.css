@@ -1076,6 +1076,33 @@ tbody tr:last-child td {
   height: 14px;
 }
 
+.exit-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  min-height: 32px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition:
+    background var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out),
+    border-color var(--motion-duration-fast) var(--motion-ease-out);
+  align-self: flex-start;
+}
+
+.exit-link-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
 /* ==================================================================
    Focus mode — toggle button + floating exit pill
 ================================================================== */

@@ -175,6 +175,14 @@ function WorkspaceShell() {
           )}
         </nav>
         <div className="sidebar-footer">
+          <a
+            className="exit-link-btn"
+            href="https://dempsey.agency/"
+            rel="noreferrer"
+            aria-label="Exit workspace and return to dempsey.agency"
+          >
+            ← dempsey.agency
+          </a>
           <ThemeToggle />
           {user && (
             <button
