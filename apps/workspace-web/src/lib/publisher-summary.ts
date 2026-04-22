@@ -1,4 +1,4 @@
-import { apiJson } from "./api";
+import { apiFetch, apiJson } from "./api";
 
 export type PublisherSummary = {
   summary: string;
@@ -26,6 +26,28 @@ export async function fetchPublisherSummary(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export type SummaryHealth =
+  | { status: "ok" }
+  | {
+      status: "down";
+      reason:
+        | "no_api_key"
+        | "openai_unreachable"
+        | "openai_auth_failed"
+        | "openai_error";
+      statusCode?: number;
+    };
+
+export async function fetchSummaryHealth(): Promise<SummaryHealth> {
+  const res = await apiFetch("/api/workspace/publishers/summary/health");
+  if (res.status === 200 || res.status === 503) {
+    return (await res.json()) as SummaryHealth;
+  }
+  // Any other status (401, 429, 5xx without a structured body) is surfaced
+  // as a thrown error so the caller treats it as "checking", not "down".
+  throw new Error(`summary health request failed (${res.status})`);
 }
 
 export function formatRelativeTime(iso: string): string {

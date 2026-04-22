@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Markdown from "react-markdown";
 import type { Publisher } from "../../data/publishers";
 import { formatCirc } from "../../data/publishers";
 import { ApiError } from "../../lib/api";
@@ -183,9 +184,9 @@ export function DetailsPanel({
                       aria-label={`Summary of ${p.name}`}
                     >
                       <h4 className="details-summary-heading">Overview</h4>
-                      <p className="details-summary-body">
-                        {state.data.summary}
-                      </p>
+                      <div className="details-summary-markdown">
+                        <Markdown>{state.data.summary}</Markdown>
+                      </div>
                       <div className="details-summary-footer">
                         <span>
                           Generated {formatRelativeTime(state.data.generated_at)}

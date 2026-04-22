@@ -51,11 +51,24 @@ type CachedSummary = {
 
 function systemPrompt(): string {
   return [
-    "You write brief, neutral summaries of local and regional news publishers for an ad-buying workspace.",
-    "Respond with exactly 3-4 sentences. Cover: what the publisher covers, editorial tone, likely audience, any standout sections or specialties.",
-    "Ground your answer in the publisher's URL and location. Do not invent circulation numbers, ownership, or awards.",
-    "If you don't have enough confident public information about the specific publisher, reply with exactly: Limited public info available.",
-  ].join(" ");
+    "You write brief, neutral summaries of local and regional news publishers for an ad-buying workspace, in structured markdown.",
+    "Output exactly these four sections, in this order, using bold markdown for headings (not # headings):",
+    "",
+    "**What they cover**",
+    "- 2 to 3 short bullet points",
+    "",
+    "**Editorial tone**",
+    "A single sentence.",
+    "",
+    "**Audience**",
+    "A single sentence.",
+    "",
+    "**Standout sections**",
+    "- 2 to 3 short bullet points",
+    "",
+    "Ground every claim in the publisher's URL and location. Do not invent circulation numbers, ownership, awards, or staff names.",
+    "If you do not have enough confident public information for a section, emit that section's content as a single bullet or sentence reading exactly: Limited public info available.",
+  ].join("\n");
 }
 
 function userPrompt(p: z.infer<typeof summaryBody>): string {
@@ -112,6 +125,53 @@ function clientIp(request: FastifyRequest): string {
   // `trustProxy: true` in Fastify config means `request.ip` already honors
   // X-Forwarded-For when deployed behind Railway's proxy.
   return request.ip || "unknown";
+}
+
+type HealthResult =
+  | { status: "ok" }
+  | {
+      status: "down";
+      reason:
+        | "no_api_key"
+        | "openai_unreachable"
+        | "openai_auth_failed"
+        | "openai_error";
+      statusCode?: number;
+    };
+
+const HEALTH_CACHE_TTL_MS = 60_000;
+const HEALTH_PING_TIMEOUT_MS = 5_000;
+let healthCache: { result: HealthResult; expiresAt: number } | null = null;
+
+async function runHealthPing(): Promise<HealthResult> {
+  if (!env.OPENAI_API_KEY) {
+    return { status: "down", reason: "no_api_key" };
+  }
+  const client = new OpenAI({
+    apiKey: env.OPENAI_API_KEY,
+    timeout: HEALTH_PING_TIMEOUT_MS,
+  });
+  try {
+    await client.models.list();
+    return { status: "ok" };
+  } catch (err) {
+    const name = err instanceof Error ? err.name : "";
+    const statusCode =
+      typeof (err as { status?: unknown })?.status === "number"
+        ? (err as { status: number }).status
+        : undefined;
+    if (
+      name === "APIConnectionError" ||
+      name === "APIConnectionTimeoutError" ||
+      name === "AbortError"
+    ) {
+      return { status: "down", reason: "openai_unreachable" };
+    }
+    if (statusCode === 401) {
+      return { status: "down", reason: "openai_auth_failed" };
+    }
+    return { status: "down", reason: "openai_error", statusCode };
+  }
 }
 
 export async function publishersRoutes(app: FastifyInstance) {
@@ -212,5 +272,30 @@ export async function publishersRoutes(app: FastifyInstance) {
       model: SUMMARY_MODEL,
       cached: false,
     });
+  });
+
+  app.get("/summary/health", async (request, reply) => {
+    app.requireUser(request);
+
+    const ip = clientIp(request);
+    const rate = checkRateLimit(ip);
+    if (!rate.allowed) {
+      reply.header("Retry-After", String(rate.retryAfter));
+      return reply.code(429).send({
+        error: "rate_limited",
+        retry_after_seconds: rate.retryAfter,
+      });
+    }
+
+    const now = Date.now();
+    if (healthCache && healthCache.expiresAt > now) {
+      const code = healthCache.result.status === "ok" ? 200 : 503;
+      return reply.code(code).send(healthCache.result);
+    }
+
+    const result = await runHealthPing();
+    healthCache = { result, expiresAt: now + HEALTH_CACHE_TTL_MS };
+    const code = result.status === "ok" ? 200 : 503;
+    return reply.code(code).send(result);
   });
 }

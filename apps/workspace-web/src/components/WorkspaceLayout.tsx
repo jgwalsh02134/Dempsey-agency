@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { AIStatusIndicator } from "./AIStatusIndicator";
 import { BrandMark } from "./brand/BrandMark";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -151,6 +152,7 @@ export function WorkspaceLayout() {
               {signingOut ? "Signing out…" : "Sign out"}
             </button>
           )}
+          {user && <AIStatusIndicator />}
           <span className="sidebar-meta">
             {user ? (
               <span className="mono" title={user.email}>
