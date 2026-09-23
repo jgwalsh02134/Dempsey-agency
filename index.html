@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dempsey Agency</title>
+    <meta
+      name="description"
+      content="Dempsey Agency is a full-service media agency for strategic planning, premium publisher placements, and campaign execution — national reach with local precision."
+    />
+    <link rel="canonical" href="https://dempsey.agency/" />
+    <meta property="og:title" content="Dempsey Agency" />
+    <meta
+      property="og:description"
+      content="Strategic media planning, premium publisher placements, and campaign execution. National reach. Local precision."
+    />
+    <meta property="og:url" content="https://dempsey.agency/" />
+    <meta property="og:type" content="website" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
@@ -11,499 +23,26 @@
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#10233F" />
     <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
-    <style>
-      :root {
-        color-scheme: light;
-        --color-midnight: #10233f;
-        --color-fir: #0f524a;
-        --color-ocean: #4b6b8a;
-        --color-ledger: #e2e8f0;
-        --color-canvas: #f8fafc;
-        --color-gold: #b18a53;
-        --bg: var(--color-canvas);
-        --text: var(--color-midnight);
-      }
-
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        margin: 0;
-        min-height: 100vh;
-        min-height: 100dvh;
-        background: var(--bg);
-        color: var(--text);
-        font-family: "skolar-latin", serif;
-      }
-
-      img {
-        max-width: 100%;
-        height: auto;
-      }
-
-      a {
-        color: inherit;
-      }
-
-      .page {
-        min-height: 100vh;
-        min-height: 100dvh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .shell {
-        width: 100%;
-        max-width: 56rem;
-        margin-inline: auto;
-        padding-inline: clamp(1.25rem, 4vw, 2.25rem);
-      }
-
-      /* ── Skip link ── */
-      .skip-link {
-        position: absolute;
-        left: 1rem;
-        top: -3rem;
-        z-index: 1000;
-        padding: 0.75rem 1rem;
-        background: var(--color-midnight);
-        color: var(--color-canvas);
-        text-decoration: none;
-        border-radius: 0.375rem;
-        font-family: "neue-haas-grotesk-display", sans-serif;
-        font-size: 0.875rem;
-      }
-      .skip-link:focus {
-        top: 1rem;
-      }
-
-      /* ── Shared font-family ── */
-      .site-header,
-      .section-label,
-      .section-heading,
-      .header-nav,
-      .header-login,
-      .btn-primary,
-      .btn-secondary,
-      .service-card h3 {
-        font-family: "neue-haas-grotesk-display", sans-serif;
-      }
-
-      /* ── Header ── */
-      .site-header {
-        border-bottom: 1px solid var(--color-ledger);
-        background: rgba(248, 250, 252, 0.96);
-      }
-      .header-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        min-height: 4.75rem;
-      }
-      .header-logo {
-        display: inline-flex;
-        align-items: center;
-        line-height: 0;
-        flex-shrink: 0;
-      }
-      .header-logo img {
-        width: auto;
-        height: 2.5rem;
-        object-fit: contain;
-      }
-      .header-nav {
-        display: none;
-        align-items: center;
-        gap: 1.25rem;
-        font-size: 0.9375rem;
-        font-weight: 500;
-        letter-spacing: 0.02em;
-      }
-      .header-nav a {
-        text-decoration: none;
-        color: var(--color-ocean);
-      }
-      .header-nav a:hover,
-      .header-nav a:focus-visible {
-        color: var(--color-midnight);
-      }
-
-      /* ── Shared button / login ── */
-      .header-login,
-      .btn-primary,
-      .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 2.75rem;
-        padding: 0.75rem 1rem;
-        border-radius: 999px;
-        text-decoration: none;
-        font-size: 0.875rem;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        transition: background-color 0.2s ease, color 0.2s ease,
-          border-color 0.2s ease;
-      }
-      .header-login,
-      .btn-secondary {
-        border: 1px solid var(--color-ledger);
-        color: var(--color-midnight);
-        background: transparent;
-      }
-      .header-login:hover,
-      .btn-secondary:hover,
-      .header-login:focus-visible,
-      .btn-secondary:focus-visible {
-        border-color: var(--color-ocean);
-        color: var(--color-midnight);
-      }
-      .btn-primary {
-        background: var(--color-midnight);
-        color: var(--color-canvas);
-        border: 1px solid var(--color-midnight);
-      }
-      .btn-primary:hover,
-      .btn-primary:focus-visible {
-        background: var(--color-fir);
-        border-color: var(--color-fir);
-      }
-
-      /* ── Sections shared ── */
-      .hero,
-      .services,
-      .cta {
-        padding-block: clamp(2.75rem, 7vw, 4.5rem);
-      }
-      .hero {
-        padding-top: clamp(3.5rem, 8vw, 5.5rem);
-      }
-      .section-label {
-        margin: 0 0 0.875rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--color-ocean);
-      }
-      .section-heading {
-        margin: 0;
-        font-size: clamp(2rem, 5vw, 3.5rem);
-        line-height: 0.98;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        color: var(--color-midnight);
-        max-width: 12ch;
-      }
-      .section-body {
-        margin: 1.25rem 0 0;
-        max-width: 42rem;
-        font-size: clamp(1rem, 2vw, 1.125rem);
-        line-height: 1.7;
-        color: var(--color-ocean);
-      }
-      .hero-actions,
-      .cta-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.875rem;
-        margin-top: 1.75rem;
-      }
-
-      /* ── Services ── */
-      .services {
-        border-top: 1px solid var(--color-ledger);
-      }
-      .services-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        margin-top: 2rem;
-      }
-      .service-card {
-        padding: 1.5rem;
-        border: 1px solid var(--color-ledger);
-        border-radius: 1rem;
-        background: #ffffff;
-      }
-      .service-card h3 {
-        margin: 0 0 0.75rem;
-        font-size: 1.125rem;
-        line-height: 1.25;
-        color: var(--color-midnight);
-      }
-      .service-card p {
-        margin: 0;
-        color: var(--color-ocean);
-        line-height: 1.65;
-      }
-
-      /* ── CTA ── */
-      .cta {
-        border-top: 1px solid var(--color-ledger);
-      }
-
-      /* ── Page sections: tablet ── */
-      @media (min-width: 768px) {
-        .header-nav {
-          display: inline-flex;
-        }
-        .services-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      /* ══════════════════════════════════════════
-         Footer
-         ══════════════════════════════════════════ */
-      .site-footer {
-        width: 100%;
-        border-top: 2px solid var(--color-gold);
-        background: var(--color-canvas);
-        margin-top: auto;
-      }
-      .footer-shell {
-        width: 100%;
-        max-width: 56rem;
-        margin-inline: auto;
-        padding-inline: clamp(1.25rem, 4vw, 2.25rem);
-      }
-
-      /* ── Upper: brand + contact | affiliates ── */
-      .footer-upper {
-        padding-block: clamp(2rem, 4.5vw, 2.75rem);
-      }
-      .footer-upper > .footer-shell {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 2rem;
-      }
-      .footer-brand-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .footer-logo {
-        display: inline-flex;
-        line-height: 0;
-        border-radius: 4px;
-        transition: opacity 0.2s ease;
-      }
-      .footer-logo:hover {
-        opacity: 0.82;
-      }
-      .footer-logo:focus-visible {
-        outline: 2px solid var(--color-gold);
-        outline-offset: 4px;
-      }
-      .footer-logo img {
-        display: block;
-        height: 1.5rem;
-        width: auto;
-        object-fit: contain;
-      }
-      .footer-address {
-        margin: 0;
-        padding: 0;
-        font-style: normal;
-        display: flex;
-        flex-direction: column;
-        gap: 0.1rem;
-        font-family: "skolar-latin", serif;
-        font-size: 0.8125rem;
-        font-weight: 400;
-        line-height: 1.55;
-        letter-spacing: 0.01em;
-        color: var(--color-ocean);
-      }
-      .footer-address p {
-        margin: 0;
-      }
-      .footer-address a {
-        color: var(--color-midnight);
-        text-decoration: none;
-        font-weight: 500;
-        border-radius: 3px;
-        transition: color 0.2s ease;
-      }
-      .footer-address a:hover {
-        color: var(--color-fir);
-      }
-      .footer-address a:focus-visible {
-        outline: 2px solid var(--color-gold);
-        outline-offset: 2px;
-      }
-
-      /* ── Affiliates ── */
-      .footer-affiliates-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.625rem;
-        padding-top: 1.75rem;
-        border-top: 1px solid var(--color-ledger);
-        width: 100%;
-      }
-      .footer-label {
-        margin: 0;
-        font-family: "neue-haas-grotesk-display", sans-serif;
-        font-size: 0.625rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--color-ocean);
-        opacity: 0.55;
-      }
-      .footer-affiliates {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1.75rem;
-      }
-      .footer-affiliate {
-        display: inline-flex;
-        align-items: center;
-        text-decoration: none;
-        border-radius: 4px;
-        transition: opacity 0.2s ease;
-        opacity: 0.5;
-      }
-      .footer-affiliate:hover {
-        opacity: 0.75;
-      }
-      .footer-affiliate:focus-visible {
-        outline: 2px solid var(--color-gold);
-        outline-offset: 4px;
-        opacity: 0.75;
-      }
-      .footer-affiliate img {
-        display: block;
-        height: 1.25rem;
-        width: auto;
-        object-fit: contain;
-      }
-
-      /* ── Lower bar ── */
-      .footer-lower {
-        border-top: 1px solid var(--color-ledger);
-        background: #f1f5f9;
-        padding: 0.875rem 0
-          calc(0.875rem + env(safe-area-inset-bottom, 0px));
-      }
-      .footer-lower > .footer-shell {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 0.5rem;
-      }
-      .footer-nav {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        gap: 0;
-        font-family: "skolar-latin", serif;
-        font-size: 0.8125rem;
-      }
-      .footer-nav a {
-        color: var(--color-ocean);
-        text-decoration: none;
-        letter-spacing: 0.012em;
-        padding: 0.25rem 0;
-        border-radius: 3px;
-        transition: color 0.2s ease;
-      }
-      .footer-nav a:hover {
-        color: var(--color-midnight);
-      }
-      .footer-nav a:focus-visible {
-        outline: 2px solid var(--color-gold);
-        outline-offset: 2px;
-      }
-      .footer-nav-sep {
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: var(--color-ocean);
-        opacity: 0.3;
-        margin: 0 0.625rem;
-        flex-shrink: 0;
-      }
-      .footer-legal-block {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.125rem;
-      }
-      .footer-copyright {
-        margin: 0;
-        font-family: "skolar-latin", serif;
-        font-size: 0.6875rem;
-        line-height: 1.4;
-        color: var(--color-ocean);
-        opacity: 0.55;
-        letter-spacing: 0.008em;
-      }
-      .footer-disclaimer {
-        margin: 0;
-        font-family: "skolar-latin", serif;
-        font-size: 0.625rem;
-        font-weight: 300;
-        line-height: 1.4;
-        color: var(--color-ocean);
-        opacity: 0.4;
-      }
-
-      /* ── Footer: tablet (≥640px) ── */
-      @media (min-width: 640px) {
-        .footer-upper > .footer-shell {
-          flex-direction: row;
-          justify-content: space-between;
-          align-items: flex-start;
-          text-align: left;
-        }
-        .footer-brand-col {
-          align-items: flex-start;
-        }
-        .footer-affiliates-col {
-          align-items: flex-end;
-          padding-top: 0;
-          border-top: none;
-          border-left: 1px solid var(--color-ledger);
-          padding-left: 2rem;
-          width: auto;
-        }
-        .footer-affiliates {
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 0.875rem;
-        }
-      }
-      /* ── Footer: desktop (≥1024px) ── */
-      @media (min-width: 1024px) {
-        .footer-logo img {
-          height: 1.625rem;
-        }
-        .footer-affiliates-col {
-          padding-left: 2.5rem;
-        }
-        .footer-affiliate img {
-          height: 1.35rem;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="assets/site.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "AdvertisingAgency",
+        "name": "Dempsey Agency",
+        "legalName": "Dempsey Agency, LLC",
+        "url": "https://dempsey.agency/",
+        "email": "info@dempsey.agency",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "1377 Third Street",
+          "addressLocality": "Rensselaer",
+          "addressRegion": "NY",
+          "postalCode": "12144",
+          "addressCountry": "US"
+        },
+        "description": "Full-service media agency for strategic planning, premium publisher placements, and campaign execution."
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -519,76 +58,102 @@
             />
           </a>
 
-          <nav class="header-nav" aria-label="Primary navigation">
+          <nav class="header-nav" id="primary-nav" aria-label="Primary navigation">
             <a href="#services">Services</a>
             <a href="/contact">Contact</a>
+            <a class="nav-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </nav>
 
-          <a class="header-login" href="https://portal.dempsey.agency/login">Client Portal</a>
+          <div class="header-end">
+            <button
+              class="nav-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="primary-nav"
+            >
+              <span class="nav-toggle-icon" aria-hidden="true"></span>
+              <span class="visually-hidden nav-toggle-label">Open menu</span>
+            </button>
+            <a class="header-login" href="https://portal.dempsey.agency/login">Client Portal</a>
+          </div>
         </div>
       </header>
 
       <main id="main-content">
-        <section class="hero" aria-labelledby="hero-heading">
-          <div class="shell">
-            <p class="section-label">Full-Service Media Agency</p>
-            <h1 class="section-heading" id="hero-heading">
-              National reach. Local precision.
-            </h1>
-            <p class="section-body">
-              Dempsey Agency provides strategic media planning, premium publisher
-              placements, and complete campaign execution with national reach
-              and local precision.
-            </p>
-            <div class="hero-actions">
-              <a class="btn-primary" href="/contact">Get in Touch</a>
+        <section class="hero home-hero" aria-labelledby="hero-heading">
+          <div class="shell hero-grid">
+            <div>
+              <p class="section-label">Full-Service Media Agency</p>
+              <h1 class="section-heading" id="hero-heading">
+                National reach.<br />Local precision.
+              </h1>
+            </div>
+            <div class="hero-copy">
+              <p class="section-body">
+                Dempsey Agency provides strategic media planning, premium publisher
+                placements, and complete campaign execution with national reach
+                and local precision.
+              </p>
+              <div class="hero-actions">
+                <a class="btn-primary" href="/contact">Get in Touch</a>
+              </div>
             </div>
           </div>
         </section>
 
-        <section
-          class="services"
-          id="services"
-          aria-labelledby="services-heading"
-        >
+        <section class="environments" aria-labelledby="environments-label">
+          <div class="shell">
+            <p class="section-label" id="environments-label">Where campaigns run</p>
+            <ul class="environment-list">
+              <li>Print</li>
+              <li>Digital editions</li>
+              <li>Websites</li>
+              <li>Newsletters</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="services" id="services" aria-labelledby="services-heading">
           <div class="shell">
             <p class="section-label">What We Do</p>
-            <h2 class="section-heading" id="services-heading">
-              Core Services
-            </h2>
+            <h2 class="section-heading" id="services-heading">Core Services</h2>
 
             <div class="services-grid">
-              <div class="service-card">
+              <article class="service-card">
+                <p class="service-index">01</p>
                 <h3>Strategic Media Planning &amp; Buying</h3>
                 <p>
                   Multi-platform strategies engineered for scale, efficiency, and
                   clearer campaign direction.
                 </p>
-              </div>
+              </article>
 
-              <div class="service-card">
+              <article class="service-card">
+                <p class="service-index">02</p>
                 <h3>Premium Omnichannel Placements</h3>
                 <p>
                   Access to trusted publisher environments across print, digital
                   editions, websites, and newsletters.
                 </p>
-              </div>
+              </article>
 
-              <div class="service-card">
+              <article class="service-card">
+                <p class="service-index">03</p>
                 <h3>Creative Strategy</h3>
                 <p>
                   Campaign direction and messaging tailored for credible,
                   high-trust media environments.
                 </p>
-              </div>
+              </article>
 
-              <div class="service-card">
+              <article class="service-card">
+                <p class="service-index">04</p>
                 <h3>Performance Analytics &amp; Optimization</h3>
                 <p>
                   Transparent reporting and ongoing optimization guided by
                   campaign performance and publisher data.
                 </p>
-              </div>
+              </article>
             </div>
           </div>
         </section>
@@ -604,9 +169,7 @@
               strategy, and next steps.
             </p>
             <div class="cta-actions">
-              <a class="btn-primary" href="mailto:info@dempsey.agency"
-                >Contact Us</a
-              >
+              <a class="btn-primary" href="/contact">Get in Touch</a>
               <a class="btn-secondary" href="https://portal.dempsey.agency/login">Client Portal</a>
             </div>
           </div>
@@ -688,5 +251,6 @@
         </div>
       </footer>
     </div>
+    <script src="assets/site.js"></script>
   </body>
 </html>
