@@ -34,6 +34,7 @@ html {
 
 body {
   margin: 0;
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--color-canvas);
@@ -65,14 +66,24 @@ textarea {
 }
 
 .page {
+  width: 100%;
+  min-width: 0;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 
+.site-header,
+main,
+.site-footer {
+  width: 100%;
+  min-width: 0;
+}
+
 .shell {
-  width: min(100%, var(--page));
+  width: 100%;
+  max-width: var(--page);
   margin-inline: auto;
   padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
   padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
@@ -559,6 +570,14 @@ body.nav-open::before {
 .service-list {
   margin: 0;
   padding: 0;
+  list-style: none;
+}
+
+.service-list li,
+.service-points,
+.service-points li,
+.aside-points,
+.aside-points li {
   list-style: none;
 }
 
