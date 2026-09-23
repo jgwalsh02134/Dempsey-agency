@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#10233F" />
     <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
     <link rel="stylesheet" href="assets/site.css" />
+    <script>document.documentElement.classList.add("js");</script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -18,45 +19,39 @@
       <header class="site-header">
         <div class="shell header-inner">
           <a class="header-logo" href="/">
-            <img
-              src="assets/branding/hor-lockup-2.svg"
-              alt="Dempsey Agency"
-              decoding="async"
-            />
+            <img src="assets/branding/hor-lockup-2.svg" alt="Dempsey Agency" decoding="async" />
           </a>
-          <nav class="header-nav" id="primary-nav" aria-label="Primary navigation">
+          <nav class="header-nav" id="primary-nav" aria-label="Primary">
             <a href="/#services">Services</a>
+            <a href="/#channels">Channels</a>
             <a href="/contact">Contact</a>
             <a class="nav-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </nav>
           <div class="header-end">
-            <button
-              class="nav-toggle"
-              type="button"
-              aria-expanded="false"
-              aria-controls="primary-nav"
-            >
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
               <span class="nav-toggle-icon" aria-hidden="true"></span>
               <span class="visually-hidden nav-toggle-label">Open menu</span>
             </button>
-            <a class="header-login" href="https://portal.dempsey.agency/login">Client Portal</a>
+            <a class="header-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </div>
         </div>
+        <div class="scroll-progress" aria-hidden="true"><span></span></div>
       </header>
-
-      <main id="main-content" class="hero">
-        <div class="shell">
-          <p class="section-label">404</p>
-          <h1 class="section-heading">That page is not here.</h1>
-          <p class="section-body">
-            The address may have changed. The homepage and contact page are the
-            surest way back.
-          </p>
-          <div class="hero-actions">
-            <a class="btn-primary" href="/">Back home</a>
-            <a class="btn-secondary" href="/contact">Contact</a>
+      <main id="main-content">
+        <section class="hero">
+          <div class="shell">
+            <p class="eyebrow">404</p>
+            <h1 class="display">That page is not here.</h1>
+            <p class="lede">
+              The address may have changed. The homepage and contact page are
+              the surest way back.
+            </p>
+            <div class="actions">
+              <a class="btn btn-primary" href="/">Back home</a>
+              <a class="btn btn-quiet" href="/contact">Contact</a>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
     <script src="assets/site.js"></script>

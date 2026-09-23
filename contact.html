@@ -9,6 +9,13 @@
       content="Contact Dempsey Agency for media planning, publisher placements, and campaign strategy. Based in Rensselaer, NY."
     />
     <link rel="canonical" href="https://dempsey.agency/contact" />
+    <meta property="og:title" content="Contact — Dempsey Agency" />
+    <meta
+      property="og:description"
+      content="Contact Dempsey Agency for media planning, publisher placements, and campaign strategy."
+    />
+    <meta property="og:url" content="https://dempsey.agency/contact" />
+    <meta property="og:type" content="website" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
@@ -17,58 +24,48 @@
     <meta name="theme-color" content="#10233F" />
     <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
     <link rel="stylesheet" href="assets/site.css" />
+    <script>document.documentElement.classList.add("js");</script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-
     <div class="page page-compact">
       <header class="site-header">
         <div class="shell header-inner">
           <a class="header-logo" href="/">
-            <img
-              src="assets/branding/hor-lockup-2.svg"
-              alt="Dempsey Agency"
-              decoding="async"
-            />
+            <img src="assets/branding/hor-lockup-2.svg" alt="Dempsey Agency" decoding="async" />
           </a>
-
-          <nav class="header-nav" id="primary-nav" aria-label="Primary navigation">
+          <nav class="header-nav" id="primary-nav" aria-label="Primary">
             <a href="/#services">Services</a>
+            <a href="/#channels">Channels</a>
             <a href="/contact" aria-current="page">Contact</a>
             <a class="nav-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </nav>
-
           <div class="header-end">
-            <button
-              class="nav-toggle"
-              type="button"
-              aria-expanded="false"
-              aria-controls="primary-nav"
-            >
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
               <span class="nav-toggle-icon" aria-hidden="true"></span>
               <span class="visually-hidden nav-toggle-label">Open menu</span>
             </button>
-            <a class="header-login" href="https://portal.dempsey.agency/login">Client Portal</a>
+            <a class="header-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </div>
         </div>
+        <div class="scroll-progress" aria-hidden="true"><span></span></div>
       </header>
 
       <main id="main-content">
         <section class="hero" aria-labelledby="contact-heading">
           <div class="shell contact-layout">
             <div>
-              <p class="section-label">Get in Touch</p>
-              <h1 class="section-heading" id="contact-heading">Contact</h1>
-              <p class="section-body">
+              <p class="eyebrow">Get in touch</p>
+              <h1 class="display" id="contact-heading">Contact</h1>
+              <p class="lede">
                 Reach out to discuss media planning, publisher placements, or
                 campaign strategy. We'll get back to you within one business day.
               </p>
             </div>
-            <address class="footer-address contact-card">
+            <address class="contact-card">
               <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
-              <p>1377 Third Street</p>
-              <p>Rensselaer, NY 12144</p>
-              <a href="https://maps.apple.com/p/ethUmdcrFVL~hw" rel="noopener">Get directions →</a>
+              <p>1377 Third Street<br />Rensselaer, NY 12144</p>
+              <a href="https://maps.apple.com/p/ethUmdcrFVL~hw" rel="noopener">Get directions</a>
             </address>
           </div>
         </section>
@@ -76,14 +73,10 @@
 
       <footer class="site-footer">
         <div class="footer-upper">
-          <div class="footer-shell">
-            <div class="footer-brand-col">
-              <a class="footer-logo" href="https://dempsey.agency">
-                <img
-                  src="assets/branding/hor-lockup.svg"
-                  alt="Dempsey Agency"
-                  decoding="async"
-                />
+          <div class="shell">
+            <div class="footer-brand">
+              <a class="footer-logo" href="/">
+                <img src="assets/branding/hor-lockup.svg" alt="Dempsey Agency" decoding="async" />
               </a>
               <address class="footer-address">
                 <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
@@ -91,42 +84,22 @@
                 <p>Rensselaer, NY 12144</p>
               </address>
             </div>
-
-            <div class="footer-affiliates-col">
+            <div class="footer-affiliates">
               <p class="footer-label">Affiliated companies</p>
-              <div class="footer-affiliates">
-                <a
-                  class="footer-affiliate"
-                  href="https://www.vdata.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="assets/branding/small_v-data-wordimage.svg"
-                    alt="Vision Data"
-                    decoding="async"
-                  />
+              <div class="footer-logos">
+                <a href="https://www.vdata.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/branding/small_v-data-wordimage.svg" alt="Vision Data" decoding="async" />
                 </a>
-                <a
-                  class="footer-affiliate"
-                  href="https://adsell.ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="assets/branding/new_as_wordmark.svg"
-                    alt="AdSell.ai"
-                    decoding="async"
-                  />
+                <a href="https://adsell.ai/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/branding/new_as_wordmark.svg" alt="AdSell.ai" decoding="async" />
                 </a>
               </div>
             </div>
           </div>
         </div>
-
         <div class="footer-lower">
-          <div class="footer-shell">
-            <nav class="footer-nav" aria-label="Footer navigation">
+          <div class="shell">
+            <nav class="footer-nav" aria-label="Footer">
               <a href="/privacy">Privacy Policy</a>
               <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="/terms">Terms of Use</a>
@@ -135,15 +108,8 @@
               <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="https://workspace.dempsey.agency">Team Intranet</a>
             </nav>
-
-            <div class="footer-legal-block">
-              <p class="footer-copyright">
-                &copy; 2026 Dempsey Agency, LLC. All rights reserved.
-              </p>
-              <p class="footer-disclaimer">
-                Dempsey Agency, LLC is an independent business entity.
-              </p>
-            </div>
+            <p class="footer-note">&copy; 2026 Dempsey Agency, LLC. All rights reserved.</p>
+            <p class="footer-disclaimer">Dempsey Agency, LLC is an independent business entity.</p>
           </div>
         </div>
       </footer>

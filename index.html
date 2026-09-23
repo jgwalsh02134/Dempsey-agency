@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dempsey Agency</title>
+    <title>Dempsey Agency — National reach. Local precision.</title>
     <meta
       name="description"
       content="Dempsey Agency is a full-service media agency for strategic planning, premium publisher placements, and campaign execution — national reach with local precision."
@@ -24,6 +24,7 @@
     <meta name="theme-color" content="#10233F" />
     <link rel="stylesheet" href="https://use.typekit.net/urn3pan.css" />
     <link rel="stylesheet" href="assets/site.css" />
+    <script>document.documentElement.classList.add("js");</script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -46,134 +47,200 @@
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-
     <div class="page">
       <header class="site-header">
         <div class="shell header-inner">
           <a class="header-logo" href="/">
-            <img
-              src="assets/branding/hor-lockup-2.svg"
-              alt="Dempsey Agency"
-              decoding="async"
-            />
+            <img src="assets/branding/hor-lockup-2.svg" alt="Dempsey Agency" decoding="async" />
           </a>
-
-          <nav class="header-nav" id="primary-nav" aria-label="Primary navigation">
+          <nav class="header-nav" id="primary-nav" aria-label="Primary">
             <a href="#services">Services</a>
+            <a href="#channels">Channels</a>
             <a href="/contact">Contact</a>
             <a class="nav-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </nav>
-
           <div class="header-end">
-            <button
-              class="nav-toggle"
-              type="button"
-              aria-expanded="false"
-              aria-controls="primary-nav"
-            >
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
               <span class="nav-toggle-icon" aria-hidden="true"></span>
               <span class="visually-hidden nav-toggle-label">Open menu</span>
             </button>
-            <a class="header-login" href="https://portal.dempsey.agency/login">Client Portal</a>
+            <a class="header-portal" href="https://portal.dempsey.agency/login">Client Portal</a>
           </div>
         </div>
+        <div class="scroll-progress" aria-hidden="true"><span></span></div>
       </header>
 
       <main id="main-content">
-        <section class="hero home-hero" aria-labelledby="hero-heading">
+        <section class="hero" aria-labelledby="hero-heading">
           <div class="shell hero-grid">
-            <div>
-              <p class="section-label">Full-Service Media Agency</p>
-              <h1 class="section-heading" id="hero-heading">
-                National reach.<br />Local precision.
-              </h1>
-            </div>
             <div class="hero-copy">
-              <p class="section-body">
+              <p class="eyebrow">Full-service media agency</p>
+              <h1 class="display" id="hero-heading">National reach.<br />Local precision.</h1>
+            </div>
+            <div class="hero-aside">
+              <p class="lede">
                 Dempsey Agency provides strategic media planning, premium publisher
                 placements, and complete campaign execution with national reach
                 and local precision.
               </p>
-              <div class="hero-actions">
-                <a class="btn-primary" href="/contact">Get in Touch</a>
+              <div class="actions">
+                <a class="btn btn-primary" href="/contact">Start a conversation</a>
+                <a class="btn btn-quiet" href="#services">View services</a>
+              </div>
+            </div>
+            <div class="field" aria-hidden="true">
+              <div class="field-meta">
+                <span>National reach</span>
+                <span>Local precision</span>
+              </div>
+              <div class="field-track">
+                <span class="field-ticks"></span>
+                <span class="field-mark"></span>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="environments" aria-labelledby="environments-label">
+        <section class="section services reveal" id="services" aria-labelledby="services-heading">
           <div class="shell">
-            <p class="section-label" id="environments-label">Where campaigns run</p>
-            <ul class="environment-list">
-              <li>Print</li>
-              <li>Digital editions</li>
-              <li>Websites</li>
-              <li>Newsletters</li>
+            <header class="section-intro">
+              <p class="eyebrow">What we do</p>
+              <h2 class="display" id="services-heading">Core services</h2>
+              <p class="lede">
+                Planning, placement, creative direction, and reporting, handled
+                as one engagement.
+              </p>
+            </header>
+            <div class="service-layout">
+              <ol class="service-list" data-service-list aria-label="Core services">
+                <li class="service-row is-selected">
+                  <h3>
+                    <button class="service-tab" id="tab-plan" type="button" data-service-tab>
+                      <span class="service-index">01</span>
+                      <span class="service-name">Strategic Media Planning &amp; Buying</span>
+                    </button>
+                  </h3>
+                  <p class="service-text">
+                    Multi-platform strategies engineered for scale, efficiency, and
+                    clearer campaign direction.
+                  </p>
+                  <ul class="service-points">
+                    <li>Scale</li>
+                    <li>Efficiency</li>
+                    <li>Direction</li>
+                  </ul>
+                </li>
+                <li class="service-row">
+                  <h3>
+                    <button class="service-tab" id="tab-place" type="button" data-service-tab>
+                      <span class="service-index">02</span>
+                      <span class="service-name">Premium Omnichannel Placements</span>
+                    </button>
+                  </h3>
+                  <p class="service-text">
+                    Access to trusted publisher environments across print, digital
+                    editions, websites, and newsletters.
+                  </p>
+                  <ul class="service-points">
+                    <li>Print</li>
+                    <li>Digital editions</li>
+                    <li>Websites</li>
+                    <li>Newsletters</li>
+                  </ul>
+                </li>
+                <li class="service-row">
+                  <h3>
+                    <button class="service-tab" id="tab-create" type="button" data-service-tab>
+                      <span class="service-index">03</span>
+                      <span class="service-name">Creative Strategy</span>
+                    </button>
+                  </h3>
+                  <p class="service-text">
+                    Campaign direction and messaging tailored for credible,
+                    high-trust media environments.
+                  </p>
+                  <ul class="service-points">
+                    <li>Campaign direction</li>
+                    <li>High-trust environments</li>
+                  </ul>
+                </li>
+                <li class="service-row">
+                  <h3>
+                    <button class="service-tab" id="tab-optimize" type="button" data-service-tab>
+                      <span class="service-index">04</span>
+                      <span class="service-name">Performance Analytics &amp; Optimization</span>
+                    </button>
+                  </h3>
+                  <p class="service-text">
+                    Transparent reporting and ongoing optimization guided by
+                    campaign performance and publisher data.
+                  </p>
+                  <ul class="service-points">
+                    <li>Campaign performance</li>
+                    <li>Publisher data</li>
+                  </ul>
+                </li>
+              </ol>
+              <aside class="service-aside" id="service-detail">
+                <p class="eyebrow">In focus</p>
+                <div class="aside-body">
+                  <p class="aside-title" id="service-aside-title">Strategic Media Planning &amp; Buying</p>
+                  <ul class="aside-points" id="service-aside-points">
+                    <li>Scale</li>
+                    <li>Efficiency</li>
+                    <li>Direction</li>
+                  </ul>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="section channels reveal" id="channels" aria-labelledby="channels-heading">
+          <div class="shell">
+            <header class="section-intro">
+              <p class="eyebrow">Where campaigns run</p>
+              <h2 class="display" id="channels-heading">Publisher environments</h2>
+              <p class="lede">
+                Premium placements in trusted publisher environments, planned
+                together.
+              </p>
+            </header>
+            <ul class="channel-list">
+              <li>
+                <span class="channel-index" aria-hidden="true">01</span>
+                <h3>Print</h3>
+              </li>
+              <li>
+                <span class="channel-index" aria-hidden="true">02</span>
+                <h3>Digital editions</h3>
+              </li>
+              <li>
+                <span class="channel-index" aria-hidden="true">03</span>
+                <h3>Websites</h3>
+              </li>
+              <li>
+                <span class="channel-index" aria-hidden="true">04</span>
+                <h3>Newsletters</h3>
+              </li>
             </ul>
           </div>
         </section>
 
-        <section class="services" id="services" aria-labelledby="services-heading">
-          <div class="shell">
-            <p class="section-label">What We Do</p>
-            <h2 class="section-heading" id="services-heading">Core Services</h2>
-
-            <div class="services-grid">
-              <article class="service-card">
-                <p class="service-index">01</p>
-                <h3>Strategic Media Planning &amp; Buying</h3>
-                <p>
-                  Multi-platform strategies engineered for scale, efficiency, and
-                  clearer campaign direction.
-                </p>
-              </article>
-
-              <article class="service-card">
-                <p class="service-index">02</p>
-                <h3>Premium Omnichannel Placements</h3>
-                <p>
-                  Access to trusted publisher environments across print, digital
-                  editions, websites, and newsletters.
-                </p>
-              </article>
-
-              <article class="service-card">
-                <p class="service-index">03</p>
-                <h3>Creative Strategy</h3>
-                <p>
-                  Campaign direction and messaging tailored for credible,
-                  high-trust media environments.
-                </p>
-              </article>
-
-              <article class="service-card">
-                <p class="service-index">04</p>
-                <h3>Performance Analytics &amp; Optimization</h3>
-                <p>
-                  Transparent reporting and ongoing optimization guided by
-                  campaign performance and publisher data.
-                </p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="cta" aria-labelledby="cta-heading">
+        <section class="section cta reveal" aria-labelledby="cta-heading">
           <div class="shell cta-grid">
             <div>
-              <p class="section-label">Let's Work Together</p>
-              <h2 class="section-heading" id="cta-heading">
-                Ready to put a stronger media strategy in motion?
-              </h2>
+              <p class="eyebrow">Let's work together</p>
+              <h2 class="display" id="cta-heading">Ready to put a stronger media strategy in motion?</h2>
             </div>
-            <div class="cta-copy">
-              <p class="section-body">
+            <div>
+              <p class="lede">
                 Connect with Dempsey Agency to discuss campaign planning, placement
                 strategy, and next steps.
               </p>
-              <div class="cta-actions">
-                <a class="btn-primary" href="/contact">Get in Touch</a>
-                <a class="btn-secondary" href="https://portal.dempsey.agency/login">Client Portal</a>
+              <div class="actions">
+                <a class="btn btn-light" href="/contact">Discuss a campaign</a>
+                <a class="btn btn-ghost" href="https://portal.dempsey.agency/login">Client portal</a>
               </div>
             </div>
           </div>
@@ -182,14 +249,10 @@
 
       <footer class="site-footer">
         <div class="footer-upper">
-          <div class="footer-shell">
-            <div class="footer-brand-col">
-              <a class="footer-logo" href="https://dempsey.agency">
-                <img
-                  src="assets/branding/hor-lockup.svg"
-                  alt="Dempsey Agency"
-                  decoding="async"
-                />
+          <div class="shell">
+            <div class="footer-brand">
+              <a class="footer-logo" href="/">
+                <img src="assets/branding/hor-lockup.svg" alt="Dempsey Agency" decoding="async" />
               </a>
               <address class="footer-address">
                 <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
@@ -197,43 +260,22 @@
                 <p>Rensselaer, NY 12144</p>
               </address>
             </div>
-
-            <div class="footer-affiliates-col">
+            <div class="footer-affiliates">
               <p class="footer-label">Affiliated companies</p>
-              <div class="footer-affiliates">
-                <a
-                  class="footer-affiliate footer-affiliate--vision"
-                  href="https://www.vdata.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="assets/branding/small_v-data-wordimage.svg"
-                    alt="Vision Data"
-                    decoding="async"
-                  />
+              <div class="footer-logos">
+                <a href="https://www.vdata.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/branding/small_v-data-wordimage.svg" alt="Vision Data" decoding="async" />
                 </a>
-
-                <a
-                  class="footer-affiliate footer-affiliate--adsell"
-                  href="https://adsell.ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="assets/branding/new_as_wordmark.svg"
-                    alt="AdSell.ai"
-                    decoding="async"
-                  />
+                <a href="https://adsell.ai/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/branding/new_as_wordmark.svg" alt="AdSell.ai" decoding="async" />
                 </a>
               </div>
             </div>
           </div>
         </div>
-
         <div class="footer-lower">
-          <div class="footer-shell">
-            <nav class="footer-nav" aria-label="Footer navigation">
+          <div class="shell">
+            <nav class="footer-nav" aria-label="Footer">
               <a href="/privacy">Privacy Policy</a>
               <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="/terms">Terms of Use</a>
@@ -242,15 +284,8 @@
               <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="https://workspace.dempsey.agency">Team Intranet</a>
             </nav>
-
-            <div class="footer-legal-block">
-              <p class="footer-copyright">
-                &copy; 2026 Dempsey Agency, LLC. All rights reserved.
-              </p>
-              <p class="footer-disclaimer">
-                Dempsey Agency, LLC is an independent business entity.
-              </p>
-            </div>
+            <p class="footer-note">&copy; 2026 Dempsey Agency, LLC. All rights reserved.</p>
+            <p class="footer-disclaimer">Dempsey Agency, LLC is an independent business entity.</p>
           </div>
         </div>
       </footer>
