@@ -6,7 +6,7 @@
     <title>Contact — Dempsey Agency</title>
     <meta
       name="description"
-      content="Contact Dempsey Agency for media planning, publisher placements, and campaign strategy. Email info@dempsey.agency. Based in Rensselaer, NY."
+      content="Send Dempsey Agency a media inquiry: markets, budget range, and goals. Email info@dempsey.agency. Based in Rensselaer, NY. Reply within one business day."
     />
     <link rel="canonical" href="https://dempsey.agency/contact" />
     <meta name="robots" content="index, follow" />
@@ -16,7 +16,7 @@
     <meta property="og:title" content="Contact — Dempsey Agency" />
     <meta
       property="og:description"
-      content="Contact Dempsey Agency for media planning, publisher placements, and campaign strategy. Based in Rensselaer, NY."
+      content="Tell Dempsey Agency about the markets and goals for your media plan. Based in Rensselaer, NY."
     />
     <meta property="og:url" content="https://dempsey.agency/contact" />
     <meta property="og:image" content="https://dempsey.agency/assets/og-image.png" />
@@ -30,7 +30,7 @@
     <meta name="twitter:title" content="Contact — Dempsey Agency" />
     <meta
       name="twitter:description"
-      content="Contact Dempsey Agency for media planning, publisher placements, and campaign strategy. Based in Rensselaer, NY."
+      content="Tell Dempsey Agency about the markets and goals for your media plan. Based in Rensselaer, NY."
     />
     <meta name="twitter:image" content="https://dempsey.agency/assets/og-image.png" />
     <meta
@@ -82,15 +82,13 @@
               decoding="async"
             />
           </a>
-
           <nav class="header-nav" aria-label="Primary navigation">
-            <a href="/#services">Services</a>
+            <a href="/services">Services</a>
+            <a href="/approach">Approach</a>
+            <a href="/about">About</a>
             <a href="/contact" aria-current="page">Contact</a>
           </nav>
-
-          <a class="header-login" href="https://portal.dempsey.agency/login"
-            >Client Portal</a
-          >
+          <a class="header-login" href="https://portal.dempsey.agency/login">Client Portal</a>
         </div>
       </header>
 
@@ -100,29 +98,100 @@
             <p class="section-label">Get in Touch</p>
             <h1 class="section-heading" id="contact-heading">Contact</h1>
             <p class="section-body">
-              Reach out to discuss media planning, publisher placements, or
-              campaign strategy. We'll get back to you within one business day.
+              Tell us the markets you need and what the media should accomplish.
+              We'll get back to you within one business day.
             </p>
-            <div class="hero-actions">
-              <a class="btn-primary" href="mailto:info@dempsey.agency"
-                >Email info@dempsey.agency</a
+
+            <div class="contact-layout">
+              <form
+                id="contact-form"
+                class="form-card"
+                action="mailto:info@dempsey.agency"
+                method="post"
+                enctype="text/plain"
+                novalidate
               >
+                <div class="form-field">
+                  <label for="name">Name</label>
+                  <input id="name" name="name" type="text" autocomplete="name" required />
+                </div>
+                <div class="form-field">
+                  <label for="email">Email</label>
+                  <input id="email" name="email" type="email" autocomplete="email" required />
+                </div>
+                <div class="form-field">
+                  <label for="company">Company</label>
+                  <input id="company" name="company" type="text" autocomplete="organization" required />
+                </div>
+                <div class="form-field">
+                  <label for="markets">Markets or geography</label>
+                  <input
+                    id="markets"
+                    name="markets"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="National, Capital Region, specific markets"
+                    required
+                  />
+                </div>
+                <div class="form-field">
+                  <label for="budget">Budget range <span class="form-optional">(optional)</span></label>
+                  <select id="budget" name="budget">
+                    <option value="">Prefer not to say</option>
+                    <option>Not sure yet</option>
+                    <option>Under $25,000</option>
+                    <option>$25,000–$75,000</option>
+                    <option>$75,000–$250,000</option>
+                    <option>$250,000 or more</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="message">Goal</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    maxlength="2000"
+                    required
+                    placeholder="What should the plan accomplish, and on what timing?"
+                  ></textarea>
+                </div>
+                <p id="form-error" class="form-error" role="alert" hidden></p>
+                <p id="form-success" class="form-success" role="status" hidden></p>
+                <div class="form-actions">
+                  <button class="btn-primary" type="submit">Send inquiry</button>
+                </div>
+                <p class="form-note">
+                  This inquiry is emailed to
+                  <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>.
+                  <a href="/privacy">Privacy Policy</a>.
+                  Already a client?
+                  <a href="https://portal.dempsey.agency/login">Open the client portal</a>.
+                </p>
+              </form>
+
+              <address class="contact-card">
+                <p class="contact-email">
+                  <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
+                </p>
+                <p>Dempsey Agency, LLC</p>
+                <p>1377 Third Street</p>
+                <p>Rensselaer, NY 12144</p>
+                <a
+                  class="contact-directions"
+                  href="https://www.google.com/maps/search/?api=1&amp;query=1377+Third+Street%2C+Rensselaer%2C+NY+12144"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Get directions<span class="sr-only"> (opens in a new tab)</span></a
+                >
+              </address>
             </div>
-            <address class="contact-card">
-              <p class="contact-email">
+            <noscript>
+              <p class="section-body">
+                Email
                 <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
+                with your name, company, markets, and goal.
               </p>
-              <p>Dempsey Agency, LLC</p>
-              <p>1377 Third Street</p>
-              <p>Rensselaer, NY 12144</p>
-              <a
-                class="contact-directions"
-                href="https://www.google.com/maps/search/?api=1&amp;query=1377+Third+Street%2C+Rensselaer%2C+NY+12144"
-                target="_blank"
-                rel="noopener noreferrer"
-                >Get directions<span class="sr-only"> (opens in a new tab)</span></a
-              >
-            </address>
+            </noscript>
           </div>
         </section>
       </main>
@@ -132,11 +201,7 @@
           <div class="footer-shell">
             <div class="footer-brand-col">
               <a class="footer-logo" href="/">
-                <img
-                  src="/assets/branding/hor-lockup.svg"
-                  alt="Dempsey Agency"
-                  decoding="async"
-                />
+                <img src="/assets/branding/hor-lockup.svg" alt="Dempsey Agency" decoding="async" />
               </a>
               <address class="footer-address">
                 <a href="mailto:info@dempsey.agency">info@dempsey.agency</a>
@@ -144,65 +209,45 @@
                 <p>Rensselaer, NY 12144</p>
               </address>
             </div>
-
             <div class="footer-affiliates-col">
               <p class="footer-label">Affiliated companies</p>
               <div class="footer-affiliates">
-                <a
-                  class="footer-affiliate footer-affiliate--vision"
-                  href="https://www.vdata.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/assets/branding/small_v-data-wordimage.svg"
-                    alt="Vision Data"
-                    decoding="async"
-                  />
+                <a class="footer-affiliate" href="https://www.vdata.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="/assets/branding/small_v-data-wordimage.svg" alt="Vision Data" decoding="async" />
                   <span class="sr-only"> (opens in a new tab)</span>
                 </a>
-
-                <a
-                  class="footer-affiliate footer-affiliate--adsell"
-                  href="https://adsell.ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img
-                    src="/assets/branding/new_as_wordmark.svg"
-                    alt="AdSell.ai"
-                    decoding="async"
-                  />
+                <a class="footer-affiliate" href="https://adsell.ai/" target="_blank" rel="noopener noreferrer">
+                  <img src="/assets/branding/new_as_wordmark.svg" alt="AdSell.ai" decoding="async" />
                   <span class="sr-only"> (opens in a new tab)</span>
                 </a>
               </div>
             </div>
           </div>
         </div>
-
         <div class="footer-lower">
           <div class="footer-shell">
             <nav class="footer-nav" aria-label="Footer navigation">
-              <a href="/privacy">Privacy Policy</a>
+              <a href="/services">Services</a>
               <span class="footer-nav-sep" aria-hidden="true"></span>
-              <a href="/terms">Terms of Use</a>
+              <a href="/approach">Approach</a>
+              <span class="footer-nav-sep" aria-hidden="true"></span>
+              <a href="/about">About</a>
               <span class="footer-nav-sep" aria-hidden="true"></span>
               <a href="/contact" aria-current="page">Contact</a>
               <span class="footer-nav-sep" aria-hidden="true"></span>
-              <a href="https://workspace.dempsey.agency">Team Intranet</a>
+              <a href="/privacy">Privacy Policy</a>
+              <span class="footer-nav-sep" aria-hidden="true"></span>
+              <a href="/terms">Terms of Use</a>
             </nav>
-
             <div class="footer-legal-block">
-              <p class="footer-copyright">
-                &copy; 2026 Dempsey Agency, LLC. All rights reserved.
-              </p>
-              <p class="footer-disclaimer">
-                Dempsey Agency, LLC is an independent business entity.
-              </p>
+              <p class="footer-copyright">&copy; 2026 Dempsey Agency, LLC. All rights reserved.</p>
+              <p class="footer-disclaimer">Dempsey Agency, LLC is an independent business entity.</p>
+              <p class="footer-staff"><a href="https://workspace.dempsey.agency">Staff intranet</a></p>
             </div>
           </div>
         </div>
       </footer>
     </div>
+    <script src="/assets/contact.js"></script>
   </body>
 </html>
