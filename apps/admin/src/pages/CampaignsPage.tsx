@@ -485,13 +485,13 @@ export function CampaignsPage() {
                 };
                 return (
                   <tr key={c.id}>
-                    <td>
+                    <td data-label="Campaign">
                       <div style={{ fontWeight: 600 }}>{c.title}</div>
                       {c.description && (
                         <span className="small">{c.description}</span>
                       )}
                     </td>
-                    <td className="small">
+                    <td className="small" data-label="Client">
                       <Link
                         to={`/clients/${c.organizationId}`}
                         style={{ color: "inherit", textDecoration: "none" }}
@@ -499,20 +499,20 @@ export function CampaignsPage() {
                         {c.organization.name}
                       </Link>
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span
                         className={`q-status-badge ${STATUS_ACCENT[c.status]}`}
                       >
                         {STATUS_LABEL[c.status]}
                       </span>
                     </td>
-                    <td style={{ whiteSpace: "nowrap" }}>
+                    <td data-label="Budget" style={{ whiteSpace: "nowrap" }}>
                       {formatCents(c.budgetCents)}
                     </td>
-                    <td className="small" style={{ whiteSpace: "nowrap" }}>
+                    <td data-label="Dates" className="small" style={{ whiteSpace: "nowrap" }}>
                       {dateRange(c.startDate, c.endDate)}
                     </td>
-                    <td className="small" style={{ whiteSpace: "nowrap" }}>
+                    <td data-label="Creatives" className="small" style={{ whiteSpace: "nowrap" }}>
                       {counts.total === 0 ? (
                         <span className="muted">—</span>
                       ) : (
@@ -539,7 +539,7 @@ export function CampaignsPage() {
                         </>
                       )}
                     </td>
-                    <td style={{ whiteSpace: "nowrap" }}>
+                    <td data-label="Open" style={{ whiteSpace: "nowrap" }}>
                       <Link
                         to={`/campaigns/${c.id}`}
                         className="btn ghost"

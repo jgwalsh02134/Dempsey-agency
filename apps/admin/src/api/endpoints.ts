@@ -548,3 +548,29 @@ export async function markAllNotificationsRead(): Promise<{ updated: number }> {
     method: "POST",
   });
 }
+
+export async function fetchAuditLogs(filters?: {
+  action?: string;
+  actorUserId?: string;
+  organizationId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  page: number;
+  limit: number;
+  total: number;
+  logs: import("../types").AuditLogEntry[];
+}> {
+  const params = new URLSearchParams();
+  if (filters?.action) params.set("action", filters.action);
+  if (filters?.actorUserId) params.set("actorUserId", filters.actorUserId);
+  if (filters?.organizationId) params.set("organizationId", filters.organizationId);
+  if (filters?.from) params.set("from", filters.from);
+  if (filters?.to) params.set("to", filters.to);
+  if (filters?.page) params.set("page", String(filters.page));
+  if (filters?.limit) params.set("limit", String(filters.limit));
+  const qs = params.toString();
+  return apiFetch(`/api/v1/admin/audit-logs${qs ? `?${qs}` : ""}`);
+}

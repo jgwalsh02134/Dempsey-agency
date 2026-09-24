@@ -1,17 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import * as api from "../api/endpoints";
+import { subscribeToast } from "../lib/toast";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Overview", end: true },
-  { to: "/agency", label: "Agency" },
-  { to: "/clients", label: "Clients" },
-  { to: "/campaigns", label: "Campaigns" },
-  { to: "/publishers", label: "Publishers" },
-  { to: "/creatives", label: "Creatives" },
-  { to: "/notifications", label: "Notifications" },
-  { to: "/access", label: "Access" },
+const GROUPS = [
+  {
+    label: "Work",
+    items: [
+      { to: "/", label: "Overview", end: true },
+      { to: "/clients", label: "Clients", end: false },
+      { to: "/campaigns", label: "Campaigns", end: false },
+      { to: "/creatives", label: "Creatives", end: false },
+    ],
+  },
+  {
+    label: "Inventory",
+    items: [{ to: "/publishers", label: "Publishers", end: false }],
+  },
+  {
+    label: "Account",
+    items: [
+      { to: "/access", label: "Access", end: false },
+      { to: "/notifications", label: "Notifications", end: false },
+      { to: "/audit", label: "Audit", end: false },
+      { to: "/agency", label: "Agency", end: false },
+    ],
+  },
 ] as const;
 
 function useUnreadCount(enabled: boolean): number {
@@ -20,21 +35,24 @@ function useUnreadCount(enabled: boolean): number {
 
   useEffect(() => {
     if (!enabled) return;
+    let cancelled = false;
     const refresh = () => {
       api
         .fetchUnreadNotificationCount()
-        .then((res) => setCount(res.count))
+        .then((res) => {
+          if (!cancelled) setCount(res.count);
+        })
         .catch(() => {
-          /* non-blocking */
+          /* keep the last count */
         });
     };
     refresh();
     const id = window.setInterval(refresh, 60_000);
-    const onFocus = () => refresh();
-    window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", refresh);
     return () => {
+      cancelled = true;
       window.clearInterval(id);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", refresh);
     };
   }, [enabled, location.pathname]);
 
@@ -44,55 +62,105 @@ function useUnreadCount(enabled: boolean): number {
 export function AdminLayout() {
   const { session, logout } = useAuth();
   const unreadCount = useUnreadCount(Boolean(session));
+  const location = useLocation();
+  const menuId = useId();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("admin-sidebar") === "collapsed",
+  );
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    localStorage.setItem("admin-sidebar", collapsed ? "collapsed" : "open");
+  }, [collapsed]);
+
+  useEffect(() => subscribeToast(setToastMessage), []);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const id = window.setTimeout(() => setToastMessage(null), 4000);
+    return () => window.clearTimeout(id);
+  }, [toastMessage]);
+
+  const badge = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar">
+    <div className={`admin-shell${collapsed ? " is-collapsed" : ""}${menuOpen ? " is-menu-open" : ""}`}>
+      <a className="skip-link" href="#admin-content">
+        Skip to content
+      </a>
+      <header className="admin-topbar">
+        <button
+          type="button"
+          className="icon-btn"
+          aria-expanded={menuOpen}
+          aria-controls={menuId}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          Menu
+        </button>
+        <span className="admin-topbar-title">Admin</span>
+      </header>
+
+      {menuOpen && (
+        <button
+          type="button"
+          className="drawer-backdrop"
+          aria-label="Close menu"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
+      <aside id={menuId} className="admin-sidebar">
         <div className="sidebar-brand">
-          <img src="/da-logo.svg" alt="Dempsey Agency" className="sidebar-logo" />
+          <img src="/da-logo.svg" alt="" className="sidebar-logo" />
           <span className="sidebar-title">Admin</span>
+          <button
+            type="button"
+            className="icon-btn collapse-toggle"
+            aria-pressed={collapsed}
+            onClick={() => setCollapsed((value) => !value)}
+          >
+            {collapsed ? "Expand" : "Collapse"}
+          </button>
         </div>
 
-        <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={"end" in item && item.end}
-              className={({ isActive }) =>
-                `sidebar-link${isActive ? " active" : ""}`
-              }
-              style={
-                item.to === "/notifications"
-                  ? {
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }
-                  : undefined
-              }
-            >
-              <span>{item.label}</span>
-              {item.to === "/notifications" && unreadCount > 0 && (
-                <span
-                  aria-label={`${unreadCount} unread`}
-                  style={{
-                    display: "inline-block",
-                    minWidth: "1.25rem",
-                    padding: "0 0.4rem",
-                    borderRadius: "999px",
-                    background: "#dc2626",
-                    color: "#fff",
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    lineHeight: "1.25rem",
-                    textAlign: "center",
-                  }}
+        <nav className="sidebar-nav" aria-label="Admin">
+          {GROUPS.map((group) => (
+            <div key={group.label} className="sidebar-group">
+              <p className="sidebar-group-label">{group.label}</p>
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `sidebar-link${isActive ? " active" : ""}`
+                  }
+                  title={item.label}
                 >
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </NavLink>
+                  <span className="sidebar-label">{item.label}</span>
+                  {item.to === "/notifications" && unreadCount > 0 && (
+                    <span className="nav-badge" aria-label={`${unreadCount} unread`}>
+                      {badge}
+                    </span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -102,9 +170,9 @@ export function AdminLayout() {
               <span className="sidebar-user-name">
                 {session.name ?? session.email}
               </span>
-              <span className="sidebar-user-email muted small">
-                {session.name ? session.email : ""}
-              </span>
+              {session.name && (
+                <span className="sidebar-user-email muted small">{session.email}</span>
+              )}
             </div>
           )}
           <button type="button" className="btn ghost sidebar-logout" onClick={logout}>
@@ -113,9 +181,15 @@ export function AdminLayout() {
         </div>
       </aside>
 
-      <main className="admin-content">
+      <main id="admin-content" className="admin-content" tabIndex={-1}>
         <Outlet />
       </main>
+
+      {toastMessage && (
+        <div className="toast" role="status">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }

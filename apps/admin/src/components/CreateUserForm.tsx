@@ -1,6 +1,7 @@
 import { type FormEvent, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { toast } from "../lib/toast";
 import type { Organization, OrganizationType, Role } from "../types";
 
 const AGENCY_ROLES: Role[] = ["AGENCY_OWNER", "AGENCY_ADMIN", "STAFF"];
@@ -81,6 +82,7 @@ export function CreateUserForm({
       if (name.trim()) body.name = name.trim();
       await api.createUser(body);
       setSuccess(`User ${body.email} created.`);
+      toast(`User ${body.email} created.`);
       setEmail("");
       setPassword("");
       setName("");
