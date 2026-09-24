@@ -2,7 +2,7 @@ import { type FormEvent, type DragEvent, useCallback, useEffect, useRef, useStat
 import { ApiError } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import * as api from "../api/endpoints";
-import { useAuth } from "../auth/AuthContext";
+import { useOrg } from "../auth/OrgContext";
 import type {
   Campaign,
   CreativeSubmission,
@@ -80,12 +80,7 @@ function formatBytes(bytes: number): string {
 /* ── Component ── */
 
 export function CreativesPage() {
-  const { session } = useAuth();
-  const memberships = session!.memberships;
-
-  const [selectedOrgId, setSelectedOrgId] = useState(
-    () => memberships[0]?.organizationId ?? "",
-  );
+  const { orgId: selectedOrgId, setOrgId: setSelectedOrgId, memberships } = useOrg();
 
   /* ── campaign state ── */
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);

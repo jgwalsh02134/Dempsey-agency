@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MARKETING_URL } from "../api/config";
 import { useAuth } from "../auth/AuthContext";
+import { useOrg } from "../auth/OrgContext";
 import * as api from "../api/endpoints";
 import { EmptyState } from "../components/EmptyState";
 import { Money } from "../components/Money";
@@ -96,10 +97,7 @@ function campaignPulse(counts: {
 export function DashboardPage() {
   const { session } = useAuth();
 
-  const orgId = useMemo(
-    () => session?.memberships[0]?.organizationId ?? "",
-    [session],
-  );
+  const { orgId } = useOrg();
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [allSubs, setAllSubs] = useState<CreativeSubmission[]>([]);
@@ -234,9 +232,9 @@ export function DashboardPage() {
         </div>
         {!loading && (
         <nav className="attention-grid" aria-label="What needs attention">
-          <Link to="/campaigns">
+          <Link to="/approvals">
             <span className="mono">{pendingPlacements}</span>
-            Pending placements
+            Placements to approve
           </Link>
           <Link to="/creatives">
             <span className="mono">{inReview.length + needsAttention.length}</span>

@@ -3,7 +3,7 @@ import { ApiError } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { EmptyState } from "../components/EmptyState";
 import * as api from "../api/endpoints";
-import { useAuth } from "../auth/AuthContext";
+import { useOrg } from "../auth/OrgContext";
 import { formatMoney, Money } from "../components/Money";
 import { fromNow, shortDate } from "../lib/date";
 import type { Invoice, InvoiceStatus } from "../types";
@@ -21,12 +21,9 @@ const STATUS_BADGE: Record<InvoiceStatus, string> = {
 };
 
 export function BillingPage() {
-  const { session } = useAuth();
-  const memberships = session!.memberships;
-
-  const [selectedOrgId, setSelectedOrgId] = useState(
-    () => memberships[0]?.organizationId ?? "",
-  );
+  const { orgId: selectedOrgId, setOrgId: setSelectedOrgId, memberships } = useOrg();
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | InvoiceStatus>("ALL");
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,6 +136,29 @@ export function BillingPage() {
             </select>
           </div>
         )}
+        <div className="list-tools">
+          <label className="list-search">
+            <span className="visually-hidden">Search invoices</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search invoices"
+            />
+          </label>
+          <div className="chip-row" role="group" aria-label="Invoice status">
+            {(["ALL", "PENDING", "OVERDUE", "PAID"] as const).map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={statusFilter === status ? "chip active" : "chip"}
+                aria-pressed={statusFilter === status}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === "ALL" ? "All" : STATUS_LABEL[status]}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {!loading && !error && summary.length > 0 && (
@@ -237,7 +257,12 @@ export function BillingPage() {
 
         {!loading && invoices.length > 0 && (
           <ul className="report-list">
-            {invoices.map((inv) => (
+            {invoices
+              .filter((inv) => {
+                if (statusFilter !== "ALL" && inv.status !== statusFilter) return false;
+                return inv.title.toLowerCase().includes(query.trim().toLowerCase());
+              })
+              .map((inv) => (
               <li key={inv.id} className="report-item">
                 <div className="report-info">
                   <span className="report-name">{inv.title}</span>

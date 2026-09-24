@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import { PortalLayout } from "./components/PortalLayout";
+import { ApprovalsPage } from "./pages/ApprovalsPage";
 import { BillingPage } from "./pages/BillingPage";
 import { CampaignDetailPage } from "./pages/CampaignDetailPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
@@ -46,6 +47,7 @@ export function App() {
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="campaigns/:id" element={<CampaignDetailPage />} />
         <Route path="documents" element={<DocumentsPage />} />

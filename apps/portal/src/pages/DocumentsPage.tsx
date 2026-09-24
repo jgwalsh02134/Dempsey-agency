@@ -3,7 +3,7 @@ import { ApiError } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { EmptyState } from "../components/EmptyState";
 import * as api from "../api/endpoints";
-import { useAuth } from "../auth/AuthContext";
+import { useOrg } from "../auth/OrgContext";
 import { fromNow } from "../lib/date";
 import type { Document, DocumentCategory } from "../types";
 
@@ -49,12 +49,8 @@ function formatBytes(bytes: number): string {
 
 
 export function DocumentsPage() {
-  const { session } = useAuth();
-  const memberships = session!.memberships;
-
-  const [selectedOrgId, setSelectedOrgId] = useState(
-    () => memberships[0]?.organizationId ?? "",
-  );
+  const { orgId: selectedOrgId, setOrgId: setSelectedOrgId, memberships } = useOrg();
+  const [query, setQuery] = useState("");
 
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,6 +139,16 @@ export function DocumentsPage() {
             </select>
           </div>
         )}
+        <div className="list-tools">
+          <label className="list-search">
+            <span className="visually-hidden">Search documents</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search documents"
+            />
+          </label>
+        </div>
       </section>
 
       <section className="section-block">
@@ -174,7 +180,9 @@ export function DocumentsPage() {
 
         {!loading && docs.length > 0 && (
           <GroupedDocs
-            docs={docs}
+            docs={docs.filter((doc) =>
+              doc.title.toLowerCase().includes(query.trim().toLowerCase()),
+            )}
             downloadingId={downloadingId}
             onDownload={download}
           />
