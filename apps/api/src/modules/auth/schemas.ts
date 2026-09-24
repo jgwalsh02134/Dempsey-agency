@@ -20,6 +20,7 @@ export const changePasswordSchema = z
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
+  audience: z.enum(["admin", "portal"]).optional(),
 });
 
 export const resetPasswordSchema = z.object({

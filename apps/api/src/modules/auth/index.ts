@@ -5,6 +5,7 @@ import {
   generateResetToken,
   resetTokenExpiresAt,
 } from "../../lib/reset-token.js";
+import { adminBaseUrl, portalBaseUrl, sendEmail } from "../../lib/email.js";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -97,10 +98,26 @@ export async function authRoutes(app: FastifyInstance) {
   );
 
   app.post("/forgot-password", async (request) => {
-    const { email } = forgotPasswordSchema.parse(request.body);
+    const { email, audience } = forgotPasswordSchema.parse(request.body);
+    const requested = audience ?? "portal";
 
-    const user = await app.prisma.user.findUnique({ where: { email } });
-    if (user?.active && user.passwordHash) {
+    const user = await app.prisma.user.findUnique({
+      where: { email },
+      include: { memberships: { select: { role: true } } },
+    });
+    const agency = user?.memberships.some((m) =>
+      m.role === "AGENCY_OWNER" ||
+      m.role === "AGENCY_ADMIN" ||
+      m.role === "STAFF",
+    );
+    const base =
+      requested === "admin"
+        ? agency
+          ? adminBaseUrl()
+          : null
+        : portalBaseUrl();
+
+    if (user?.active && user.passwordHash && base) {
       const token = generateResetToken();
       await app.prisma.passwordReset.create({
         data: {
@@ -109,9 +126,20 @@ export async function authRoutes(app: FastifyInstance) {
           expiresAt: resetTokenExpiresAt(),
         },
       });
-      request.log.info(
-        { userId: user.id, token },
-        "Password reset token created (wire email sending here)",
+      const link = `${base.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
+      try {
+        await sendEmail(request.log, {
+          to: user.email,
+          subject: "Reset your Dempsey Agency password",
+          text: `Use this link to choose a new password. It expires soon.\n\n${link}\n\nIf you did not ask for this, you can ignore this email.`,
+        });
+      } catch (err) {
+        request.log.error({ err, userId: user.id }, "password reset email failed");
+      }
+    } else if (user?.active && user.passwordHash && !base) {
+      request.log.warn(
+        { audience: requested },
+        "password reset email skipped: app base URL is not configured",
       );
     }
 

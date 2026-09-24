@@ -35,6 +35,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 #root {
@@ -67,10 +68,12 @@ code,
 .page-center,
 .auth-layout {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 1rem;
+  overflow-x: clip;
 }
 
 .card {
@@ -1798,82 +1801,111 @@ input[type="file"]::file-selector-button:hover {
   flex-wrap: wrap;
 }
 
-/* ── Mobile: collapse sidebar to top bar ── */
+/* Mobile drawer replaces the old horizontal nav. */
+.admin-topbar,
+.admin-backdrop {
+  display: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 50;
+  padding: 0.6rem 0.9rem;
+  background: #fff;
+  color: #10233f;
+  border-radius: 0.4rem;
+  transform: translateY(-150%);
+}
+.skip-link:focus {
+  transform: none;
+}
+
+.nav-group-label {
+  margin: 0.85rem 0.4rem 0.25rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+
+.nav-badge {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background: #d5deea;
+  font-family: inherit;
+  z-index: 0;
+}
+.leaflet-container img {
+  max-width: none;
+}
+
+.explorer-state-grid .card {
+  min-height: 44px;
+  color: inherit;
+  font: inherit;
+}
+
 @media (max-width: 768px) {
   .admin-shell {
-    flex-direction: column;
+    display: block;
+  }
+
+  .admin-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 3.25rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
   }
 
   .admin-sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 0.75rem 0.75rem 0;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    overflow-y: visible;
+    position: fixed;
+    z-index: 40;
+    top: 0;
+    left: 0;
+    width: min(18rem, 88vw);
+    height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
   }
 
-  .sidebar-brand {
-    padding: 0 0.5rem 0.75rem 0;
-    border-bottom: none;
-    margin-bottom: 0;
+  .admin-sidebar.open {
+    transform: none;
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 2px;
-    padding: 0;
-    flex: 1 1 100%;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    border-top: 1px solid var(--border);
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-
-  .sidebar-nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  .sidebar-link {
-    white-space: nowrap;
-    flex-shrink: 0;
-    padding: 0.375rem 0.625rem;
-    font-size: 0.8rem;
-  }
-
-  .sidebar-footer {
-    border-top: none;
-    margin-top: 0;
-    margin-left: auto;
-    padding: 0 0 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .sidebar-user {
-    margin-bottom: 0;
-  }
-
-  .sidebar-user-name {
-    font-size: 0.75rem;
-  }
-
-  .sidebar-user-email {
-    display: none;
-  }
-
-  .sidebar-logout {
-    width: auto;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+  .admin-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    border: 0;
+    background: rgba(0, 0, 0, 0.45);
   }
 
   .admin-content {

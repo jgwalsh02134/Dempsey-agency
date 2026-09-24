@@ -34,8 +34,8 @@ export interface MapMarkerPublisher {
   streetAddress?: string | null;
   zipCode?: string | null;
   websiteUrl?: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
 }
 
 interface Props {
@@ -46,15 +46,24 @@ interface Props {
 function AutoFit({ points }: { points: [number, number][] }) {
   const map = useMap();
   useEffect(() => {
-    if (points.length === 0) return;
-    if (points.length === 1) {
-      map.setView(points[0], 10);
-      return;
-    }
-    const bounds = L.latLngBounds(points);
-    map.fitBounds(bounds, { padding: [32, 32] });
+    const frame = window.requestAnimationFrame(() => {
+      map.invalidateSize();
+      if (points.length === 0) return;
+      if (points.length === 1) {
+        map.setView(points[0], 10);
+        return;
+      }
+      map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [map, points]);
   return null;
+}
+
+function asCoord(value: number | string | null | undefined): number | null {
+  if (value == null || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function EmptyState({
@@ -100,10 +109,12 @@ export function CampaignMapPreview({
 }: Props) {
   const mapped = useMemo(
     () =>
-      publishers.filter(
-        (p): p is MapMarkerPublisher & { latitude: number; longitude: number } =>
-          p.latitude != null && p.longitude != null,
-      ),
+      publishers.flatMap((p) => {
+        const latitude = asCoord(p.latitude);
+        const longitude = asCoord(p.longitude);
+        if (latitude == null || longitude == null) return [];
+        return [{ ...p, latitude, longitude }];
+      }),
     [publishers],
   );
 

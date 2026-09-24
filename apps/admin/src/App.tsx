@@ -9,7 +9,9 @@ import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { CreativesQueuePage } from "./pages/CreativesQueuePage";
 import { AgencyPage } from "./pages/AgencyPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { LoginPage } from "./pages/LoginPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PublisherDetailPage } from "./pages/PublisherDetailPage";
@@ -40,6 +42,8 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         element={
           <RequireAuth>
