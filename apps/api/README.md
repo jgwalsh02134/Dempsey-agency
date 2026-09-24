@@ -15,6 +15,11 @@ Fastify + Prisma backend for the Dempsey Agency B2B advertising platform.
 | `NODE_ENV` | Environment mode | `development` | `production` |
 | `JWT_SECRET` | Secret for signing JWT tokens | `unsafe-dev-secret` (rejected when `NODE_ENV=production`) | `openssl rand -base64 48` |
 | `JWT_EXPIRES_IN` | Token lifetime | `7d` | `24h` |
+| `RESEND_API_KEY` | Resend API key for outbound email | optional; unset means email is skipped | `re_…` |
+| `EMAIL_FROM` | Verified From address | required together with the API key | `Dempsey Agency <notifications@example.com>` |
+| `APP_PORTAL_URL` | Portal origin for reset and client links | optional | `https://portal.dempsey.agency` |
+| `APP_ADMIN_URL` | Admin origin for agency notification links | optional | `https://admin.dempsey.agency` |
+| `APP_SITE_URL` | Marketing origin for invite activation | optional | `https://dempsey.agency` |
 
 **Production CORS**
 
@@ -63,7 +68,7 @@ npm run dev -w apps/api
 
 ## Audit log (database)
 
-Security-relevant actions are appended to the `AuditLog` table (PostgreSQL via Prisma): **user created**, **role changed**, **user deactivated**, **membership removed**. Each row stores `actorUserId`, optional `targetUserId` / `organizationId`, and JSON `metadata` (e.g. previous and new roles). There is no read API yet — inspect with Prisma Studio, SQL, or your own reporting.
+Security-relevant actions are appended to the `AuditLog` table: **user created**, **role changed**, **user deactivated**, **membership removed**. Login failures are not recorded. Agency owners and admins can read the log at `GET /api/v1/admin/audit-logs` (pagination plus `action`, `actorUserId`, `organizationId`, `from`, `to`). Responses omit password hashes and metadata keys that look like secrets.
 
 ## Seeded admin workflow
 
@@ -214,6 +219,16 @@ curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/deactivate"
 4. **Change password**: `POST /api/v1/auth/change-password` with current + new password (returns **403** if the account is deactivated).
 5. **Logout**: `POST /api/v1/auth/logout` (stateless JWT — discard token on the client).
 
+## Email
+
+Outbound mail uses Resend (`RESEND_API_KEY`, `EMAIL_FROM`). If either is unset, the API logs that once and skips delivery. `APP_PORTAL_URL` builds password-reset and client notification links. `APP_ADMIN_URL` builds agency notification links. `APP_SITE_URL` builds invite links (`/activate-account.html`).
+
+Email is sent for: password reset, approved account-request invites (when `APP_SITE_URL` is set), and notifications of type `CREATIVE_REVISION_REQUESTED`, `CREATIVE_REVISION_UPLOADED`, `PLACEMENT_AWAITING_APPROVAL`, `PLACEMENT_APPROVED_BY_CLIENT`, `NEW_INVOICE_UPLOADED`, and `NEW_PROOF_UPLOADED`.
+
+## DMA
+
+Publisher rows have optional `dmaName` and `dmaCode`. There is no DMA dataset in this repo, so those fields stay empty until an admin sets them. Do not invent market codes.
+
 ## Routes
 
 ### Public
@@ -222,16 +237,21 @@ curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/deactivate"
 |---|---|---|
 | `GET` | `/healthz` | Health check — `{ "status": "ok" }` |
 | `GET` | `/api/v1` | API version info |
+| `POST` | `/api/v1/account-requests` | Public access request |
+| `GET` | `/api/v1/invites/:token/validate` | Check an invite before activation |
+| `POST` | `/api/v1/invites/:token/activate` | Create the user from an unused, unexpired invite |
 
 ### Auth
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/v1/auth/login` | Login `{ email, password }` → `{ token, user }` |
+| `POST` | `/api/v1/auth/login` | Login `{ email, password }` → `{ token, user }`. Inactive users and wrong passwords share one error. |
 | `POST` | `/api/v1/auth/logout` | Logout (requires token) |
 | `GET` | `/api/v1/auth/me` | Session: user + memberships |
 | `GET` | `/api/v1/auth/session` | Same as `/auth/me` |
-| `POST` | `/api/v1/auth/change-password` | `{ currentPassword, newPassword }` (requires token) |
+| `POST` | `/api/v1/auth/change-password` | `{ currentPassword, newPassword }` |
+| `POST` | `/api/v1/auth/forgot-password` | Always `{ success: true }`. Emails a reset link when mail is configured and the account is active. |
+| `POST` | `/api/v1/auth/reset-password` | `{ token, password }`. Rejects expired, reused, and inactive-user tokens. |
 
 ### Users
 
@@ -239,33 +259,134 @@ curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/deactivate"
 |---|---|---|
 | `GET` | `/api/v1/users` | Scoped to orgs you can see; includes `active` |
 | `GET` | `/api/v1/users/:id` | Self or users visible in your org scope |
-| `POST` | `/api/v1/users` | Create user + membership; body includes `organizationId`, `role`, `password` |
-| `PATCH` | `/api/v1/users/:id/role` | Body `{ organizationId, role }`; org-scoped RBAC; blocks last agency owner demotion |
-| `PATCH` | `/api/v1/users/:id/deactivate` | Body `{}` only; soft-deactivate; blocks login + API session |
+| `POST` | `/api/v1/users` | Create user + membership |
+| `PATCH` | `/api/v1/users/:id/role` | Blocks demoting the last agency owner |
+| `PATCH` | `/api/v1/users/:id/deactivate` | Blocks deactivating yourself or the last agency owner |
+| `PATCH` | `/api/v1/users/:id/reactivate` | Restores `active` |
 
 ### Organizations
 
 | Method | Path | Notes |
 |---|---|---|
 | `GET` | `/api/v1/organizations` | Scoped (platform agency owners see all) |
-| `GET` | `/api/v1/organizations/:id/users` | Members of org with roles; org-scoped list access |
 | `GET` | `/api/v1/organizations/:id` | Same visibility rules |
-| `POST` | `/api/v1/organizations` | `AGENCY`: agency owner only. `CLIENT`: requires `agencyOrganizationId` and agency admin/owner on that agency |
+| `GET` | `/api/v1/organizations/:id/users` | Members of the org |
+| `POST` | `/api/v1/organizations` | `AGENCY`: agency owner only. `CLIENT`: requires `agencyOrganizationId` |
 
 ### Memberships
 
 | Method | Path | Notes |
 |---|---|---|
 | `GET` | `/api/v1/memberships` | Scoped to visible orgs |
-| `POST` | `/api/v1/memberships` | Link existing user to org; org-aware + role rules |
-| `DELETE` | `/api/v1/memberships/:id` | Remove membership; org-scoped; blocks removing last agency owner |
+| `POST` | `/api/v1/memberships` | Link an existing user |
+| `DELETE` | `/api/v1/memberships/:id` | Blocks removing the last agency owner |
 
 ### Agency–client relationships
 
 | Method | Path | Notes |
 |---|---|---|
-| `GET` | `/api/v1/agency-clients` | Scoped to agencies you belong to (owners see all) |
-| `POST` | `/api/v1/agency-clients` | Agency admin/owner on `agencyId`; validates agency/client types |
+| `GET` | `/api/v1/agency-clients` | Scoped to agencies you belong to |
+| `POST` | `/api/v1/agency-clients` | Agency admin/owner on `agencyId` |
+
+### Documents
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/organizations/:orgId/documents` | List |
+| `POST` | `/api/v1/organizations/:orgId/documents` | Upload. `INVOICE` and `PROOF` notify clients and email when mail is configured |
+| `PATCH` | `/api/v1/documents/:id` | Metadata only |
+| `DELETE` | `/api/v1/documents/:id` | Delete record and object |
+| `GET` | `/api/v1/documents/:id/download` | Signed download URL (`503` if storage is unset) |
+
+### Campaigns
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/organizations/:orgId/campaigns` | List |
+| `POST` | `/api/v1/organizations/:orgId/campaigns` | Create |
+| `GET` | `/api/v1/campaigns/:id` | One campaign |
+| `PATCH` | `/api/v1/campaigns/:id` | Update, including status |
+| `DELETE` | `/api/v1/campaigns/:id` | Delete |
+
+### Invoices
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/organizations/:orgId/invoices` | List |
+| `POST` | `/api/v1/organizations/:orgId/invoices` | Create |
+| `PATCH` | `/api/v1/invoices/:id` | Update status |
+| `DELETE` | `/api/v1/invoices/:id` | Delete |
+
+### Submissions
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/campaigns/:campaignId/submissions` | List, including revision chain fields |
+| `POST` | `/api/v1/campaigns/:campaignId/submissions` | Upload. `parentSubmissionId` starts or continues a revision chain |
+| `PATCH` | `/api/v1/submissions/:id` | Agency status / review note. `NEEDS_RESIZING` and `VALIDATION_FAILED` email the client |
+| `DELETE` | `/api/v1/submissions/:id` | Delete |
+| `GET` | `/api/v1/submissions/:id/download` | Signed attachment URL |
+| `GET` | `/api/v1/submissions/:id/preview` | Signed inline URL for PDF and images |
+
+### Publishers and inventory
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/publishers` | Agency staff+. Optional `q`, `isActive`. Includes `dmaName` / `dmaCode` when set |
+| `POST` | `/api/v1/publishers` | Agency admin+ |
+| `PATCH` | `/api/v1/publishers/:id` | Agency admin+. Optional DMA fields |
+| `DELETE` | `/api/v1/publishers/:id` | Refuses while inventory or campaign links exist |
+| `POST` | `/api/v1/publishers/import` | CSV rows already parsed by the client |
+| `POST` | `/api/v1/publishers/:id/geocode` | Refresh coordinates |
+| `GET` | `/api/v1/publishers/:id/inventory` | List inventory |
+| `POST` | `/api/v1/publishers/:id/inventory` | Create inventory |
+| `PATCH` | `/api/v1/inventory/:inventoryId` | Update inventory |
+| `DELETE` | `/api/v1/inventory/:inventoryId` | Refuses while placements reference it |
+| `GET` | `/api/v1/campaigns/:campaignId/publishers` | Publishers attached to a visible campaign |
+| `POST` | `/api/v1/campaigns/:campaignId/publishers` | Attach. Caller must manage the campaign org |
+| `DELETE` | `/api/v1/campaigns/:campaignId/publishers/:publisherId` | Detach. `404` if the link is missing |
+
+### Placements
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/campaigns/:campaignId/placements` | List. Net cost is omitted for non-agency callers |
+| `POST` | `/api/v1/campaigns/:campaignId/placements` | Create. Notifies the client |
+| `PATCH` | `/api/v1/placements/:id` | Agency update |
+| `POST` | `/api/v1/placements/:id/client-response` | Client members only. Body `{ response, note }` |
+| `DELETE` | `/api/v1/placements/:id` | Delete |
+
+### Account requests and invites
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/account-requests` | Agency owner/admin |
+| `PATCH` | `/api/v1/account-requests/:id` | Approve requires `organizationId` and creates an invite. A second approve returns 400 |
+
+### AI
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/v1/ai/review-creative` | `{ submissionId }` |
+
+### Notifications
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/notifications` | Current user. `unread`, `limit` |
+| `GET` | `/api/v1/notifications/unread-count` | Count |
+| `POST` | `/api/v1/notifications/:id/read` | Mark one |
+| `POST` | `/api/v1/notifications/read-all` | Mark all |
+
+### Admin
+
+Agency owner and agency admin only.
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/v1/admin/overview` | Counts plus the latest audit rows |
+| `GET` | `/api/v1/admin/audit-logs` | `page`, `limit`, `action`, `actorUserId`, `organizationId`, `from`, `to` |
+| `GET` | `/api/v1/admin/submissions` | Queue. Filters: `status`, `organizationId`, `creativeType` |
 
 ## RBAC (short)
 
@@ -296,7 +417,7 @@ npm run start -w apps/api
 
 1. Set **Root Directory** to `apps/api`.
 2. Add PostgreSQL — `DATABASE_URL` is injected.
-3. Set **`CORS_ORIGINS`** to every production frontend origin (comma-separated), e.g. `https://dempsey.agency,https://admin.dempsey.agency`, and a strong **`JWT_SECRET`**. Do **not** set `SEED_*` on the service — seeds are one-off via CLI or a release task if you choose.
-4. Run migrations on deploy: `npm run prisma:migrate:deploy` (or equivalent Railway step) **before** or as part of startup so `AuditLog` exists.
+3. Set **`CORS_ORIGINS`** to every production frontend origin, including `https://portal.dempsey.agency` and `https://admin.dempsey.agency`, and a strong **`JWT_SECRET`** (`JWT_SECRET` is required in production). Do **not** set `SEED_*` on the service.
+4. Run `npm run prisma:migrate:deploy` on deploy before the process serves traffic.
 5. Build: `npm run build`; start: `npm run start`.
 6. Health check path: `/healthz`.

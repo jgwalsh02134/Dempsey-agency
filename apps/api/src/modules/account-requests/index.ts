@@ -1,7 +1,12 @@
 import { randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../plugins/auth.js";
-import { requireRole } from "../../lib/rbac.js";
+import {
+  assertCanAssignMembershipRole,
+  requireRole,
+  resolveCanManageOrganization,
+} from "../../lib/rbac.js";
+import { sendEmail, siteBaseUrl } from "../../lib/email.js";
 import {
   createAccountRequestSchema,
   requestIdParamsSchema,
@@ -90,6 +95,12 @@ export async function accountRequestRoutes(app: FastifyInstance) {
         });
       }
 
+      if (status === "APPROVED" && !organizationId) {
+        return reply.code(400).send({
+          error: "organizationId is required to approve an account request",
+        });
+      }
+
       if (status === "APPROVED" && organizationId) {
         const org = await app.prisma.organization.findUnique({
           where: { id: organizationId },
@@ -111,17 +122,54 @@ export async function accountRequestRoutes(app: FastifyInstance) {
           });
         }
 
+        const manage = await resolveCanManageOrganization(
+          app.prisma,
+          request.currentUser!,
+          organizationId,
+        );
+        if (!manage.ok) {
+          return reply.code(403).send({
+            error: "Forbidden: insufficient access to this organization",
+          });
+        }
+        if (
+          !assertCanAssignMembershipRole(
+            request.currentUser!,
+            organizationId,
+            org.type,
+            effectiveRole,
+            manage,
+            reply,
+          )
+        ) {
+          return;
+        }
+
         const token = randomBytes(32).toString("base64url");
         const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
 
-        const [updated, invite] = await app.prisma.$transaction(
+        let updated: Awaited<
+          ReturnType<typeof app.prisma.accountRequest.findUniqueOrThrow>
+        >;
+        let invite: Awaited<ReturnType<typeof app.prisma.invite.create>>;
+        try {
+          [updated, invite] = await app.prisma.$transaction(
           async (tx) => {
-            const ar = await tx.accountRequest.update({
-              where: { id },
+            const claimed = await tx.accountRequest.updateMany({
+              where: { id, status: "PENDING" },
               data: {
                 status,
                 reviewedById: request.currentUser!.id,
               },
+            });
+            if (claimed.count !== 1) {
+              throw Object.assign(new Error("ALREADY_REVIEWED"), {
+                code: "ALREADY_REVIEWED",
+              });
+            }
+
+            const ar = await tx.accountRequest.findUniqueOrThrow({
+              where: { id },
             });
 
             const inv = await tx.invite.create({
@@ -139,6 +187,36 @@ export async function accountRequestRoutes(app: FastifyInstance) {
             return [ar, inv] as const;
           },
         );
+        } catch (err) {
+          const code =
+            err && typeof err === "object" && "code" in err
+              ? String((err as { code: unknown }).code)
+              : "";
+          if (code === "ALREADY_REVIEWED") {
+            return reply.code(400).send({
+              error: "Request has already been reviewed",
+            });
+          }
+          throw err;
+        }
+
+        const site = siteBaseUrl();
+        const link = site
+          ? `${site.replace(/\/$/, "")}/activate-account.html?token=${encodeURIComponent(invite.token)}`
+          : null;
+        if (link) {
+          await sendEmail(request.log, {
+            to: existing.email,
+            subject: "Your Dempsey Agency account is ready",
+            text: `Your access request was approved.\n\nActivate your account:\n${link}\n\nThis link expires in 48 hours.`,
+            html: `<p>Your access request was approved.</p><p><a href="${link}">Activate your account</a></p><p>This link expires in 48 hours.</p>`,
+          });
+        } else {
+          request.log.warn(
+            { accountRequestId: id },
+            "invite email skipped: APP_SITE_URL is not set",
+          );
+        }
 
         return {
           ...updated,
@@ -149,12 +227,21 @@ export async function accountRequestRoutes(app: FastifyInstance) {
         };
       }
 
-      const updated = await app.prisma.accountRequest.update({
-        where: { id },
+      const rejected = await app.prisma.accountRequest.updateMany({
+        where: { id, status: "PENDING" },
         data: {
           status,
           reviewedById: request.currentUser!.id,
         },
+      });
+      if (rejected.count !== 1) {
+        return reply.code(400).send({
+          error: "Request has already been reviewed",
+        });
+      }
+
+      const updated = await app.prisma.accountRequest.findUniqueOrThrow({
+        where: { id },
       });
 
       return updated;

@@ -8,6 +8,7 @@ import {
 } from "../../lib/rbac.js";
 import {
   assertActorCanDeactivateTarget,
+  assertNotDeactivatingLastAgencyOwner,
   assertRoleChangePreservesAgencyOwner,
 } from "../../lib/org-user-admin.js";
 import { hashPassword } from "../../lib/password.js";
@@ -136,6 +137,16 @@ export async function userRoutes(app: FastifyInstance) {
         reply,
       );
       if (!allowed) return;
+
+      if (
+        !(await assertNotDeactivatingLastAgencyOwner(
+          app.prisma,
+          targetUserId,
+          reply,
+        ))
+      ) {
+        return;
+      }
 
       const target = await app.prisma.user.findUnique({
         where: { id: targetUserId },

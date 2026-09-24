@@ -33,6 +33,8 @@ const envSchema = z.object({
   /** Public base URLs used to build CTA links in outgoing emails. */
   APP_PORTAL_URL: z.string().url().optional(),
   APP_ADMIN_URL: z.string().url().optional(),
+  /** Marketing site origin for invite links (`/activate-account.html`). */
+  APP_SITE_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

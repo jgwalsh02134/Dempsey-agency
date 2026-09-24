@@ -17,12 +17,18 @@ interface StorageConfig {
 
 let _client: S3Client | null = null;
 
+export class StorageNotConfiguredError extends Error {
+  statusCode = 503;
+  constructor() {
+    super("File storage is not configured.");
+    this.name = "StorageNotConfiguredError";
+  }
+}
+
 function requireConfig(): StorageConfig {
   const { S3_BUCKET, S3_REGION, S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY } = env;
   if (!S3_BUCKET || !S3_ACCESS_KEY_ID || !S3_SECRET_ACCESS_KEY) {
-    throw new Error(
-      "Object storage is not configured. Set S3_BUCKET, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY.",
-    );
+    throw new StorageNotConfiguredError();
   }
   return {
     bucket: S3_BUCKET,
