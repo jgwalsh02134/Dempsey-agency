@@ -41,6 +41,7 @@ const EMAIL_ENABLED_TYPES: ReadonlySet<NotificationType> = new Set<NotificationT
   "PLACEMENT_AWAITING_APPROVAL",
   "PLACEMENT_APPROVED_BY_CLIENT",
   "NEW_INVOICE_UPLOADED",
+  "NEW_PROOF_UPLOADED",
 ]);
 
 /** Types directed at client users (use portal base for CTA links). */

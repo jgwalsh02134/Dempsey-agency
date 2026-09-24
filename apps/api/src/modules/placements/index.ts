@@ -252,15 +252,15 @@ export async function placementRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "Placement not found" });
       }
 
-      const visible = await resolveVisibleOrganizationIds(
-        app.prisma,
-        request.currentUser!,
+      const isClientMember = request.currentUser!.memberships.some(
+        (m) =>
+          m.organizationId === placement.campaign.organizationId &&
+          (m.role === "CLIENT_ADMIN" || m.role === "CLIENT_USER"),
       );
-      if (
-        visible !== null &&
-        !visible.includes(placement.campaign.organizationId)
-      ) {
-        return reply.code(403).send({ error: "Forbidden" });
+      if (!isClientMember) {
+        return reply.code(403).send({
+          error: "Forbidden: only a client member can respond to this placement",
+        });
       }
 
       const { response, note } = clientResponseSchema.parse(request.body);
@@ -272,6 +272,22 @@ export async function placementRoutes(app: FastifyInstance) {
           clientResponse: response,
           clientResponseNote: note ?? null,
           clientRespondedAt: new Date(),
+        },
+        include: {
+          inventory: {
+            include: {
+              publisher: {
+                select: {
+                  id: true,
+                  name: true,
+                  city: true,
+                  state: true,
+                  dmaName: true,
+                  dmaCode: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -298,7 +314,17 @@ export async function placementRoutes(app: FastifyInstance) {
         });
       }
 
-      return updated;
+      const { netCostCents: _net, inventory, ...rest } = updated;
+      return {
+        ...rest,
+        inventory: {
+          id: inventory.id,
+          name: inventory.name,
+          mediaType: inventory.mediaType,
+          pricingModel: inventory.pricingModel,
+          publisher: inventory.publisher,
+        },
+      };
     },
   );
 

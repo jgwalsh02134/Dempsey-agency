@@ -31,6 +31,12 @@ export interface SendEmailResult {
 
 const RESEND_URL = "https://api.resend.com/emails";
 
+let loggedEmailDisabled = false;
+
+export function isEmailConfigured(): boolean {
+  return Boolean(env.RESEND_API_KEY && env.EMAIL_FROM);
+}
+
 export async function sendEmail(
   log: FastifyBaseLogger,
   args: SendEmailArgs,
@@ -38,10 +44,12 @@ export async function sendEmail(
   const apiKey = env.RESEND_API_KEY;
   const from = env.EMAIL_FROM;
   if (!apiKey || !from) {
-    log.info(
-      { to: args.to, subject: args.subject },
-      "email.send skipped: RESEND_API_KEY or EMAIL_FROM not configured",
-    );
+    if (!loggedEmailDisabled) {
+      loggedEmailDisabled = true;
+      log.warn(
+        "email.send disabled: RESEND_API_KEY or EMAIL_FROM is not set; further sends are skipped",
+      );
+    }
     return { delivered: false };
   }
 
@@ -92,4 +100,9 @@ export function portalBaseUrl(): string | null {
 /** Base URL for the admin app. Null when not configured. */
 export function adminBaseUrl(): string | null {
   return env.APP_ADMIN_URL ?? null;
+}
+
+/** Marketing site origin used for invite activation links. */
+export function siteBaseUrl(): string | null {
+  return env.APP_SITE_URL ?? null;
 }

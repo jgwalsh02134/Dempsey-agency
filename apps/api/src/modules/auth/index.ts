@@ -5,6 +5,7 @@ import {
   generateResetToken,
   resetTokenExpiresAt,
 } from "../../lib/reset-token.js";
+import { portalBaseUrl, sendEmail } from "../../lib/email.js";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -109,10 +110,22 @@ export async function authRoutes(app: FastifyInstance) {
           expiresAt: resetTokenExpiresAt(),
         },
       });
-      request.log.info(
-        { userId: user.id, token },
-        "Password reset token created (wire email sending here)",
-      );
+
+      const base = portalBaseUrl();
+      const link = base
+        ? `${base.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`
+        : null;
+      const text = link
+        ? `Reset your Dempsey Agency password:\n\n${link}\n\nThis link expires in one hour. If you did not request it, you can ignore this email.`
+        : "A password reset was requested, but the portal URL is not configured. Contact your agency administrator.";
+      await sendEmail(request.log, {
+        to: user.email,
+        subject: "Reset your Dempsey Agency password",
+        text,
+        html: link
+          ? `<p>Reset your Dempsey Agency password:</p><p><a href="${link}">Choose a new password</a></p><p>This link expires in one hour.</p>`
+          : `<p>${text}</p>`,
+      });
     }
 
     return { success: true };
@@ -121,27 +134,45 @@ export async function authRoutes(app: FastifyInstance) {
   app.post("/reset-password", async (request, reply) => {
     const { token, password } = resetPasswordSchema.parse(request.body);
 
-    const reset = await app.prisma.passwordReset.findUnique({
-      where: { token },
-    });
-    if (!reset || reset.usedAt || reset.expiresAt < new Date()) {
-      return reply.code(400).send({
-        error: "This reset link is invalid or has expired.",
-      });
-    }
-
     const passwordHash = await hashPassword(password);
+    const invalid = {
+      error: "This reset link is invalid or has expired.",
+    };
 
-    await app.prisma.$transaction([
-      app.prisma.user.update({
+    const applied = await app.prisma.$transaction(async (tx) => {
+      const reset = await tx.passwordReset.findUnique({
+        where: { token },
+        include: { user: { select: { id: true, active: true } } },
+      });
+      if (
+        !reset ||
+        reset.usedAt ||
+        reset.expiresAt < new Date() ||
+        !reset.user.active
+      ) {
+        return false;
+      }
+
+      const claimed = await tx.passwordReset.updateMany({
+        where: { id: reset.id, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+      if (claimed.count !== 1) return false;
+
+      await tx.user.update({
         where: { id: reset.userId },
         data: { passwordHash },
-      }),
-      app.prisma.passwordReset.update({
-        where: { id: reset.id },
+      });
+      await tx.passwordReset.updateMany({
+        where: { userId: reset.userId, usedAt: null },
         data: { usedAt: new Date() },
-      }),
-    ]);
+      });
+      return true;
+    });
+
+    if (!applied) {
+      return reply.code(400).send(invalid);
+    }
 
     return { success: true };
   });

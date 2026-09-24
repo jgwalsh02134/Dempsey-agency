@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../../plugins/auth.js";
-import { requireRole } from "../../lib/rbac.js";
+import { assertCanManageOrganization, requireRole } from "../../lib/rbac.js";
 import { resolveVisibleOrganizationIds } from "../../lib/org-scope.js";
 import { geocodeAddress } from "./geocode.js";
 import {
@@ -519,11 +519,19 @@ export async function publisherRoutes(app: FastifyInstance) {
 
       const campaign = await app.prisma.campaign.findUnique({
         where: { id: campaignId },
-        select: { id: true },
+        select: { id: true, organizationId: true },
       });
       if (!campaign) {
         return reply.code(404).send({ error: "Campaign not found" });
       }
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        campaign.organizationId,
+        reply,
+      );
+      if (!manage) return;
 
       // Filter to publishers that actually exist (avoids FK violations).
       const validPublishers = await app.prisma.publisher.findMany({
@@ -564,9 +572,28 @@ export async function publisherRoutes(app: FastifyInstance) {
         request.params,
       );
 
-      await app.prisma.campaignPublisher.deleteMany({
+      const campaign = await app.prisma.campaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true, organizationId: true },
+      });
+      if (!campaign) {
+        return reply.code(404).send({ error: "Campaign not found" });
+      }
+
+      const manage = await assertCanManageOrganization(
+        app.prisma,
+        request.currentUser!,
+        campaign.organizationId,
+        reply,
+      );
+      if (!manage) return;
+
+      const removed = await app.prisma.campaignPublisher.deleteMany({
         where: { campaignId, publisherId },
       });
+      if (removed.count === 0) {
+        return reply.code(404).send({ error: "Publisher is not attached to this campaign" });
+      }
 
       return reply.code(204).send();
     },

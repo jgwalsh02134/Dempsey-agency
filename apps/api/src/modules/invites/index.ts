@@ -62,57 +62,96 @@ export async function inviteRoutes(app: FastifyInstance) {
       return reply.code(410).send({ error: "This invite has expired" });
     }
 
-    const existingUser = await app.prisma.user.findUnique({
-      where: { email: invite.email },
-    });
-    if (existingUser) {
-      return reply.code(409).send({
-        error:
-          "An account with this email already exists. Please sign in instead.",
-      });
-    }
-
     const passwordHash = await hashPassword(password);
 
-    const user = await app.prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
-        data: {
-          email: invite.email,
-          name: name ?? null,
-          passwordHash,
-          active: true,
-        },
-        omit: { passwordHash: true },
-      });
+    let user: { id: string; email: string; name: string | null };
+    try {
+      user = await app.prisma.$transaction(async (tx) => {
+        const current = await tx.invite.findUnique({ where: { id: invite.id } });
+        if (!current || current.usedAt || current.expiresAt < new Date()) {
+          throw Object.assign(new Error("INVITE_CLOSED"), { code: "INVITE_CLOSED" });
+        }
 
-      await tx.organizationMembership.create({
-        data: {
-          userId: created.id,
-          organizationId: invite.organizationId,
-          role: invite.role as Role,
-        },
-      });
+        const existingUser = await tx.user.findUnique({
+          where: { email: current.email },
+        });
+        if (existingUser) {
+          throw Object.assign(
+            new Error(existingUser.active ? "USER_EXISTS" : "USER_INACTIVE"),
+            { code: existingUser.active ? "USER_EXISTS" : "USER_INACTIVE" },
+          );
+        }
 
-      await tx.invite.update({
-        where: { id: invite.id },
-        data: { usedAt: new Date() },
-      });
+        const claimed = await tx.invite.updateMany({
+          where: { id: current.id, usedAt: null },
+          data: { usedAt: new Date() },
+        });
+        if (claimed.count !== 1) {
+          throw Object.assign(new Error("INVITE_CLOSED"), { code: "INVITE_CLOSED" });
+        }
 
-      await writeAuditLog(tx, {
-        action: "USER_CREATED",
-        actorUserId: invite.createdById,
-        targetUserId: created.id,
-        organizationId: invite.organizationId,
-        metadata: {
-          email: invite.email,
-          role: invite.role,
-          source: "invite",
-          inviteId: invite.id,
-        },
-      });
+        const created = await tx.user.create({
+          data: {
+            email: current.email,
+            name: name ?? null,
+            passwordHash,
+            active: true,
+          },
+          omit: { passwordHash: true },
+        });
 
-      return created;
-    });
+        await tx.organizationMembership.create({
+          data: {
+            userId: created.id,
+            organizationId: current.organizationId,
+            role: current.role as Role,
+          },
+        });
+
+        await writeAuditLog(tx, {
+          action: "USER_CREATED",
+          actorUserId: current.createdById,
+          targetUserId: created.id,
+          organizationId: current.organizationId,
+          metadata: {
+            email: current.email,
+            role: current.role,
+            source: "invite",
+            inviteId: current.id,
+          },
+        });
+
+        return created;
+      });
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code: unknown }).code)
+          : "";
+      if (code === "USER_EXISTS") {
+        return reply.code(409).send({
+          error:
+            "An account with this email already exists. Please sign in instead.",
+        });
+      }
+      if (code === "USER_INACTIVE") {
+        return reply.code(403).send({
+          error: "This account is disabled. Contact your agency administrator.",
+        });
+      }
+      if (code === "P2002") {
+        return reply.code(409).send({
+          error:
+            "An account with this email already exists. Please sign in instead.",
+        });
+      }
+      if (code === "INVITE_CLOSED") {
+        return reply
+          .code(410)
+          .send({ error: "This invite has already been used" });
+      }
+      throw err;
+    }
 
     return reply.code(201).send({
       success: true,

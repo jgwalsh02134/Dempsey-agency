@@ -132,6 +132,42 @@ export async function assertRoleChangePreservesAgencyOwner(
   return true;
 }
 
+/**
+ * Block deactivating a user who is the sole AGENCY_OWNER of any agency org.
+ * Role and membership checks already cover demotion and removal; deactivation
+ * would otherwise leave that org with no owner who can sign in.
+ */
+export async function assertNotDeactivatingLastAgencyOwner(
+  prisma: PrismaClient,
+  targetUserId: string,
+  reply: FastifyReply,
+): Promise<boolean> {
+  const ownerMemberships = await prisma.organizationMembership.findMany({
+    where: {
+      userId: targetUserId,
+      role: AGENCY_OWNER,
+      organization: { type: "AGENCY" },
+    },
+    select: { organizationId: true },
+  });
+
+  for (const membership of ownerMemberships) {
+    const count = await countAgencyOwnersInOrganization(
+      prisma,
+      membership.organizationId,
+    );
+    if (count <= 1) {
+      await reply.code(400).send({
+        error:
+          "Cannot deactivate the last agency owner; assign another owner first",
+      });
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export async function assertActorCanDeactivateTarget(
   prisma: PrismaClient,
   actor: AuthUser,
