@@ -1,53 +1,74 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { MARKETING_URL } from "../api/config";
 import * as api from "../api/endpoints";
 
-/** Poll the unread count while the tab is focused. Keeps the header badge
- *  fresh without a websocket — 60s is plenty for a workflow signal. */
-function useUnreadCount(enabled: boolean): {
-  count: number;
-  refresh: () => void;
-} {
+const PRIMARY_NAV = [
+  { to: "/", label: "Home", end: true },
+  { to: "/campaigns", label: "Campaigns", end: false },
+  { to: "/creatives", label: "Creatives", end: false },
+  { to: "/documents", label: "Documents", end: false },
+  { to: "/billing", label: "Billing", end: false },
+] as const;
+
+const TAB_NAV = [
+  { to: "/", label: "Home", end: true },
+  { to: "/campaigns", label: "Campaigns", end: false },
+  { to: "/creatives", label: "Creatives", end: false },
+  { to: "/documents", label: "Docs", end: false },
+  { to: "/notifications", label: "Alerts", end: false },
+] as const;
+
+function useUnreadCount(enabled: boolean): number {
   const [count, setCount] = useState(0);
   const location = useLocation();
 
-  const refresh = () => {
-    api
-      .fetchUnreadNotificationCount()
-      .then((res) => setCount(res.count))
-      .catch(() => {
-        /* non-blocking: count stays stale rather than breaking the shell */
-      });
-  };
-
   useEffect(() => {
     if (!enabled) return;
+    let cancelled = false;
+    const refresh = () => {
+      api
+        .fetchUnreadNotificationCount()
+        .then((res) => {
+          if (!cancelled) setCount(res.count);
+        })
+        .catch(() => {
+          /* keep the last count */
+        });
+    };
     refresh();
     const id = window.setInterval(refresh, 60_000);
-    const onFocus = () => refresh();
-    window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", refresh);
     return () => {
+      cancelled = true;
       window.clearInterval(id);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", refresh);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, location.pathname]);
 
-  // Also refetch whenever the route changes — covers returning from the
-  // notifications page where items were just marked read.
-  useEffect(() => {
-    if (enabled) refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, enabled]);
-
-  return { count, refresh };
+  return count;
 }
 
 export function PortalLayout() {
   const { session, logout, loading, token } = useAuth();
-  const { count: unreadCount } = useUnreadCount(Boolean(session));
+  const unreadCount = useUnreadCount(Boolean(session));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuId = useId();
+  const location = useLocation();
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   if (loading && token) {
     return (
@@ -57,86 +78,120 @@ export function PortalLayout() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
+
+  const badge = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
     <div className="portal">
+      <a className="skip-link" href="#portal-content">
+        Skip to content
+      </a>
       <header className="portal-header">
         <div className="portal-header-top">
-          <div className="portal-brand">
-            <img
-              src="/d-fav.svg"
-              alt="Dempsey Agency"
-              className="portal-logo"
-            />
+          <Link to="/" className="portal-brand">
+            <img src="/d-fav.svg" alt="" className="portal-logo" />
             <span className="portal-title">Client Portal</span>
-          </div>
+          </Link>
           <div className="portal-header-actions">
-            <a href={MARKETING_URL} className="btn-back-to-site">
-              <span className="back-to-site-full">&larr; Back to site</span>
-              <span className="back-to-site-short">&larr; Home</span>
-            </a>
             <Link
               to="/notifications"
-              className="btn-sign-out"
+              className="icon-button"
               aria-label={
                 unreadCount > 0
                   ? `Notifications, ${unreadCount} unread`
                   : "Notifications"
               }
-              style={{ position: "relative" }}
             >
-              Notifications
+              Alerts
               {unreadCount > 0 && (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    marginLeft: "0.4rem",
-                    display: "inline-block",
-                    minWidth: "1.25rem",
-                    padding: "0 0.4rem",
-                    borderRadius: "999px",
-                    background: "#dc2626",
-                    color: "#fff",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    lineHeight: "1.25rem",
-                    textAlign: "center",
-                  }}
-                >
-                  {unreadCount > 99 ? "99+" : unreadCount}
+                <span className="nav-badge" aria-hidden="true">
+                  {badge}
                 </span>
               )}
             </Link>
-            <button type="button" className="btn-sign-out" onClick={logout}>
+            <a href={MARKETING_URL} className="btn-back-to-site desktop-only">
+              Back to site
+            </a>
+            <button type="button" className="btn-sign-out desktop-only" onClick={logout}>
+              Sign out
+            </button>
+            <button
+              type="button"
+              className="icon-button menu-toggle"
+              aria-expanded={menuOpen}
+              aria-controls={menuId}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              Menu
+            </button>
+          </div>
+        </div>
+        <nav className="portal-nav" aria-label="Portal">
+          {PRIMARY_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={navLinkClass}
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </header>
+
+      {menuOpen && (
+        <div className="sheet-backdrop" onClick={() => setMenuOpen(false)}>
+          <div
+            id={menuId}
+            className="nav-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <nav className="nav-sheet-links" aria-label="All sections">
+              {PRIMARY_NAV.map((item) => (
+                <NavLink key={item.to} to={item.to} end={item.end} className={navLinkClass}>
+                  {item.label}
+                </NavLink>
+              ))}
+              <NavLink to="/notifications" className={navLinkClass}>
+                Notifications{unreadCount > 0 ? ` (${badge})` : ""}
+              </NavLink>
+            </nav>
+            <a className="btn-hero" href={MARKETING_URL}>
+              Back to dempsey.agency
+            </a>
+            <button type="button" className="btn-hero" onClick={logout}>
               Sign out
             </button>
           </div>
         </div>
-        <nav className="portal-nav" aria-label="Portal navigation">
-          <NavLink to="/" end className={navLinkClass}>
-            Dashboard
-          </NavLink>
-          <NavLink to="/campaigns" className={navLinkClass}>
-            Campaigns
-          </NavLink>
-          <NavLink to="/documents" className={navLinkClass}>
-            Documents
-          </NavLink>
-          <NavLink to="/billing" className={navLinkClass}>
-            Billing
-          </NavLink>
-          <NavLink to="/creatives" className={navLinkClass}>
-            Creatives
-          </NavLink>
-        </nav>
-      </header>
+      )}
 
-      <main className="portal-main">
+      <main id="portal-content" className="portal-main" tabIndex={-1}>
         <Outlet />
       </main>
+
+      <nav className="portal-tabbar" aria-label="Primary">
+        {TAB_NAV.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={navLinkClass}
+          >
+            <span>{item.label}</span>
+            {item.to === "/notifications" && unreadCount > 0 && (
+              <span className="nav-badge" aria-hidden="true">
+                {badge}
+              </span>
+            )}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

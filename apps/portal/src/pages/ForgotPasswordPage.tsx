@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { ApiError } from "../api/client";
+import { humanApiMessage } from "../api/client";
 import * as api from "../api/endpoints";
 
 export function ForgotPasswordPage() {
@@ -16,16 +16,8 @@ export function ForgotPasswordPage() {
     try {
       await api.forgotPassword(email.trim());
       setSent(true);
-    } catch (e) {
-      if (e instanceof ApiError) {
-        setFormError(e.message);
-      } else if (e instanceof TypeError) {
-        setFormError(
-          "Unable to reach the server. Please check your connection and try again.",
-        );
-      } else {
-        setFormError("Something went wrong. Please try again.");
-      }
+    } catch (err) {
+      setFormError(humanApiMessage(err, "Something went wrong. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -87,6 +79,7 @@ export function ForgotPasswordPage() {
                 type="submit"
                 className="btn-submit"
                 disabled={submitting}
+                aria-busy={submitting}
               >
                 {submitting ? "Sending…" : "Send Reset Link"}
               </button>

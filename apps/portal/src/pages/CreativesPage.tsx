@@ -1,5 +1,6 @@
 import { type FormEvent, type DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../api/client";
+import { Breadcrumbs } from "../components/Breadcrumbs";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import type {
@@ -269,6 +270,7 @@ export function CreativesPage() {
   return (
     <>
       <section className="section-welcome">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Creatives" }]} />
         <h1 className="welcome-heading">Creatives</h1>
         <p className="welcome-body">
           Review your submissions, respond to agency feedback, and upload new files when you're ready.

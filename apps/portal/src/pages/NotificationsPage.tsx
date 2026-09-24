@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Breadcrumbs } from "../components/Breadcrumbs";
+import { EmptyState } from "../components/EmptyState";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import type { Notification, NotificationLink } from "../types";
@@ -119,6 +121,7 @@ export function NotificationsPage() {
   return (
     <>
       <section className="section-welcome">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Notifications" }]} />
         <h1 className="welcome-heading">Notifications</h1>
         <p className="welcome-body">
           A quick record of activity across your campaigns and documents.
@@ -166,10 +169,11 @@ export function NotificationsPage() {
         )}
 
         {!loading && !error && items.length === 0 && (
-          <p className="text-muted" style={{ marginTop: "0.5rem" }}>
-            You have no notifications yet. We'll let you know when there's
-            something to review.
-          </p>
+          <EmptyState
+            title="You're caught up"
+            body="New placement approvals, creative requests, and shared files will land here."
+            action={{ href: "/campaigns", label: "Go to campaigns" }}
+          />
         )}
 
         {!loading && items.length > 0 && (
@@ -187,8 +191,10 @@ export function NotificationsPage() {
               const unread = n.readAt == null;
               const clickable = routeFor(n.link) != null;
               return (
-                <li
-                  key={n.id}
+                <li key={n.id}>
+                  <button
+                  type="button"
+                  className={`notice-row${unread ? " notice-row-unread" : ""}`}
                   onClick={() => onRowClick(n)}
                   style={{
                     padding: "0.75rem 0.9rem",
@@ -258,9 +264,10 @@ export function NotificationsPage() {
                       style={{ fontSize: "0.75rem", marginTop: "0.3rem" }}
                     >
                       {TYPE_LABEL[n.type] ?? n.type}
-                      {clickable && " · Click to open"}
+                      {clickable ? " · Open" : ""}
                     </div>
                   </div>
+                  </button>
                 </li>
               );
             })}

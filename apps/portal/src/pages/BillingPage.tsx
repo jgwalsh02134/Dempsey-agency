@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
+import { Breadcrumbs } from "../components/Breadcrumbs";
+import { EmptyState } from "../components/EmptyState";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import { formatMoney, Money } from "../components/Money";
@@ -107,6 +109,7 @@ export function BillingPage() {
   return (
     <>
       <section className="section-welcome section-welcome-compact">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Billing" }]} />
         <h1 className="welcome-heading">Billing</h1>
         {!loading && invoices.length > 0 && (
           <p className="welcome-status">
@@ -225,9 +228,11 @@ export function BillingPage() {
         )}
 
         {!loading && !error && invoices.length === 0 && (
-          <p className="text-muted">
-            No invoices have been issued for your organization yet.
-          </p>
+          <EmptyState
+            title="No invoices yet"
+            body="Invoices your agency issues will show up here with their status and due date."
+            action={{ href: "/documents", label: "Check documents" }}
+          />
         )}
 
         {!loading && invoices.length > 0 && (

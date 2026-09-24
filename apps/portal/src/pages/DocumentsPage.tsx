@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api/client";
+import { Breadcrumbs } from "../components/Breadcrumbs";
+import { EmptyState } from "../components/EmptyState";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
 import { fromNow } from "../lib/date";
@@ -110,6 +112,7 @@ export function DocumentsPage() {
   return (
     <>
       <section className="section-welcome section-welcome-compact">
+        <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Documents" }]} />
         <h1 className="welcome-heading">Documents</h1>
         {!loading && docs.length > 0 && (
           <p className="welcome-status">
@@ -162,10 +165,11 @@ export function DocumentsPage() {
         )}
 
         {!loading && !error && docs.length === 0 && (
-          <p className="text-muted">
-            No documents have been shared with your organization yet.
-            Check back soon.
-          </p>
+          <EmptyState
+            title="No documents yet"
+            body="Proofs, contracts, and invoices your agency shares will appear here."
+            action={{ href: "/campaigns", label: "View campaigns" }}
+          />
         )}
 
         {!loading && docs.length > 0 && (

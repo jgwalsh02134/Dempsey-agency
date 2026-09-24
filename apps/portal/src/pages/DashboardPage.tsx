@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { MARKETING_URL } from "../api/config";
 import { useAuth } from "../auth/AuthContext";
 import * as api from "../api/endpoints";
+import { EmptyState } from "../components/EmptyState";
 import { Money } from "../components/Money";
 import { fromNow, shortDate } from "../lib/date";
 import type {
@@ -105,6 +107,7 @@ export function DashboardPage() {
     Record<string, Placement[]>
   >({});
   const [loading, setLoading] = useState(true);
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     if (!orgId) return;
@@ -149,6 +152,10 @@ export function DashboardPage() {
             placementResults.map((r) => [r.campaignId, r.placements]),
           ),
         );
+        const unreadRes = await api.fetchUnreadNotificationCount().catch(() => ({
+          count: 0,
+        }));
+        if (!cancelled) setUnread(unreadRes.count);
       } catch {
         /* best effort */
       } finally {
@@ -184,6 +191,9 @@ export function DashboardPage() {
   const attentionShown = attentionItems.slice(0, 5);
 
   const campaignTitleById = new Map(campaigns.map((c) => [c.id, c.title]));
+  const pendingPlacements = Object.values(placementsByCampaign)
+    .flat()
+    .filter((p) => p.clientResponse === "PENDING_CLIENT_REVIEW").length;
 
   const headline: { tone: "action" | "info" | "positive" | "muted"; text: string } =
     loading
@@ -222,6 +232,22 @@ export function DashboardPage() {
             {headline.text}
           </p>
         </div>
+        {!loading && (
+        <nav className="attention-grid" aria-label="What needs attention">
+          <Link to="/campaigns">
+            <span className="mono">{pendingPlacements}</span>
+            Pending placements
+          </Link>
+          <Link to="/creatives">
+            <span className="mono">{inReview.length + needsAttention.length}</span>
+            Creatives to watch
+          </Link>
+          <Link to="/notifications">
+            <span className="mono">{unread}</span>
+            Unread alerts
+          </Link>
+        </nav>
+        )}
         <div className="dash-hero-actions">
           <Link to="/creatives" className="btn-hero btn-hero-primary">
             Upload a creative
@@ -237,6 +263,14 @@ export function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {loading && (
+        <div className="skeleton-stack" aria-busy="true" aria-label="Loading dashboard">
+          <span />
+          <span />
+          <span />
+        </div>
+      )}
 
       {/* ── Act now (only when blocking action exists) ── */}
       {!loading && attentionShown.length > 0 && (
@@ -467,14 +501,15 @@ export function DashboardPage() {
 
       {/* ── Empty state ── */}
       {!loading && campaigns.length === 0 && (
-        <section className="section-block">
-          <div className="dash-empty">
-            <p className="dash-empty-text">
-              No campaigns have been set up yet. Your agency will create
-              campaigns and you will see them here.
-            </p>
-          </div>
-        </section>
+        <EmptyState
+          title="No campaigns yet"
+          body="Your agency creates campaigns. When one is ready, it will show up here."
+          action={{
+            href: `${MARKETING_URL}/contact`,
+            label: "Contact your agency",
+            external: true,
+          }}
+        />
       )}
     </>
   );

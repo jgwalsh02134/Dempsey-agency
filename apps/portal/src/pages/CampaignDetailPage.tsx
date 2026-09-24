@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { Breadcrumbs } from "../components/Breadcrumbs";
 import { CampaignMap } from "../components/CampaignMap";
 import { formatMoney, Money } from "../components/Money";
 import { dateRange, fromNow } from "../lib/date";
@@ -973,9 +974,13 @@ export function CampaignDetailPage() {
   return (
     <>
       <section className="section-welcome">
-        <Link to="/campaigns" className="back-link">
-          ← Back to campaigns
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Home", to: "/" },
+            { label: "Campaigns", to: "/campaigns" },
+            { label: campaign.title },
+          ]}
+        />
         <div className="campaign-hero">
           <div className="campaign-hero-title-row">
             <h1 className="welcome-heading" style={{ margin: 0 }}>
@@ -1566,7 +1571,7 @@ export function CampaignDetailPage() {
                               </span>
                               <button
                                 type="button"
-                                className="inline-text-link"
+                                className="primary-button"
                                 onClick={() =>
                                   setApproval((a) => ({
                                     ...a,
@@ -1578,14 +1583,8 @@ export function CampaignDetailPage() {
                                     },
                                   }))
                                 }
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  fontWeight: 600,
-                                }}
                               >
-                                Approve placement →
+                                Review and approve
                               </button>
                             </div>
                           )}

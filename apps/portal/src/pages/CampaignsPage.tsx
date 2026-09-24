@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
+import { EmptyState } from "../components/EmptyState";
 import { Money } from "../components/Money";
 import { dateRange } from "../lib/date";
 import type { Campaign, CampaignStatus, CreativeSubmission } from "../types";
@@ -194,13 +195,11 @@ export function CampaignsPage() {
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {!loading && !error && campaigns.length === 0 && (
-        <section className="section-block">
-          <div className="dash-empty">
-            <p className="dash-empty-text">
-              No campaigns have been set up for your organization yet. Check back soon.
-            </p>
-          </div>
-        </section>
+        <EmptyState
+          title="No campaigns yet"
+          body="Your agency will add campaigns here. You can still review documents and billing in the meantime."
+          action={{ href: "/documents", label: "Open documents" }}
+        />
       )}
 
       {!loading && active.length > 0 && (

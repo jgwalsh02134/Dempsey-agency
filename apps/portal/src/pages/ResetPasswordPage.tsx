@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ApiError } from "../api/client";
+import { humanApiMessage } from "../api/client";
 import * as api from "../api/endpoints";
 
 export function ResetPasswordPage() {
@@ -56,16 +56,8 @@ export function ResetPasswordPage() {
     try {
       await api.resetPassword(token, password);
       setDone(true);
-    } catch (e) {
-      if (e instanceof ApiError) {
-        setFormError(e.message);
-      } else if (e instanceof TypeError) {
-        setFormError(
-          "Unable to reach the server. Please check your connection and try again.",
-        );
-      } else {
-        setFormError("Something went wrong. Please try again.");
-      }
+    } catch (err) {
+      setFormError(humanApiMessage(err, "Something went wrong. Please try again."));
     } finally {
       setSubmitting(false);
     }

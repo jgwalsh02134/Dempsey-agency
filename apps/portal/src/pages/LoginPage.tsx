@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { MARKETING_URL } from "../api/config";
-import { ApiError } from "../api/client";
+import { humanApiMessage } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
@@ -30,16 +30,8 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email.trim(), password);
-    } catch (e) {
-      if (e instanceof ApiError) {
-        setFormError(e.message);
-      } else if (e instanceof TypeError) {
-        setFormError(
-          "Unable to reach the server. Please check your connection and try again.",
-        );
-      } else {
-        setFormError("Unable to sign in. Please try again.");
-      }
+    } catch (err) {
+      setFormError(humanApiMessage(err, "Unable to sign in. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -70,6 +62,8 @@ export function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
               required
+              aria-invalid={formError ? true : undefined}
+              aria-describedby={formError ? "login-error" : undefined}
             />
           </div>
 
@@ -82,6 +76,8 @@ export function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              aria-invalid={formError ? true : undefined}
+              aria-describedby={formError ? "login-error" : undefined}
             />
           </div>
 
@@ -92,7 +88,7 @@ export function LoginPage() {
           </div>
 
           {formError && (
-            <p className="form-error" role="alert">
+            <p id="login-error" className="form-error" role="alert">
               {formError}
             </p>
           )}
@@ -101,6 +97,7 @@ export function LoginPage() {
             type="submit"
             className="btn-submit"
             disabled={submitting || loading}
+            aria-busy={submitting}
           >
             {submitting ? "Signing in…" : "Sign In"}
           </button>
