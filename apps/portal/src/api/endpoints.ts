@@ -39,7 +39,7 @@ export async function forgotPassword(
 ): Promise<{ success: boolean }> {
   return apiFetch("/api/v1/auth/forgot-password", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, audience: "portal" }),
     token: null,
   });
 }

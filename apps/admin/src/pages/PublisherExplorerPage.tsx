@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { CampaignMapPreview } from "../components/CampaignMapPreview";
 import type { Publisher } from "../types";
 
 /**
@@ -225,6 +226,13 @@ export function PublisherExplorerPage() {
           </div>
         </div>
       </div>
+
+      {!loading && !error && (
+        <CampaignMapPreview
+          publishers={selected ? selected.publishers : filtered}
+          height="24rem"
+        />
+      )}
 
       {error && (
         <p className="error" role="alert">

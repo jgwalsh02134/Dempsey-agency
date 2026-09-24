@@ -35,6 +35,25 @@ import type {
   UnreadCountResponse,
 } from "../types";
 
+export async function forgotPassword(email: string): Promise<{ success: boolean }> {
+  return apiFetch("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email, audience: "admin" }),
+    token: null,
+  });
+}
+
+export async function resetPassword(
+  token: string,
+  password: string,
+): Promise<{ success: boolean }> {
+  return apiFetch("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+    token: null,
+  });
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   return apiFetch<LoginResponse>("/api/v1/auth/login", {
     method: "POST",
