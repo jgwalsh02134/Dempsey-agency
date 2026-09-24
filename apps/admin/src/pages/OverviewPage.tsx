@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import type { AdminOverview, AuditLogEntry } from "../types";
+import type { AdminOverview, AuditLogEntry, Placement } from "../types";
 
 const AUDIT_LABELS: Record<string, string> = {
   USER_CREATED: "User created",
@@ -59,6 +59,7 @@ function KpiCard({ label, value, accent = "default", linkTo }: KpiCardProps) {
 
 export function OverviewPage() {
   const [data, setData] = useState<AdminOverview | null>(null);
+  const [awaitingClient, setAwaitingClient] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +79,39 @@ export function OverviewPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const orgs = await api.fetchOrganizations();
+        const clients = orgs.filter((org) => org.type === "CLIENT");
+        const campaignLists = await Promise.all(
+          clients.map((org) =>
+            api.fetchOrgCampaigns(org.id).catch(() => ({ campaigns: [] })),
+          ),
+        );
+        const campaigns = campaignLists.flatMap((list) => list.campaigns).slice(0, 40);
+        const placementLists = await Promise.all(
+          campaigns.map((campaign) =>
+            api
+              .fetchCampaignPlacements(campaign.id)
+              .catch(() => ({ placements: [] as Placement[] })),
+          ),
+        );
+        const count = placementLists
+          .flatMap((list) => list.placements)
+          .filter((placement) => placement.clientResponse === "PENDING_CLIENT_REVIEW")
+          .length;
+        if (!cancelled) setAwaitingClient(count);
+      } catch {
+        if (!cancelled) setAwaitingClient(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="overview-page">
@@ -125,6 +159,14 @@ export function OverviewPage() {
               accent={data.overdueInvoices > 0 ? "danger" : "default"}
               linkTo="/clients"
             />
+            {awaitingClient != null && (
+              <KpiCard
+                label="Placements awaiting client"
+                value={awaitingClient}
+                accent={awaitingClient > 0 ? "warning" : "default"}
+                linkTo="/campaigns"
+              />
+            )}
           </div>
 
           <section className="card overview-section">

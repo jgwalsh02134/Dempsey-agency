@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { toast } from "../lib/toast";
 import type { Organization } from "../types";
 
 export function CreateClientOrgForm({
@@ -35,7 +36,8 @@ export function CreateClientOrgForm({
         name: name.trim(),
         agencyOrganizationId: agencyId,
       });
-      setSuccess(`Created client org “${org.name}” (${org.id})`);
+      setSuccess(`Created client org “${org.name}”.`);
+      toast(`Created client org “${org.name}”.`);
       setName("");
       onCreated();
     } catch (err) {
