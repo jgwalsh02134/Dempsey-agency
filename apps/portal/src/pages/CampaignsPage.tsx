@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
-import { useAuth } from "../auth/AuthContext";
+import { useOrg } from "../auth/OrgContext";
+import { EmptyState } from "../components/EmptyState";
 import { Money } from "../components/Money";
 import { dateRange } from "../lib/date";
 import type { Campaign, CampaignStatus, CreativeSubmission } from "../types";
@@ -20,12 +21,9 @@ const STATUS_BADGE: Record<CampaignStatus, string> = {
 };
 
 export function CampaignsPage() {
-  const { session } = useAuth();
-  const memberships = session!.memberships;
-
-  const [selectedOrgId, setSelectedOrgId] = useState(
-    () => memberships[0]?.organizationId ?? "",
-  );
+  const { orgId: selectedOrgId, setOrgId: setSelectedOrgId, memberships } = useOrg();
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | CampaignStatus>("ALL");
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [subsBycamp, setSubsByCamp] = useState<Record<string, CreativeSubmission[]>>({});
@@ -69,9 +67,15 @@ export function CampaignsPage() {
     return () => { cancelled = true; };
   }, [selectedOrgId]);
 
-  const active = campaigns.filter((c) => c.status === "ACTIVE");
-  const paused = campaigns.filter((c) => c.status === "PAUSED");
-  const completed = campaigns.filter((c) => c.status === "COMPLETED");
+  const q = query.trim().toLowerCase();
+  const visible = campaigns.filter((c) => {
+    if (statusFilter !== "ALL" && c.status !== statusFilter) return false;
+    if (!q) return true;
+    return c.title.toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q);
+  });
+  const active = visible.filter((c) => c.status === "ACTIVE");
+  const paused = visible.filter((c) => c.status === "PAUSED");
+  const completed = visible.filter((c) => c.status === "COMPLETED");
 
   function renderCard(c: Campaign) {
     const subs = subsBycamp[c.id] ?? [];
@@ -188,19 +192,41 @@ export function CampaignsPage() {
             </select>
           </div>
         )}
+
+        <div className="list-tools">
+          <label className="list-search">
+            <span className="visually-hidden">Search campaigns</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search campaigns"
+            />
+          </label>
+          <div className="chip-row" role="group" aria-label="Campaign status">
+            {(["ALL", "ACTIVE", "PAUSED", "COMPLETED"] as const).map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={statusFilter === status ? "chip active" : "chip"}
+                aria-pressed={statusFilter === status}
+                onClick={() => setStatusFilter(status)}
+              >
+                {status === "ALL" ? "All" : STATUS_LABEL[status]}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {loading && <p className="text-muted" style={{ padding: "0 1rem" }}>Loading campaigns…</p>}
       {error && <p className="form-error" role="alert">{error}</p>}
 
       {!loading && !error && campaigns.length === 0 && (
-        <section className="section-block">
-          <div className="dash-empty">
-            <p className="dash-empty-text">
-              No campaigns have been set up for your organization yet. Check back soon.
-            </p>
-          </div>
-        </section>
+        <EmptyState
+          title="No campaigns yet"
+          body="Your agency will add campaigns here. You can still review documents and billing in the meantime."
+          action={{ href: "/documents", label: "Open documents" }}
+        />
       )}
 
       {!loading && active.length > 0 && (

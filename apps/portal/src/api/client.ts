@@ -68,8 +68,33 @@ export async function apiFetch<T>(
       typeof data === "object" && data !== null && "error" in data
         ? String((data as { error: unknown }).error)
         : res.statusText;
-    throw new ApiError(msg || `HTTP ${res.status}`, res.status, data);
+    throw new ApiError(humanizeError(msg, res.status), res.status, data);
   }
 
   return data as T;
+}
+
+function humanizeError(message: string, status: number): string {
+  const trimmed = message.trim();
+  if (status === 401 && /invalid email or password/i.test(trimmed)) {
+    return "That email or password is incorrect.";
+  }
+  if (status === 403) {
+    return trimmed || "You don't have access to that.";
+  }
+  if (status >= 500 || trimmed === "Internal Server Error") {
+    return "Something went wrong on our side. Please try again.";
+  }
+  if (!trimmed || trimmed === "Validation Error") {
+    return "Please check the form and try again.";
+  }
+  return trimmed;
+}
+
+export function humanApiMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) return error.message || fallback;
+  if (error instanceof TypeError) {
+    return "Unable to reach the server. Check your connection and try again.";
+  }
+  return fallback;
 }

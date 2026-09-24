@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import * as api from "../api/endpoints";
+import { Breadcrumbs } from "../components/Breadcrumbs";
 import { CampaignMap } from "../components/CampaignMap";
 import { formatMoney, Money } from "../components/Money";
 import { dateRange, fromNow } from "../lib/date";
@@ -973,9 +974,13 @@ export function CampaignDetailPage() {
   return (
     <>
       <section className="section-welcome">
-        <Link to="/campaigns" className="back-link">
-          ← Back to campaigns
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Home", to: "/" },
+            { label: "Campaigns", to: "/campaigns" },
+            { label: campaign.title },
+          ]}
+        />
         <div className="campaign-hero">
           <div className="campaign-hero-title-row">
             <h1 className="welcome-heading" style={{ margin: 0 }}>
@@ -1064,9 +1069,17 @@ export function CampaignDetailPage() {
         </div>
       </section>
 
+      <nav className="camp-jump" aria-label="On this page">
+        <a href="#camp-status">Status</a>
+        <a href="#camp-budget">Budget</a>
+        <a href="#camp-plan">Media plan</a>
+        <a href="#camp-creatives">Creatives</a>
+        <a href="#camp-documents">Documents</a>
+      </nav>
+
       {/* ── Control: next-action guidance ── */}
       {!placementsLoading && !subsLoading && nextSteps.length > 0 && (
-        <section className="section-block zone-section zone-control">
+        <section id="camp-status" className="section-block zone-section zone-control">
           <div className="zone-label">
             {hasAction ? "Needs your action" : "Status"}
           </div>
@@ -1106,7 +1119,7 @@ export function CampaignDetailPage() {
           loading so numbers don't jump, and when there's no budget AND no
           placements to report against. */}
       {!placementsLoading && (financials.budget != null || placements.length > 0) && (
-        <section className="section-block zone-section zone-financial">
+        <section id="camp-budget" className="section-block zone-section zone-financial">
           <div className="zone-label">Money</div>
           <div
             className="camp-section-header"
@@ -1216,7 +1229,7 @@ export function CampaignDetailPage() {
       )}
 
       {/* ── Execution: placements + publisher map ── */}
-      <section className="section-block zone-section zone-execution">
+      <section id="camp-plan" className="section-block zone-section zone-execution">
         <div className="zone-label">Media plan</div>
         <div
           className="camp-section-header"
@@ -1566,7 +1579,7 @@ export function CampaignDetailPage() {
                               </span>
                               <button
                                 type="button"
-                                className="inline-text-link"
+                                className="primary-button"
                                 onClick={() =>
                                   setApproval((a) => ({
                                     ...a,
@@ -1578,14 +1591,8 @@ export function CampaignDetailPage() {
                                     },
                                   }))
                                 }
-                                style={{
-                                  background: "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  fontWeight: 600,
-                                }}
                               >
-                                Approve placement →
+                                Review and approve
                               </button>
                             </div>
                           )}
@@ -1881,7 +1888,7 @@ export function CampaignDetailPage() {
           their own sub-list; other categories appear as a count strip that
           deep-links into the full Documents library with none-category
           filtering left for a future pass. */}
-      <section className="section-block zone-section zone-assets-docs">
+      <section id="camp-documents" className="section-block zone-section zone-assets-docs">
         <div
           className="camp-section-header"
           style={{
@@ -2057,7 +2064,7 @@ export function CampaignDetailPage() {
       </section>
 
       {/* ── Creative Submissions ── */}
-      <section className="section-block zone-section zone-assets-creatives">
+      <section id="camp-creatives" className="section-block zone-section zone-assets-creatives">
         <div className="camp-section-header">
           <h2 className="section-heading zone-heading" style={{ margin: 0 }}>Creative submissions</h2>
           <Link to="/creatives" className="camp-upload-link">Upload creative &rarr;</Link>
