@@ -26,6 +26,20 @@ Fastify + Prisma backend for the Dempsey Agency B2B advertising platform.
 
 - If `JWT_SECRET` is still the default `unsafe-dev-secret` while `NODE_ENV=production`, the process exits at startup.
 
+### Stripe Checkout (client invoice payments)
+
+Optional. The API starts without these. `POST /api/v1/invoices/:id/checkout` and `POST /api/v1/stripe/webhook` respond **503** until the secret key and webhook secret are set. Do not commit real keys. `SEED_*` is unrelated and must stay off Railway.
+
+| Variable | Description | Example |
+|---|---|---|
+| `STRIPE_SECRET_KEY` | Secret API key. The process builds `new Stripe(STRIPE_SECRET_KEY)` when Checkout or the webhook runs. | `sk_test_...` / `sk_live_...` |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret for the webhook endpoint below. Signature verification uses the raw request body. | `whsec_...` |
+| `STRIPE_PUBLISHABLE_KEY` | Not read by this API. Hosted Checkout does not load Stripe.js in the portal. Set it only if a later client needs it. | `pk_test_...` |
+| `PORTAL_URL` | Origin for Checkout `success_url` and `cancel_url` (`/billing?paid=1` or `/billing?canceled=1`). | `https://portal.dempsey.agency` |
+| `APP_PORTAL_URL` | Fallback return origin when `PORTAL_URL` is unset (also used for email links). | `https://portal.dempsey.agency` |
+
+If both portal URL vars are unset, the API uses the first `CORS_ORIGINS` / `CORS_ORIGIN` entry whose host starts with `portal.`. In non-production, the last fallback is `http://localhost:5174` (the portal Vite port).
+
 ```sh
 cp .env.example .env
 ```
@@ -276,6 +290,29 @@ curl -s -X PATCH "http://localhost:3001/api/v1/users/$TARGET_USER_ID/deactivate"
 
 Password hashes are never returned from the API (`omit` on Prisma queries).
 
+## Client invoice payments (Stripe Checkout)
+
+Agency admins still create `Invoice` rows (`PENDING`, `OVERDUE`, `PAID`) from admin. A client (or someone who can manage that organization) pays an unpaid invoice from portal Billing. Stripe Checkout collects the card payment. The invoice becomes `PAID` only after a verified webhook — the browser return URL is a message, not proof of payment.
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/v1/invoices/:id/checkout` | Auth required. Caller must belong to the invoice organization or be allowed to manage it. `PENDING` or `OVERDUE` only. Returns `{ url }` for a Checkout Session (`mode=payment`). Already-paid invoices return `{ alreadyPaid: true }` and do not open a second charge. |
+| `POST` | `/api/v1/stripe/webhook` | No JWT. Verifies `Stripe-Signature` against the raw body. Handles `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `payment_intent.succeeded`. Unknown events return 200. |
+
+Checkout metadata is `{ invoiceId, organizationId }`. `payment_method_types` is omitted so Stripe can offer dynamic payment methods. The session amount, currency, and title come from the invoice row. `Organization.stripeCustomerId` is stored on the first checkout and reused.
+
+**Webhook endpoint:** `https://api.dempsey.agency/api/v1/stripe/webhook`
+
+**Events to enable** on that endpoint:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `payment_intent.succeeded`
+
+Local forwarding (Stripe CLI): `stripe listen --forward-to localhost:3001/api/v1/stripe/webhook` — use the CLI `whsec_...` as `STRIPE_WEBHOOK_SECRET`. The API port in `.env.example` is `3001`.
+
+The route reads the raw JSON body in its own Fastify context so signature verification matches the bytes Stripe signed. Do not put another proxy in front that re-encodes the body.
+
 ## Prisma
 
 ```sh
@@ -296,7 +333,8 @@ npm run start -w apps/api
 
 1. Set **Root Directory** to `apps/api`.
 2. Add PostgreSQL — `DATABASE_URL` is injected.
-3. Set **`CORS_ORIGINS`** to every production frontend origin (comma-separated), e.g. `https://dempsey.agency,https://admin.dempsey.agency`, and a strong **`JWT_SECRET`**. Do **not** set `SEED_*` on the service — seeds are one-off via CLI or a release task if you choose.
-4. Run migrations on deploy: `npm run prisma:migrate:deploy` (or equivalent Railway step) **before** or as part of startup so `AuditLog` exists.
-5. Build: `npm run build`; start: `npm run start`.
-6. Health check path: `/healthz`.
+3. Set **`CORS_ORIGINS`** to every production frontend origin (comma-separated), e.g. `https://dempsey.agency,https://portal.dempsey.agency,https://admin.dempsey.agency`, and a strong **`JWT_SECRET`**. Do **not** set `SEED_*` on the service — seeds are one-off via CLI or a release task if you choose.
+4. For client invoice payments, set **`STRIPE_SECRET_KEY`**, **`STRIPE_WEBHOOK_SECRET`**, and **`PORTAL_URL`** (`https://portal.dempsey.agency`). `STRIPE_PUBLISHABLE_KEY` is unused. Create the Stripe webhook (URL and events in the section above) before copying the signing secret. Redeploy after the variables are saved.
+5. Run migrations on deploy: `npm run prisma:migrate:deploy` (or equivalent Railway step) **before** or as part of startup so `AuditLog` and the invoice Stripe columns exist.
+6. Build: `npm run build`; start: `npm run start`.
+7. Health check path: `/healthz`.

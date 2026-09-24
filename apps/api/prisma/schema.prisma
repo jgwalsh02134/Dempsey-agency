@@ -121,6 +121,8 @@ model Organization {
   id        String           @id @default(cuid())
   name      String
   type      OrganizationType
+  /// Stripe Customer reused across Checkout Sessions for this organization.
+  stripeCustomerId String?  @unique
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
@@ -218,18 +220,24 @@ model Campaign {
 }
 
 model Invoice {
-  id             String        @id @default(cuid())
-  organizationId String
-  title          String
-  description    String?
-  amountCents    Int
-  currency       String        @default("USD")
-  status         InvoiceStatus @default(PENDING)
-  invoiceDate    DateTime
-  dueDate        DateTime?
-  createdById    String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                      String        @id @default(cuid())
+  organizationId          String
+  title                   String
+  description             String?
+  amountCents             Int
+  currency                String        @default("USD")
+  status                  InvoiceStatus @default(PENDING)
+  invoiceDate             DateTime
+  dueDate                 DateTime?
+  /// Latest Checkout Session started for this invoice. Replaced when a new
+  /// session is opened after expiry or an amount change.
+  stripeCheckoutSessionId String?       @unique
+  /// Set from the Stripe webhook once funds are captured.
+  stripePaymentIntentId   String?       @unique
+  paidAt                  DateTime?
+  createdById             String
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
   createdBy    User         @relation(fields: [createdById], references: [id])

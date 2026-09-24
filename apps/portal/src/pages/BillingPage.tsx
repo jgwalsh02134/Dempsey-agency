@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { EmptyState } from "../components/EmptyState";
@@ -20,14 +21,31 @@ const STATUS_BADGE: Record<InvoiceStatus, string> = {
   OVERDUE: "report-badge badge-overdue",
 };
 
+function canPay(inv: Invoice): boolean {
+  return (
+    (inv.status === "PENDING" || inv.status === "OVERDUE") &&
+    !inv.stripePaymentIntentId &&
+    inv.amountCents > 0
+  );
+}
+
 export function BillingPage() {
   const { orgId: selectedOrgId, setOrgId: setSelectedOrgId, memberships } = useOrg();
+  const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | InvoiceStatus>("ALL");
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [payNotice, setPayNotice] = useState<string | null>(null);
+
+  const paidFlag = params.get("paid") === "1";
+  const canceledFlag = params.get("canceled") === "1";
+  const returnInvoiceId = params.get("invoice");
+  const returnOrgId = params.get("org");
 
   useEffect(() => {
     if (!selectedOrgId) return;
@@ -55,6 +73,58 @@ export function BillingPage() {
       cancelled = true;
     };
   }, [selectedOrgId]);
+
+  useEffect(() => {
+    if (!returnOrgId) return;
+    const member = memberships.some((m) => m.organizationId === returnOrgId);
+    if (member && returnOrgId !== selectedOrgId) {
+      setSelectedOrgId(returnOrgId);
+    }
+  }, [returnOrgId, memberships, selectedOrgId, setSelectedOrgId]);
+
+  function dismissReturnFlags() {
+    const next = new URLSearchParams(params);
+    next.delete("paid");
+    next.delete("canceled");
+    next.delete("invoice");
+    next.delete("org");
+    setParams(next, { replace: true });
+    setPayNotice(null);
+  }
+
+  async function onPay(inv: Invoice) {
+    if (payingId || !selectedOrgId) return;
+    setPayingId(inv.id);
+    setPayError(null);
+    setPayNotice(null);
+    try {
+      const res = await api.createInvoiceCheckout(inv.id);
+      if (res.alreadyPaid || !res.url) {
+        setPayNotice("This invoice is already paid.");
+        const refreshed = await api.fetchOrgInvoices(selectedOrgId);
+        setInvoices(refreshed.invoices);
+        setPayingId(null);
+        return;
+      }
+      window.location.assign(res.url);
+    } catch (e) {
+      setPayError(
+        e instanceof ApiError ? e.message : "Unable to start checkout",
+      );
+      setPayingId(null);
+    }
+  }
+
+  const returnInvoice = returnInvoiceId
+    ? invoices.find((inv) => inv.id === returnInvoiceId)
+    : undefined;
+  const returnBanner = paidFlag
+    ? returnInvoice?.status === "PAID"
+      ? `Payment confirmed. "${returnInvoice.title}" is paid.`
+      : "Thanks. Stripe has your payment. This invoice will show as paid once we confirm it. Refresh in a moment if it still looks unpaid."
+    : canceledFlag
+      ? "Checkout canceled. No payment was taken. You can pay this invoice when you're ready."
+      : payNotice;
 
   /** Per-currency summary — aggregates outstanding (PENDING + OVERDUE),
    *  overdue alone, and paid-to-date. Grouping keeps the strip safe in
@@ -237,6 +307,32 @@ export function BillingPage() {
       <section className="section-block">
         <h2 className="section-heading">Invoices</h2>
 
+        {returnBanner && (
+          <p
+            className={
+              canceledFlag && !paidFlag && !payNotice
+                ? "billing-banner billing-banner-neutral"
+                : "form-success billing-banner"
+            }
+            role="status"
+          >
+            {returnBanner}
+            <button
+              type="button"
+              className="billing-banner-dismiss"
+              onClick={dismissReturnFlags}
+            >
+              Dismiss
+            </button>
+          </p>
+        )}
+
+        {payError && (
+          <p className="form-error billing-banner" role="alert">
+            {payError}
+          </p>
+        )}
+
         {loading && (
           <p className="text-muted">Loading invoices…</p>
         )}
@@ -308,10 +404,28 @@ export function BillingPage() {
                   >
                     {inv.currency}
                   </div>
+                  {inv.status === "PAID" && inv.paidAt && (
+                    <div className="invoice-meta">
+                      <span className="mono">Paid {shortDate(inv.paidAt)}</span>
+                    </div>
+                  )}
                 </div>
-                <span className={STATUS_BADGE[inv.status]}>
-                  {STATUS_LABEL[inv.status]}
-                </span>
+                <div className="invoice-side">
+                  {canPay(inv) && (
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={payingId !== null}
+                      aria-busy={payingId === inv.id}
+                      onClick={() => void onPay(inv)}
+                    >
+                      {payingId === inv.id ? "Redirecting…" : "Pay"}
+                    </button>
+                  )}
+                  <span className={STATUS_BADGE[inv.status]}>
+                    {STATUS_LABEL[inv.status]}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>

@@ -33,6 +33,18 @@ const envSchema = z.object({
   /** Public base URLs used to build CTA links in outgoing emails. */
   APP_PORTAL_URL: z.string().url().optional(),
   APP_ADMIN_URL: z.string().url().optional(),
+
+  /**
+   * Stripe Checkout for agency-issued invoices. All optional so the API
+   * still boots before billing is configured. Checkout and the webhook
+   * return 503 until the secret and webhook secret are set.
+   * STRIPE_PUBLISHABLE_KEY is unused by hosted Checkout (no Stripe.js).
+   */
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  /** Success/cancel return origin. Falls back to APP_PORTAL_URL, then a CORS portal origin. */
+  PORTAL_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

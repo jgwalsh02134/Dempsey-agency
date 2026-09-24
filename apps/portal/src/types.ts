@@ -215,9 +215,16 @@ export interface Invoice {
   status: InvoiceStatus;
   invoiceDate: string;
   dueDate: string | null;
+  paidAt?: string | null;
+  stripePaymentIntentId?: string | null;
   createdById: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface InvoiceCheckoutResponse {
+  url?: string;
+  alreadyPaid?: boolean;
 }
 
 export interface OrgInvoicesResponse {
