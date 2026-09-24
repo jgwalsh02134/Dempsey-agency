@@ -116,9 +116,16 @@ export function BillingSection({ orgId }: { orgId: string }) {
     try {
       await api.patchInvoice(id, { status: newStatus });
       setInvoices((prev) =>
-        prev.map((inv) =>
-          inv.id === id ? { ...inv, status: newStatus } : inv,
-        ),
+        prev.map((inv) => {
+          if (inv.id !== id) return inv;
+          const paidAt =
+            newStatus === "PAID"
+              ? (inv.paidAt ?? new Date().toISOString())
+              : inv.stripePaymentIntentId
+                ? inv.paidAt
+                : null;
+          return { ...inv, status: newStatus, paidAt };
+        }),
       );
     } catch (err) {
       setActionError(errorMessage(err));
@@ -304,6 +311,27 @@ export function BillingSection({ orgId }: { orgId: string }) {
                         </option>
                       ))}
                     </select>
+                    {inv.stripePaymentIntentId && (
+                      <div
+                        className="small"
+                        title={inv.stripePaymentIntentId}
+                      >
+                        Paid via Stripe
+                        {inv.paidAt ? ` · ${formatDate(inv.paidAt)}` : ""}
+                      </div>
+                    )}
+                    {inv.status === "PAID" &&
+                      !inv.stripePaymentIntentId &&
+                      inv.paidAt && (
+                        <div className="small">
+                          Marked paid · {formatDate(inv.paidAt)}
+                        </div>
+                      )}
+                    {inv.status !== "PAID" &&
+                      !inv.stripePaymentIntentId &&
+                      inv.stripeCheckoutSessionId && (
+                        <div className="small">Checkout started</div>
+                      )}
                   </td>
                   <td className="mono">{formatDate(inv.invoiceDate)}</td>
                   <td className="mono">

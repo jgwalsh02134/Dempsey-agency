@@ -10,6 +10,7 @@ import type {
   NotificationsResponse,
   OrgCampaignsResponse,
   OrgDocumentsResponse,
+  InvoiceCheckoutResponse,
   OrgInvoicesResponse,
   Placement,
   PlacementClientResponse,
@@ -84,6 +85,15 @@ export async function fetchOrgInvoices(
 ): Promise<OrgInvoicesResponse> {
   return apiFetch<OrgInvoicesResponse>(
     `/api/v1/organizations/${encodeURIComponent(orgId)}/invoices`,
+  );
+}
+
+export async function createInvoiceCheckout(
+  invoiceId: string,
+): Promise<InvoiceCheckoutResponse> {
+  return apiFetch<InvoiceCheckoutResponse>(
+    `/api/v1/invoices/${encodeURIComponent(invoiceId)}/checkout`,
+    { method: "POST", body: JSON.stringify({}) },
   );
 }
 

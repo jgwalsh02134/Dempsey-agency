@@ -7,6 +7,7 @@ import { agencyClientRoutes } from "./agency-clients/index.js";
 import { documentRoutes } from "./documents/index.js";
 import { campaignRoutes } from "./campaigns/index.js";
 import { invoiceRoutes } from "./invoices/index.js";
+import { stripeWebhookRoutes } from "./stripe/webhook.js";
 import { submissionRoutes } from "./submissions/index.js";
 import { accountRequestRoutes } from "./account-requests/index.js";
 import { inviteRoutes } from "./invites/index.js";
@@ -27,6 +28,7 @@ export async function v1Routes(app: FastifyInstance) {
   await app.register(documentRoutes);
   await app.register(campaignRoutes);
   await app.register(invoiceRoutes);
+  await app.register(stripeWebhookRoutes);
   await app.register(submissionRoutes);
   await app.register(publisherRoutes);
   await app.register(placementRoutes);
